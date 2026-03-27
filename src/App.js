@@ -441,7 +441,6 @@ const DEFAULT_STATE = {
   menus:         {},
   menuPub:       {},
   ordersOpen:    {}, // { "YYYY-MM-DD": true/false } — se false ordini chiusi
-  ordersOpen:    {},
   orders:        {},
   notifications: {},
   sentNotifs:    [],
