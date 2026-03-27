@@ -67,14 +67,18 @@ const STYLE = `
     --transition: .22s cubic-bezier(.4,0,.2,1);
   }
 
-  body {
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; max-width: 100%;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .app { min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+  #root { width: 100%; }
+  .app { min-height: 100vh; display: flex; flex-direction: column; position: relative; width: 100%; max-width: 100%; overflow-x: hidden; }
   .app-bg {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-size: cover; background-position: center center;
@@ -96,7 +100,8 @@ const STYLE = `
   }
   .header-top {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 18px; height: 60px;
+    padding: 0 10px; height: 56px;
+    min-width: 0; overflow: hidden; gap: 6px;
   }
   .header-logo {
     font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;
@@ -123,7 +128,7 @@ const STYLE = `
   }
   .badge-red { background: rgba(220,40,40,.45) !important; color: #ffb3b3 !important; border-color: rgba(220,40,40,.5) !important; }
 
-  .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .header-actions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; overflow: hidden; }
   .header-user {
     color: rgba(255,255,255,.7); font-size: .78rem;
     white-space: nowrap; font-style: italic;
@@ -137,7 +142,7 @@ const STYLE = `
   }
   .header-tabs::-webkit-scrollbar { display: none; }
   .tab {
-    padding: 5px 15px; border-radius: 40px;
+    padding: 5px 11px; border-radius: 40px; white-space: nowrap;
     border: 1px solid rgba(255,255,255,.18);
     background: rgba(255,255,255,.06); color: rgba(255,255,255,.72);
     cursor: pointer; font-family: 'DM Sans', sans-serif;
@@ -153,7 +158,7 @@ const STYLE = `
   }
 
   /* ─── Main ────────────────────────────────── */
-  .main { flex: 1; padding: 20px 18px; max-width: 960px; margin: 0 auto; width: 100%; }
+  .main { flex: 1; padding: 16px 14px 32px; max-width: 960px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 
   /* ─── Cards ───────────────────────────────── */
   .card {
@@ -1370,7 +1375,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
           <div className="header-actions">
             <span className="header-user">👤 {user.name}</span>
-            <button className="tab" onClick={onLogout} style={{marginLeft:4}}>← Esci</button>
+            <button className="tab" onClick={onLogout} style={{marginLeft:2,padding:"5px 8px"}}>⬅</button>
           </div>
         </div>
         <div className="header-tabs">
