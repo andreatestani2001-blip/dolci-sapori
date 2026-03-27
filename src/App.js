@@ -496,9 +496,11 @@ async function saveState(s) {
 const today   = () => new Date().toISOString().slice(0,10);
 
 function isOrdersOpen(date, appState) {
+  // Se l'admin ha impostato un override esplicito, usa quello
   if (appState?.ordersOpen && date in appState.ordersOpen) {
-    return appState.ordersOpen[date];
+    return Boolean(appState.ordersOpen[date]);
   }
+  // Altrimenti: logica automatica — aperto se oggi e ora < 11:30
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
   if (date !== todayStr) return false;
@@ -806,6 +808,9 @@ function AdminMenu({ date, appState, update }) {
             ? <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
             : <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
           )}
+          {!published && (appState.ordersOpen?.[date]===false) && (
+            <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
+          )}
         </div>
       </div>
       {toast.text&&<div className={`toast ${!toast.ok?"toast-err":""}`}>{toast.text}</div>}
@@ -1014,7 +1019,8 @@ function AdminClients({ appState, update }) {
     const val=parseFloat(creditEdit[userId]);
     if(isNaN(val)||val<=0) return showToast("Importo non valido",true);
     const cur=appState.credits[userId]||0;
-    update({credits:{...appState.credits,[userId]:r2(cur+sign*val)}});
+    const newCredits = {...(appState.credits||{}), [userId]: r2(cur+sign*val)};
+    update({credits: newCredits});
     setCreditEdit(p=>{const n={...p};delete n[userId];return n;});
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
   };
