@@ -1442,10 +1442,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   </div>
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     {ordersOpen
-                      ? {ordersOpen
                       ? <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
-                      : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
-                    }
                       : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
                     }
                   </div>
