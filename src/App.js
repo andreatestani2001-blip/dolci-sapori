@@ -804,12 +804,10 @@ function AdminMenu({ date, appState, update }) {
             ?<button className="btn btn-ghost btn-sm" onClick={unpublish}>Nascondi</button>
             :<button className="btn btn-success" onClick={publish} disabled={items.length===0}>📢 Pubblica ai clienti</button>
           }
-          {published && (isOrdersOpen(date,appState)
-            ? <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
-            : <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
-          )}
-          {!published && (appState.ordersOpen?.[date]===false) && (
-            <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
+          {published && (
+            appState.ordersOpen?.[date] === false
+              ? <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
+              : <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
           )}
         </div>
       </div>
@@ -1018,13 +1016,14 @@ function AdminClients({ appState, update }) {
   const applyCredit=(userId,sign)=>{
     const val=parseFloat(creditEdit[userId]);
     if(isNaN(val)||val<=0) return showToast("Importo non valido",true);
+    // Pulisci subito l'input per evitare doppio tap
+    setCreditEdit(p=>{const n={...p};delete n[userId];return n;});
     const cur=appState.credits[userId]||0;
     const newCredits = {...(appState.credits||{}), [userId]: r2(cur+sign*val)};
     update({credits: newCredits});
-    setCreditEdit(p=>{const n={...p};delete n[userId];return n;});
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
   };
-  const resetCr=userId=>{update({credits:{...appState.credits,[userId]:0}});showToast("Credito azzerato");};
+  const resetCr=userId=>{if(!window.confirm("Azzerare il credito?")) return; update({credits:{...appState.credits,[userId]:0}});showToast("Credito azzerato");};
 
   return(<>
     {pending.length>0&&(
@@ -1199,6 +1198,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const date=today();
+  // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
+  const [tick, setTick] = useState(0);
+  useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),3000); return()=>clearInterval(t); },[]);
 
   // Mostra banner iOS solo se: è iOS, non è già installata, non è stata chiusa
   useEffect(() => {
@@ -1210,7 +1212,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   const menu        = appState.menus[date]||[];
   const published   = appState.menuPub[date]||false;
-  const ordersOpen  = isOrdersOpen(date, appState);
+  const ordersOpen  = (tick >= 0) && isOrdersOpen(date, appState); // tick forza ricalcolo ogni 3s
   const myOrder   = appState.orders[`${date}:${user.id}`]||null;
   const credit    = appState.credits[user.id]||0;
   const unpaid    = getUserDebt(user.id, appState.orders);
@@ -1229,8 +1231,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
       setToast("Piatto già aggiunto!"); setTimeout(()=>setToast(""),2000); return;
     }
     update({menus:{...appState.menus,[date]:[...curMenu,newItem]}});
+    setQuantities(prev=>({...prev,[newItem.id]:1}));
     setCustomDish("");
-    setToast("✓ Richiesta inviata al cuoco!"); setTimeout(()=>setToast(""),2500);
+    setToast("✓ Richiesta inviata! Aggiunto al carrello."); setTimeout(()=>setToast(""),2500);
   };
 
   const sendOrder=()=>{
