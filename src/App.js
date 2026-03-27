@@ -1,4 +1,13 @@
 /* eslint-disable */
+
+// ─── Service Worker (PWA) ─────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('SW registrato:', reg.scope))
+      .catch(err => console.log('SW errore:', err));
+  });
+}
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── BRAND CONFIG (modifica qui per cambiare colori/logo/sfondo) ──────────
