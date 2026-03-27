@@ -440,6 +440,7 @@ const DEFAULT_STATE = {
   credits:       {},
   menus:         {},
   menuPub:       {},
+  ordersOpen:    {}, // { "YYYY-MM-DD": true/false } — se false ordini chiusi
   orders:        {},
   notifications: {},
   sentNotifs:    [],
@@ -492,6 +493,21 @@ async function saveState(s) {
 
 // ─── Utils ────────────────────────────────────────────────────────────────
 const today   = () => new Date().toISOString().slice(0,10);
+
+// Controlla se gli ordini sono aperti per una data
+// Regola: aperti di default fino alle 11:30, poi chiusi (salvo override admin)
+function isOrdersOpen(date, appState) {
+  // Se l'admin ha impostato manualmente un override, usa quello
+  if (appState?.ordersOpen && date in appState.ordersOpen) {
+    return appState.ordersOpen[date];
+  }
+  // Altrimenti: aperto se ora < 11:30 E data è oggi
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  if (date !== todayStr) return false; // giorni passati: chiusi
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  return minutes < (11 * 60 + 30); // chiude alle 11:30
+}
 const prevDay = d  => { const dt = new Date(d+"T12:00:00"); dt.setDate(dt.getDate()-1); return dt.toISOString().slice(0,10); };
 const fmt     = d  => new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 const fmtS    = d  => new Date(d+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"});
@@ -526,6 +542,34 @@ export default function App() {
   const [user,     setUser]     = useState(null);
   const saveTimer               = useRef(null);
 
+  // ── Rimani loggato ──────────────────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ds_logged_user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  // Aggiorna i dati utente quando cambia appState (es. approvazione)
+  useEffect(() => {
+    if (!user || !appState) return;
+    const fresh = appState.users.find(u => u.id === user.id);
+    if (fresh && JSON.stringify(fresh) !== JSON.stringify(user)) {
+      setUser(fresh);
+      try { localStorage.setItem("ds_logged_user", JSON.stringify(fresh)); } catch {}
+    }
+  }, [appState]);
+
+  const handleLogin = (u) => {
+    setUser(u);
+    try { localStorage.setItem("ds_logged_user", JSON.stringify(u)); } catch {}
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    try { localStorage.removeItem("ds_logged_user"); } catch {}
+  };
+
   useEffect(() => {
     loadState().then(s => setAppState(s));
     // Ricarica dal database ogni 5 secondi per sincronizzare tra dispositivi
@@ -555,10 +599,10 @@ export default function App() {
   return (
     <><style>{STYLE}</style>
     {!user
-      ? <AuthScreen appState={appState} update={update} onLogin={setUser}/>
+      ? <AuthScreen appState={appState} update={update} onLogin={handleLogin}/>
       : user.role==="admin"
-        ? <AdminPanel  user={user} appState={appState} update={update} onLogout={()=>setUser(null)}/>
-        : <ClientPanel user={user} appState={appState} update={update} onLogout={()=>setUser(null)}/>
+        ? <AdminPanel  user={user} appState={appState} update={update} onLogout={handleLogout}/>
+        : <ClientPanel user={user} appState={appState} update={update} onLogout={handleLogout}/>
     }</>
   );
 }
@@ -736,6 +780,19 @@ function AdminOrders({ date, appState, update }) {
     showToast(updated.paid?`✓ ${order.userName} segnato pagato`:`${order.userName} segnato non pagato`);
   };
 
+  const cancelOrderAdmin=(order)=>{
+    if(!window.confirm(`Annullare l'ordine di ${order.userName}?`)) return;
+    // Restituisci credito se usato
+    const newCredits={...appState.credits};
+    if(order.creditUsed>0){
+      newCredits[order.userId]=r2((newCredits[order.userId]||0)+order.creditUsed);
+    }
+    const newOrders={...appState.orders};
+    delete newOrders[`${date}:${order.userId}`];
+    update({orders:newOrders,credits:newCredits});
+    showToast(`Ordine di ${order.userName} annullato`);
+  };
+
   const applyItemPrice=(order,itemId)=>{
     const eKey=`${order.userId}_${itemId}`;
     const val=editing[eKey]; if(!val) return;
@@ -783,9 +840,12 @@ function AdminOrders({ date, appState, update }) {
               <div className="flex" style={{flexWrap:"wrap",gap:5}}>
                 {cr>0&&<span className="credit-pill credit-pos">💳 {eur(cr)}</span>}
                 <span style={{fontWeight:800,color:"var(--accent)"}}>{eur(order.total)}</span>
-                <span className={`paid-badge ${order.paid?"pagato":"non-pagato"}`} onClick={()=>togglePaid(order)}>
-                  {order.paid?"✓ Pagato":"✗ Non pagato"}
-                </span>
+                <div className="flex" style={{gap:6}}>
+                  <span className={`paid-badge ${order.paid?"pagato":"non-pagato"}`} onClick={()=>togglePaid(order)}>
+                    {order.paid?"✓ Pagato":"✗ Non pagato"}
+                  </span>
+                  <button className="btn btn-danger btn-xs" onClick={()=>cancelOrderAdmin(order)}>🗑 Annulla</button>
+                </div>
               </div>
             </div>
             {(order.creditUsed||0)>0&&<div style={{fontSize:".75rem",color:"var(--green)",marginBottom:6,fontWeight:700}}>✓ Credito scalato: −{eur(order.creditUsed)} · Netto: {eur(order.total)}</div>}
@@ -1090,8 +1150,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
     if (isIos && !isInstalled && !dismissed) setShowIosBanner(true);
   }, []);
 
-  const menu      = appState.menus[date]||[];
-  const published = appState.menuPub[date]||false;
+  const menu        = appState.menus[date]||[];
+  const published   = appState.menuPub[date]||false;
+  const ordersOpen  = isOrdersOpen(date, appState);
   const myOrder   = appState.orders[`${date}:${user.id}`]||null;
   const credit    = appState.credits[user.id]||0;
   const unpaid    = getUserDebt(user.id, appState.orders);
@@ -1131,7 +1192,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
       ?{...appState.credits,[user.id]:r2(credit+(myOrder.creditUsed||0))}
       :appState.credits;
     const newOrders={...appState.orders}; delete newOrders[`${date}:${user.id}`];
-    update({orders:newOrders,credits:newCredits}); setQuantities({});
+    update({orders:newOrders,credits:newCredits});
+    // NON resettiamo quantities qui - lo fa il bottone Annulla, Modifica le pre-popola
+  };
+
+  const fullCancelOrder=()=>{
+    cancelOrder();
+    setQuantities({});
   };
 
   const openNotifs=()=>{
@@ -1313,7 +1380,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
                     <span style={{color:"var(--accent)",fontWeight:900,fontSize:"1.1rem"}}>{eur(estNet)}</span>
                   </div>
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
-                    <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
+                    {ordersOpen
+                      ? <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
+                      : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
+                    }
                   </div>
                 </>
               }
