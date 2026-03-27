@@ -1642,25 +1642,27 @@ function ClientPanel({ user, appState, update, onLogout }) {
                     <>
                       <div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold)",margin:"10px 0 6px",textTransform:"uppercase"}}>⭐ Le tue richieste</div>
                       {myCustom.map(item=>(
-                        <div className="menu-order-item menu-order-item-custom" key={item.id}>
-                          <div>
-                            <div style={{fontWeight:700}}>{item.name}</div>
-                            <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>In attesa del prezzo</span>}</div>
+                        <div key={item.id}>
+                          <div className="menu-order-item menu-order-item-custom">
+                            <div>
+                              <div style={{fontWeight:700}}>{item.name}</div>
+                              <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>In attesa del prezzo</span>}</div>
+                            </div>
+                            <div className="qty-ctrl">
+                              <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
+                              <span className="qty-num">{quantities[item.id]||0}</span>
+                              <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
+                            </div>
                           </div>
-                          <div className="qty-ctrl">
-                            <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
-                            <span className="qty-num">{quantities[item.id]||0}</span>
-                            <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
-                          </div>
+                          {(quantities[item.id]||0)>0&&(
+                            <input
+                              value={itemNotes[item.id]||""}
+                              onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
+                              placeholder="📝 Nota per questo piatto..."
+                              style={{fontSize:".8rem",margin:"4px 0 6px",borderColor:"var(--gold)"}}
+                            />
+                          )}
                         </div>
-                        {(quantities[item.id]||0)>0&&<div style={{padding:"0 2px 6px"}}>
-                          <input
-                            value={itemNotes[item.id]||""}
-                            onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
-                            placeholder="📝 Nota per questo piatto..."
-                            style={{fontSize:".8rem",marginTop:4,borderColor:"var(--gold)"}}
-                          />
-                        </div>}
                       ))}
                     </>
                   )}
