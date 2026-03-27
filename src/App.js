@@ -1144,8 +1144,12 @@ function AdminRiepilogo({ date, appState }) {
   orders.forEach(ord=>{
     ord.items.forEach(item=>{
       const key = item.name;
-      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false};
+      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false, notes:[]};
       piatti[key].qty += item.qty;
+      // Aggrega note uniche per piatto
+      if(item.note && !piatti[key].notes.includes(item.note)){
+        piatti[key].notes.push(item.note);
+      }
     });
   });
   const lista = Object.values(piatti).sort((a,b)=>b.qty-a.qty);
@@ -1160,7 +1164,7 @@ function AdminRiepilogo({ date, appState }) {
       `RIEPILOGO ORDINI — ${new Date(date+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`,
       ``,
       `PIATTI DA PREPARARE:`,
-      ...lista.map(p=>`  ${p.qty}× ${p.name}${p.custom?" (su richiesta)":""}`),
+      ...lista.map(p=>`  ${p.qty}× ${p.name}${p.custom?" (su richiesta)":""}${p.notes&&p.notes.length>0?" - "+p.notes.join(", "):""}`),
       ``,
       `ORDINI (${totaleOrdini}):`,
       ...orders.map(o=>[
@@ -1208,10 +1212,17 @@ function AdminRiepilogo({ date, appState }) {
                 <span style={{fontWeight:p.custom?700:500}}>
                   {p.custom?"🌟 ":""}{p.name}
                 </span>
-                <span style={{
-                  background:"var(--accent)",color:"#fff",
-                  borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
-                }}>{p.qty}</span>
+                <div style={{textAlign:"right"}}>
+                  <span style={{
+                    background:"var(--accent)",color:"#fff",
+                    borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
+                  }}>{p.qty}</span>
+                  {p.notes&&p.notes.length>0&&(
+                    <div style={{fontSize:".72rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>
+                      📝 {p.notes.join(" / ")}
+                    </div>
+                  )}
+                </div>
               </div>
             ))
         }
@@ -1571,15 +1582,18 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <div className="card">
               <div className="card-title">🍽 Il tuo ordine — {fmt(date)}</div>
               {myOrder.items.map(item=>(
-                <div className="menu-order-item" key={item.id} style={{cursor:"default"}}>
-                  <div>
-                    <div style={{fontWeight:700}}>{item.custom&&"⭐ "}{item.name}</div>
-                    <div className="muted mt4">×{item.qty}</div>
-                  </div>
+                <div key={item.id}>
+                  <div className="menu-order-item" style={{cursor:"default"}}>
+                    <div>
+                      <div style={{fontWeight:700}}>{item.custom&&"⭐ "}{item.name}</div>
+                      <div className="muted mt4">×{item.qty}</div>
+                    </div>
                   <span style={{fontWeight:700,color:"var(--accent)"}}>
                     {item.price!=null?eur(item.price*item.qty):<span className="muted" style={{fontSize:".79rem"}}>Prezzo TBD</span>}
                   </span>
                 </div>
+                {item.note&&<div style={{fontSize:".78rem",color:"var(--muted)",fontStyle:"italic",padding:"2px 4px 6px"}}>📝 {item.note}</div>}
+              </div>
               ))}
               <hr className="divider"/>
               {(myOrder.creditUsed||0)>0&&<>
