@@ -508,18 +508,7 @@ function isOrdersOpen(date, appState) {
 
 // Controlla se gli ordini sono aperti per una data
 // Regola: aperti di default fino alle 11:30, poi chiusi (salvo override admin)
-function isOrdersOpen(date, appState) {
-  // Se l'admin ha impostato manualmente un override, usa quello
-  if (appState?.ordersOpen && date in appState.ordersOpen) {
-    return appState.ordersOpen[date];
-  }
-  // Altrimenti: aperto se ora < 11:30 E data è oggi
-  const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
-  if (date !== todayStr) return false; // giorni passati: chiusi
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  return minutes < (11 * 60 + 30); // chiude alle 11:30
-}
+
 const prevDay = d  => { const dt = new Date(d+"T12:00:00"); dt.setDate(dt.getDate()-1); return dt.toISOString().slice(0,10); };
 const fmt     = d  => new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 const fmtS    = d  => new Date(d+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"});
