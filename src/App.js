@@ -424,7 +424,7 @@ const STYLE = `
 // ─── State & persistence ──────────────────────────────────────────────────
 // ─── Supabase ─────────────────────────────────────────────────────────────
 const SB_URL = "https://mvwsrnitinrkbxuymykh.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12d3Nybml0aW5ya2J4dXlteWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTkzOTksImV4cCI6MjA5MDE3NTM5OX0.lQYm72vg4gc8bfbQzMyrA_9SP324qpD0yF6xaxVA-ws";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12d3Nybml0aW5ya2J4dXlteWtoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU5OTM5OSwiZXhwIjoyMDkwMTc1Mzk5fQ.x6m_Vd2tnvEe2WTf3HpNc8jh8DQ8RznnBXAwTNm9fwM";
 
 const DEFAULT_STATE = {
   users:         [{ id:"andy01", name:"Andrea Testani", role:"admin", password:"Andyssl01.", approved:true }],
