@@ -909,6 +909,7 @@ function AdminOrders({ date, appState, update }) {
                 </div>
               </div>
             </div>
+            {order.note&&<div style={{fontSize:".8rem",color:"var(--text2)",marginBottom:6,background:"var(--gold-lt)",padding:"5px 10px",borderRadius:7,border:"1px solid #f5d78e"}}>📝 <b>Nota:</b> {order.note}</div>}
             {(order.creditUsed||0)>0&&<div style={{fontSize:".75rem",color:"var(--green)",marginBottom:6,fontWeight:700}}>✓ Credito scalato: −{eur(order.creditUsed)} · Netto: {eur(order.total)}</div>}
             {order.items.map(item=>{
               const eKey=`${order.userId}_${item.id}`;
@@ -1108,6 +1109,117 @@ function AdminClients({ appState, update }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – STORICO
 // ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+// ADMIN – RIEPILOGO GIORNALIERO
+// ════════════════════════════════════════════════════════════════════════════
+function AdminRiepilogo({ date, appState }) {
+  const orders = Object.entries(appState.orders||{})
+    .filter(([k])=>k.startsWith(date+":"))
+    .map(([,v])=>v).filter(Boolean);
+
+  // Raggruppa tutti i piatti ordinati
+  const piatti = {};
+  orders.forEach(ord=>{
+    ord.items.forEach(item=>{
+      const key = item.name;
+      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false};
+      piatti[key].qty += item.qty;
+    });
+  });
+  const lista = Object.values(piatti).sort((a,b)=>b.qty-a.qty);
+
+  const totaleOrdini = orders.length;
+  const totaleIncasso = orders.reduce((s,o)=>s+o.total,0);
+  const totalePagato  = orders.filter(o=>o.paid).reduce((s,o)=>s+o.total,0);
+
+  // Esporta come testo
+  const esporta = ()=>{
+    const righe = [
+      `RIEPILOGO ORDINI — ${new Date(date+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`,
+      ``,
+      `PIATTI DA PREPARARE:`,
+      ...lista.map(p=>`  ${p.qty}× ${p.name}${p.custom?" (su richiesta)":""}`),
+      ``,
+      `ORDINI (${totaleOrdini}):`,
+      ...orders.map(o=>`  ${o.userName}: ${eur(o.total)} ${o.paid?"✓":"⏳"}${o.note?` — nota: ${o.note}`:""}`),
+      ``,
+      `Totale incasso: ${eur(totaleIncasso)}`,
+      `Già pagato: ${eur(totalePagato)}`,
+      `Da incassare: ${eur(totaleIncasso-totalePagato)}`,
+    ];
+    const blob = new Blob([righe.join("\n")], {type:"text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ordini_${date}.txt`;
+    a.click();
+  };
+
+  return(
+    <div>
+      <div className="grid3" style={{marginBottom:14}}>
+        <div className="stat-box">
+          <div className="stat-num">{totaleOrdini}</div>
+          <div className="stat-label">Ordini</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-num">{eur(totaleIncasso)}</div>
+          <div className="stat-label">Totale</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-num">{eur(totaleIncasso-totalePagato)}</div>
+          <div className="stat-label">Da incassare</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title" style={{justifyContent:"space-between"}}>
+          <span>🍽 Piatti da preparare</span>
+          <button className="btn btn-gold btn-sm" onClick={esporta}>⬇ Esporta</button>
+        </div>
+        {lista.length===0
+          ? <div className="empty">Nessun ordine per oggi.</div>
+          : lista.map(p=>(
+              <div key={p.name} className="menu-item" style={{marginBottom:6}}>
+                <span style={{fontWeight:p.custom?700:500}}>
+                  {p.custom?"🌟 ":""}{p.name}
+                </span>
+                <span style={{
+                  background:"var(--accent)",color:"#fff",
+                  borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
+                }}>{p.qty}</span>
+              </div>
+            ))
+        }
+      </div>
+
+      <div className="card">
+        <div className="card-title">👥 Chi ha ordinato</div>
+        {orders.length===0
+          ? <div className="empty">Nessun ordine.</div>
+          : orders.map(o=>(
+              <div key={o.userId} style={{borderBottom:"1px solid var(--border-lt)",padding:"8px 0"}}>
+                <div className="flex" style={{justifyContent:"space-between"}}>
+                  <span style={{fontWeight:700}}>{o.userName}</span>
+                  <div className="flex" style={{gap:6}}>
+                    <span style={{fontWeight:700,color:"var(--accent)"}}>{eur(o.total)}</span>
+                    <span className={`paid-badge ${o.paid?"pagato":"non-pagato"}`} style={{cursor:"default",fontSize:".68rem"}}>
+                      {o.paid?"✓ Pagato":"⏳ Da pagare"}
+                    </span>
+                  </div>
+                </div>
+                {o.note&&<div style={{fontSize:".78rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>📝 {o.note}</div>}
+                <div style={{fontSize:".8rem",color:"var(--muted)",marginTop:3}}>
+                  {o.items.map(i=>`${i.qty}× ${i.name}`).join(", ")}
+                </div>
+              </div>
+            ))
+        }
+      </div>
+    </div>
+  );
+}
+
+
 function AdminSummary({ appState }) {
   const byDate={};
   for(const[k,o]of Object.entries(appState.orders)){
@@ -1172,7 +1284,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
         </div>
         <div className="header-tabs">
-          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📊 Storico"]].map(([v,l])=>(
+          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"]].map(([v,l])=>(
             <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
               {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
             </button>
@@ -1192,6 +1304,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="orders"  &&<AdminOrders  date={date} appState={appState} update={update}/>}
         {tab==="notif"   &&<AdminNotifications       appState={appState} update={update}/>}
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
+        {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
       </div>
     </div>
@@ -1205,6 +1318,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [tab,        setTab]        = useState("order");
   const [quantities, setQuantities] = useState({});
   const [customDish, setCustomDish] = useState("");
+  const [orderNote,  setOrderNote]  = useState("");
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const date=today();
@@ -1253,11 +1367,12 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const creditUsed=credit>0?Math.min(credit,rawTotal):0;
     const netTotal=Math.max(0,rawTotal-creditUsed);
     const newCredits={...appState.credits,[user.id]:r2(credit-creditUsed)};
-    const order={userId:user.id,userName:user.name,date,items,rawTotal,creditUsed,total:netTotal,paid:false,createdAt:new Date().toISOString()};
+    const order={userId:user.id,userName:user.name,date,items,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
     const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
     update(patchOrder);
     saveState({...appState,...patchOrder});
     setQuantities({});
+    setOrderNote("");
     setToast("✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
   };
 
@@ -1388,6 +1503,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                               <span style={{color:"var(--muted)"}}>{it.price!=null?eur(it.price*it.qty):"prezzo da definire"}</span>
                             </div>
                           ))}
+                          {ord.note&&<div style={{fontSize:".78rem",color:"var(--muted)",marginTop:4,fontStyle:"italic"}}>📝 {ord.note}</div>}
                           <div className="flex" style={{justifyContent:"space-between",marginTop:5,fontWeight:700}}>
                             <span>Totale</span>
                             <span style={{color:"var(--accent)"}}>{eur(ord.total)}</span>
@@ -1520,6 +1636,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   <div className="flex" style={{justifyContent:"space-between",marginBottom:11}}>
                     <span style={{fontWeight:700}}>Da pagare:</span>
                     <span style={{color:"var(--accent)",fontWeight:900,fontSize:"1.1rem"}}>{eur(estNet)}</span>
+                  </div>
+                  <div className="field" style={{marginBottom:8}}>
+                    <label>📝 Note (opzionale)</label>
+                    <input
+                      value={orderNote} onChange={e=>setOrderNote(e.target.value)}
+                      placeholder="es. senza cipolla, doppia porzione..."
+                      style={{fontSize:".85rem"}}
+                    />
                   </div>
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     {ordersOpen
