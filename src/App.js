@@ -1,5 +1,16 @@
 /* eslint-disable */
 
+// ─── OneSignal Push Notifications ────────────────────────────────────────
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "0e9776b8-a16e-4ba5-a3b7-f761e81c4b51",
+    safari_web_id: "web.onesignal.auto.0e9776b8-a16e-4ba5-a3b7-f761e81c4b51",
+    notifyButton: { enable: false },
+    allowLocalhostAsSecureOrigin: true,
+  });
+});
+
 // ─── Service Worker (PWA) ─────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -577,6 +588,19 @@ export default function App() {
   const handleLogin = (u) => {
     setUser(u);
     try { localStorage.setItem("ds_logged_user", JSON.stringify(u)); } catch {}
+    // Registra l'utente su OneSignal con tag per targeting
+    try {
+      if (window.OneSignalDeferred) {
+        window.OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.login(u.id);
+          await OneSignal.User.addTags({
+            userId: u.id,
+            userName: u.name,
+            role: u.role,
+          });
+        });
+      }
+    } catch(e) { console.log("OneSignal tag error:", e); }
   };
 
   const handleLogout = () => {
