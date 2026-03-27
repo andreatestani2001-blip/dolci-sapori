@@ -480,6 +480,26 @@ async function sbReq(path, method="GET", body=null) {
   return txt ? JSON.parse(txt) : null;
 }
 
+// ─── OneSignal Push ───────────────────────────────────────────────────────
+async function sendPush(title, message) {
+  try {
+    await fetch("https://api.onesignal.com/notifications", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Key os_v2_app_b2lxnofbnzf2li5x65q6qhclkeeovhkhu5muzdvjabatxplrrdutpxlalclvghr6jnwv7yqoqsmflmyerfnh75g623hsajanq46cuwi",
+      },
+      body: JSON.stringify({
+        app_id: "0e9776b8-a16e-4ba5-a3b7-f761e81c4b51",
+        included_segments: ["All"],
+        headings: {"it": title, "en": title},
+        contents: {"it": message, "en": message},
+        url: "https://dolci-sapori.vercel.app",
+      }),
+    });
+  } catch(e) { console.error("Push error:", e); }
+}
+
 async function loadState() {
   try {
     const rows = await sbReq("/rest/v1/appstate?id=eq.main&select=data");
@@ -760,6 +780,7 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...current,[date]:true}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(true);
+    sendPush("🔓 Dolci Sapori", "Le ordinazioni sono aperte! Ordina subito.");
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
@@ -775,6 +796,7 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...currentOpen,[date]:false}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(false);
+    sendPush("🔒 Dolci Sapori", "Le ordinazioni sono chiuse. Grazie!");
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -1017,6 +1039,8 @@ function AdminNotifications({ appState, update }) {
     const record={id:Date.now().toString(),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
+    // Invia anche push reale via OneSignal
+    sendPush("🍽 Dolci Sapori", message.trim());
     showToast(`✓ Notifica inviata a ${record.to}`);
   };
 
