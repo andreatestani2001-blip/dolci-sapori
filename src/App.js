@@ -694,11 +694,18 @@ function AdminMenu({ date, appState, update }) {
 
   const openOrders = ()=>{
     const current = appState.ordersOpen || {};
-    const patch = {ordersOpen:{...current,[date]:true}};
+    const msg = "🔓 Le ordinazioni sono aperte! Ordina subito.";
+    const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
+    const newNotifs = {...appState.notifications};
+    const now = new Date().toISOString();
+    approved.forEach(u=>{
+      newNotifs[u.id] = [{id:Date.now()+u.id,text:msg,date:now,read:false}, ...(newNotifs[u.id]||[])];
+    });
+    const patch = {ordersOpen:{...current,[date]:true}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(true);
-    saveState({...appState, ...patch}); // salva SUBITO su Supabase
-    showToast("✓ Ordini riaperti!");
+    saveState({...appState, ...patch});
+    showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
     const currentOpen = appState.ordersOpen || {};
@@ -820,7 +827,9 @@ function AdminOrders({ date, appState, update }) {
     }
     const newOrders={...appState.orders};
     delete newOrders[`${date}:${order.userId}`];
-    update({orders:newOrders,credits:newCredits});
+    const patchAdmin={orders:newOrders,credits:newCredits};
+    update(patchAdmin);
+    saveState({...appState,...patchAdmin});
     showToast(`Ordine di ${order.userName} annullato`);
   };
 
@@ -923,14 +932,18 @@ function AdminNotifications({ appState, update }) {
     if(!message.trim()) return showToast("Scrivi un messaggio",true);
     const targets=target==="all"?clients:clients.filter(u=>u.id===target);
     if(!targets.length) return showToast("Nessun destinatario",true);
+    setMessage(""); // pulisci subito per evitare doppio invio
     const newNotifs={...appState.notifications};
+    const now = new Date().toISOString();
     for(const c of targets){
       const prev=newNotifs[c.id]||[];
-      newNotifs[c.id]=[{id:Date.now().toString()+c.id,message:message.trim(),ts:new Date().toISOString(),read:false},...prev].slice(0,50);
+      newNotifs[c.id]=[{id:Date.now().toString()+c.id,text:message.trim(),date:now,read:false},...prev].slice(0,50);
     }
-    const record={id:Date.now().toString(),message:message.trim(),to:target==="all"?"Tutti":targets[0].name,ts:new Date().toISOString()};
-    update({notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)});
-    setMessage(""); showToast(`✓ Notifica inviata a ${record.to}`);
+    const record={id:Date.now().toString(),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
+    const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
+    update(patch);
+    saveState({...appState,...patch});
+    showToast(`✓ Notifica inviata a ${record.to}`);
   };
 
   return(<>
@@ -1220,7 +1233,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const netTotal=Math.max(0,rawTotal-creditUsed);
     const newCredits={...appState.credits,[user.id]:r2(credit-creditUsed)};
     const order={userId:user.id,userName:user.name,date,items,rawTotal,creditUsed,total:netTotal,paid:false,createdAt:new Date().toISOString()};
-    update({orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits});
+    const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
+    update(patchOrder);
+    saveState({...appState,...patchOrder});
+    setQuantities({});
     setToast("✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
   };
 
@@ -1229,8 +1245,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
       ?{...appState.credits,[user.id]:r2(credit+(myOrder.creditUsed||0))}
       :appState.credits;
     const newOrders={...appState.orders}; delete newOrders[`${date}:${user.id}`];
-    update({orders:newOrders,credits:newCredits});
-    // NON resettiamo quantities qui - lo fa il bottone Annulla, Modifica le pre-popola
+    const patchCancel={orders:newOrders,credits:newCredits};
+    update(patchCancel);
+    saveState({...appState,...patchCancel});
   };
 
   const fullCancelOrder=()=>{
