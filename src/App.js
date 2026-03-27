@@ -466,7 +466,20 @@ async function loadState() {
   try {
     const rows = await sbReq("/rest/v1/appstate?id=eq.main&select=data");
     if (rows && rows.length > 0) {
-      return { ...DEFAULT_STATE, ...rows[0].data };
+      const state = { ...DEFAULT_STATE, ...rows[0].data };
+      // Pulisci notifiche più vecchie di 7 giorni
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      if (state.notifications) {
+        Object.keys(state.notifications).forEach(uid => {
+          state.notifications[uid] = (state.notifications[uid]||[])
+            .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
+        });
+      }
+      if (state.sentNotifs) {
+        state.sentNotifs = state.sentNotifs
+          .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
+      }
+      return state;
     }
   } catch(e) { console.error("loadState error", e); }
   return { ...DEFAULT_STATE };
