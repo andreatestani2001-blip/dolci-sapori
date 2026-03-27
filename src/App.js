@@ -441,6 +441,7 @@ const DEFAULT_STATE = {
   menus:         {},
   menuPub:       {},
   ordersOpen:    {}, // { "YYYY-MM-DD": true/false } — se false ordini chiusi
+  ordersOpen:    {},
   orders:        {},
   notifications: {},
   sentNotifs:    [],
@@ -493,6 +494,17 @@ async function saveState(s) {
 
 // ─── Utils ────────────────────────────────────────────────────────────────
 const today   = () => new Date().toISOString().slice(0,10);
+
+function isOrdersOpen(date, appState) {
+  if (appState?.ordersOpen && date in appState.ordersOpen) {
+    return appState.ordersOpen[date];
+  }
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  if (date !== todayStr) return false;
+  const mins = now.getHours()*60 + now.getMinutes();
+  return mins < (11*60+30);
+}
 
 // Controlla se gli ordini sono aperti per una data
 // Regola: aperti di default fino alle 11:30, poi chiusi (salvo override admin)
@@ -575,13 +587,42 @@ export default function App() {
     // Ricarica dal database ogni 5 secondi per sincronizzare tra dispositivi
     const poll = setInterval(() => {
       loadState().then(s => setAppState(prev => {
-        // Aggiorna solo se i dati sono cambiati
         if (JSON.stringify(prev) !== JSON.stringify(s)) return s;
         return prev;
       }));
     }, 5000);
     return () => clearInterval(poll);
   }, []);
+
+  // ── Auto-chiusura ordini alle 11:30 ────────────────────────────────────
+  useEffect(() => {
+    if (!appState) return;
+    const checkAutoClose = () => {
+      const now   = new Date();
+      const date  = now.toISOString().slice(0,10);
+      const mins  = now.getHours()*60 + now.getMinutes();
+      const wasOpen = !(appState.ordersOpen && date in appState.ordersOpen)
+                    ? mins < (11*60+30)
+                    : appState.ordersOpen[date];
+      // Se siamo esattamente alle 11:30 e erano ancora aperti → chiudi e notifica
+      if (wasOpen && mins >= (11*60+30) && !(appState.ordersOpen && appState.ordersOpen[date]===false)) {
+        const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
+        const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
+        const newNotifs = {...appState.notifications};
+        approved.forEach(u=>{
+          // Evita duplicati: non inviare se già inviata oggi
+          const already = (newNotifs[u.id]||[]).some(n=>n.text===msg && n.date?.slice(0,10)===date);
+          if (!already) {
+            newNotifs[u.id] = [{id:Date.now(),text:msg,date:new Date().toISOString(),read:false}, ...(newNotifs[u.id]||[])];
+          }
+        });
+        setAppState(prev => ({...prev, ordersOpen:{...prev.ordersOpen,[date]:false}, notifications:newNotifs}));
+      }
+    };
+    const timer = setInterval(checkAutoClose, 30000); // controlla ogni 30 secondi
+    checkAutoClose(); // controlla subito
+    return () => clearInterval(timer);
+  }, [appState]);
 
   useEffect(() => {
     if (!appState) return;
@@ -672,7 +713,8 @@ function AdminMenu({ date, appState, update }) {
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
 
   const items     = appState.menus[date] || [];
-  const published = appState.menuPub[date] || false;
+  const published  = appState.menuPub[date] || false;
+  const ordersOpen = isOrdersOpen(date, appState);
   const saveItems = list => update({menus:{...appState.menus,[date]:list}});
 
   const add = () => {
@@ -693,6 +735,23 @@ function AdminMenu({ date, appState, update }) {
 
   const publish   = ()=>{update({menuPub:{...appState.menuPub,[date]:true}});  showToast("✓ Menù pubblicato!");};
   const unpublish = ()=>{update({menuPub:{...appState.menuPub,[date]:false}}); showToast("Menù nascosto.");};
+
+  const openOrders = ()=>{
+    update({ordersOpen:{...appState.ordersOpen,[date]:true}});
+    showToast("✓ Ordini aperti!");
+  };
+  const closeOrders = ()=>{
+    update({ordersOpen:{...appState.ordersOpen,[date]:false}});
+    // Invia notifica a tutti i clienti
+    const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
+    const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
+    const newNotifs = {...appState.notifications};
+    approved.forEach(u=>{
+      newNotifs[u.id] = [{id:Date.now(),text:msg,date:new Date().toISOString(),read:false}, ...(newNotifs[u.id]||[])];
+    });
+    update({ordersOpen:{...appState.ordersOpen,[date]:false}, notifications:newNotifs});
+    showToast("🔒 Ordini chiusi, notifica inviata!");
+  };
 
   const customItems = items.filter(i=>i.custom);
   const normalItems = items.filter(i=>!i.custom);
@@ -749,11 +808,15 @@ function AdminMenu({ date, appState, update }) {
       </div>
       <div className="flex" style={{justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
         <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
-        <div className="flex" style={{gap:7}}>
+        <div className="flex" style={{gap:7,flexWrap:"wrap"}}>
           {published
             ?<button className="btn btn-ghost btn-sm" onClick={unpublish}>Nascondi</button>
             :<button className="btn btn-success" onClick={publish} disabled={items.length===0}>📢 Pubblica ai clienti</button>
           }
+          {published && (isOrdersOpen(date,appState)
+            ? <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
+            : <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
+          )}
         </div>
       </div>
       {toast.text&&<div className={`toast ${!toast.ok?"toast-err":""}`}>{toast.text}</div>}
@@ -1316,7 +1379,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 <span className={`paid-badge ${myOrder.paid?"pagato":"non-pagato"}`} style={{cursor:"default"}}>
                   {myOrder.paid?"✓ Pagato — Grazie!":"⏳ In attesa di pagamento"}
                 </span>
-                <button className="btn btn-ghost btn-sm" onClick={cancelOrder}>✏️ Modifica</button>
+                <div className="flex" style={{gap:6}}>
+                  {ordersOpen ? <>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>{
+                      const q={}; myOrder.items.forEach(i=>{q[i.id]=i.qty;}); setQuantities(q); cancelOrder();
+                    }}>✏️ Modifica</button>
+                    <button className="btn btn-danger btn-sm" onClick={()=>{
+                      if(!window.confirm("Annullare l'ordine?")) return; fullCancelOrder();
+                    }}>🗑 Annulla</button>
+                  </> : <span className="pending-badge">🔒 Ordini chiusi alle 11:30</span>}
+                </div>
               </div>
             </div>
           ):(
@@ -1381,7 +1453,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   </div>
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     {ordersOpen
+                      ? {ordersOpen
                       ? <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
+                      : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
+                    }
                       : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
                     }
                   </div>
