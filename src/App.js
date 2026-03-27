@@ -784,6 +784,27 @@ function AdminMenu({ date, appState, update }) {
                 <span className="muted" style={{fontSize:".82rem"}}>€</span>
                 <input style={{width:78,textAlign:"right",padding:"6px 7px"}} type="number" step="0.50" min="0" placeholder="— da inserire"
                   value={item.price??""} onChange={e=>updatePrice(item.id,e.target.value)}/>
+                <button className="btn btn-success btn-sm" onClick={()=>{
+                  // Salva prezzo nel menu
+                  saveItems(items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0}:i));
+                  // Aggiorna anche tutti gli ordini che contengono questo piatto
+                  const newOrders={...appState.orders};
+                  Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                    const ord=newOrders[k];
+                    const hasItem=ord.items.find(i=>i.id===item.id);
+                    if(hasItem){
+                      const price=parseFloat(item.price)||0;
+                      const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
+                      const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+                      const cr=appState.credits[ord.userId]||0;
+                      const cu=cr>0?Math.min(cr,raw):0;
+                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:Math.max(0,raw-cu)};
+                    }
+                  });
+                  update({orders:newOrders});
+                  saveState({...appState,orders:newOrders});
+                  showToast("✓ Prezzo applicato a tutti gli ordini!");
+                }}>✓</button>
                 <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}}
                   onClick={()=>saveItems(items.filter(i=>i.id!==item.id))}>✕</button>
               </div>
@@ -917,6 +938,7 @@ function AdminOrders({ date, appState, update }) {
                 <div className="order-row" key={item.id}>
                   <span style={{flex:1,fontSize:".85rem",fontWeight:item.custom?700:500}}>
                     {item.custom&&"⭐ "}{item.name}
+                    {item.note&&<div style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic",marginTop:2}}>📝 {item.note}</div>}
                   </span>
                   <span className="muted" style={{minWidth:24}}>×{item.qty}</span>
                   {item.price!=null
@@ -1141,7 +1163,10 @@ function AdminRiepilogo({ date, appState }) {
       ...lista.map(p=>`  ${p.qty}× ${p.name}${p.custom?" (su richiesta)":""}`),
       ``,
       `ORDINI (${totaleOrdini}):`,
-      ...orders.map(o=>`  ${o.userName}: ${eur(o.total)} ${o.paid?"✓":"⏳"}${o.note?` — nota: ${o.note}`:""}`),
+      ...orders.map(o=>[
+        `  ${o.userName}: ${eur(o.total)} ${o.paid?"✓":"⏳"}${o.note?` — nota generale: ${o.note}`:""}`,
+        ...o.items.filter(i=>i.note).map(i=>`     └ ${i.name}: ${i.note}`)
+      ].join("\n")),
       ``,
       `Totale incasso: ${eur(totaleIncasso)}`,
       `Già pagato: ${eur(totalePagato)}`,
@@ -1209,7 +1234,7 @@ function AdminRiepilogo({ date, appState }) {
                 </div>
                 {o.note&&<div style={{fontSize:".78rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>📝 {o.note}</div>}
                 <div style={{fontSize:".8rem",color:"var(--muted)",marginTop:3}}>
-                  {o.items.map(i=>`${i.qty}× ${i.name}`).join(", ")}
+                  {o.items.map(i=>`${i.qty}× ${i.name}${i.note?` (${i.note})`:""}`).join(", ")}
                 </div>
               </div>
             ))
@@ -1319,6 +1344,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [quantities, setQuantities] = useState({});
   const [customDish, setCustomDish] = useState("");
   const [orderNote,  setOrderNote]  = useState("");
+  const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const date=today();
@@ -1367,12 +1393,15 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const creditUsed=credit>0?Math.min(credit,rawTotal):0;
     const netTotal=Math.max(0,rawTotal-creditUsed);
     const newCredits={...appState.credits,[user.id]:r2(credit-creditUsed)};
-    const order={userId:user.id,userName:user.name,date,items,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
+    // Aggiungi note per piatto agli items
+    const itemsWithNotes = items.map(i=>({...i, note:(itemNotes[i.id]||"").trim()||undefined}));
+    const order={userId:user.id,userName:user.name,date,items:itemsWithNotes,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
     const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
     update(patchOrder);
     saveState({...appState,...patchOrder});
     setQuantities({});
     setOrderNote("");
+    setItemNotes({});
     setToast("✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
   };
 
@@ -1596,6 +1625,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
                         <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
                       </div>
                     </div>
+                    {(quantities[item.id]||0)>0&&(
+                      <input
+                        value={itemNotes[item.id]||""}
+                        onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
+                        placeholder="📝 Nota per questo piatto (es. senza cipolla)..."
+                        style={{fontSize:".8rem",marginTop:6,borderColor:"var(--border-lt)"}}
+                      />
+                    )}
                   ))}
 
                   {/* Custom dishes already requested */}
@@ -1614,6 +1651,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
                             <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
                           </div>
                         </div>
+                        {(quantities[item.id]||0)>0&&(
+                          <input
+                            value={itemNotes[item.id]||""}
+                            onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
+                            placeholder="📝 Nota per questo piatto..."
+                            style={{fontSize:".8rem",marginTop:6,borderColor:"var(--gold)"}}
+                          />
+                        )}
                       ))}
                     </>
                   )}
