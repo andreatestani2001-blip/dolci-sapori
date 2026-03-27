@@ -63,7 +63,13 @@ const STYLE = `
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .app { min-height: 100vh; display: flex; flex-direction: column; }
+  .app { min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+  .app-bg {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-size: cover; background-position: center center;
+    background-repeat: no-repeat; z-index: -1;
+    filter: brightness(0.4);
+  }
 
   /* ─── Header ──────────────────────────────── */
   .header {
