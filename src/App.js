@@ -696,6 +696,8 @@ function AdminMenu({ date, appState, update }) {
   const [newName,  setNewName]  = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [toast,    setToast]    = useState({text:"",ok:true});
+  // Stato locale per aggiornare UI subito senza aspettare il polling
+  const [localOrdersOpen, setLocalOrdersOpen] = useState(null);
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
 
   const items     = appState.menus[date] || [];
@@ -724,12 +726,18 @@ function AdminMenu({ date, appState, update }) {
 
   const openOrders = ()=>{
     const current = appState.ordersOpen || {};
+    const newState = {...appState, ordersOpen:{...current,[date]:true}};
     update({ordersOpen:{...current,[date]:true}});
+    setLocalOrdersOpen(true);
+    saveState(newState); // salva SUBITO senza debounce
     showToast("✓ Ordini riaperti!");
   };
   const closeOrders = ()=>{
     const currentOpen = appState.ordersOpen || {};
+    const newStateClose = {...appState, ordersOpen:{...currentOpen,[date]:false}};
     update({ordersOpen:{...currentOpen,[date]:false}});
+    setLocalOrdersOpen(false);
+    saveState(newStateClose); // salva SUBITO senza debounce
     // Invia notifica a tutti i clienti
     const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
     const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
@@ -801,11 +809,14 @@ function AdminMenu({ date, appState, update }) {
             ?<button className="btn btn-ghost btn-sm" onClick={unpublish}>Nascondi</button>
             :<button className="btn btn-success" onClick={publish} disabled={items.length===0}>📢 Pubblica ai clienti</button>
           }
-          {published && (
-            appState.ordersOpen?.[date] === false
-              ? <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>
-              : <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
-          )}
+          {published && (()=>{
+            const isOpen = localOrdersOpen !== null
+              ? localOrdersOpen
+              : isOrdersOpen(date, appState);
+            return isOpen
+              ? <button className="btn btn-danger btn-sm" onClick={closeOrders}>🔒 Chiudi ordini</button>
+              : <button className="btn btn-gold btn-sm" onClick={openOrders}>🔓 Riapri ordini</button>;
+          })()}
         </div>
       </div>
       {toast.text&&<div className={`toast ${!toast.ok?"toast-err":""}`}>{toast.text}</div>}
