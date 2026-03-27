@@ -607,7 +607,7 @@ export default function App() {
             newNotifs[u.id] = [{id:Date.now(),text:msg,date:new Date().toISOString(),read:false}, ...(newNotifs[u.id]||[])];
           }
         });
-        setAppState(prev => ({...prev, ordersOpen:{...prev.ordersOpen,[date]:false}, notifications:newNotifs}));
+        setAppState(prev => ({...prev, ordersOpen:{...(prev.ordersOpen||{}),[date]:false}, notifications:newNotifs}));
       }
     };
     const timer = setInterval(checkAutoClose, 30000); // controlla ogni 30 secondi
@@ -728,11 +728,13 @@ function AdminMenu({ date, appState, update }) {
   const unpublish = ()=>{update({menuPub:{...appState.menuPub,[date]:false}}); showToast("Menù nascosto.");};
 
   const openOrders = ()=>{
-    update({ordersOpen:{...appState.ordersOpen,[date]:true}});
-    showToast("✓ Ordini aperti!");
+    const current = appState.ordersOpen || {};
+    update({ordersOpen:{...current,[date]:true}});
+    showToast("✓ Ordini riaperti!");
   };
   const closeOrders = ()=>{
-    update({ordersOpen:{...appState.ordersOpen,[date]:false}});
+    const currentOpen = appState.ordersOpen || {};
+    update({ordersOpen:{...currentOpen,[date]:false}});
     // Invia notifica a tutti i clienti
     const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
     const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
