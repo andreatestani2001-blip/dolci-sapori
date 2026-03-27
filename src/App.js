@@ -575,7 +575,7 @@ export default function App() {
         if (JSON.stringify(prev) !== JSON.stringify(s)) return s;
         return prev;
       }));
-    }, 5000);
+    }, 2000);
     return () => clearInterval(poll);
   }, []);
 
@@ -725,26 +725,26 @@ function AdminMenu({ date, appState, update }) {
 
   const openOrders = ()=>{
     const current = appState.ordersOpen || {};
-    const newState = {...appState, ordersOpen:{...current,[date]:true}};
-    update({ordersOpen:{...current,[date]:true}});
+    const patch = {ordersOpen:{...current,[date]:true}};
+    update(patch);
     setLocalOrdersOpen(true);
-    saveState(newState); // salva SUBITO senza debounce
+    saveState({...appState, ...patch}); // salva SUBITO su Supabase
     showToast("✓ Ordini riaperti!");
   };
   const closeOrders = ()=>{
     const currentOpen = appState.ordersOpen || {};
-    const newStateClose = {...appState, ordersOpen:{...currentOpen,[date]:false}};
-    update({ordersOpen:{...currentOpen,[date]:false}});
-    setLocalOrdersOpen(false);
-    saveState(newStateClose); // salva SUBITO senza debounce
-    // Invia notifica a tutti i clienti
+    // Notifiche a tutti i clienti
     const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
     const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
     const newNotifs = {...appState.notifications};
     approved.forEach(u=>{
       newNotifs[u.id] = [{id:Date.now(),text:msg,date:new Date().toISOString(),read:false}, ...(newNotifs[u.id]||[])];
     });
-    update({ordersOpen:{...appState.ordersOpen,[date]:false}, notifications:newNotifs});
+    // Una sola chiamata update con tutto
+    const patch = {ordersOpen:{...currentOpen,[date]:false}, notifications:newNotifs};
+    update(patch);
+    setLocalOrdersOpen(false);
+    saveState({...appState, ...patch}); // salva SUBITO su Supabase
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -985,7 +985,7 @@ function AdminNotifications({ appState, update }) {
         <div key={n.id} style={{borderBottom:"1px solid var(--border)",padding:"8px 0"}}>
           <div className="flex" style={{justifyContent:"space-between",marginBottom:3}}>
             <span style={{fontWeight:700,fontSize:".86rem"}}>→ {n.to}</span>
-            <span className="muted" style={{fontSize:".73rem"}}>{new Date(n.ts).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span>
+            <span className="muted" style={{fontSize:".73rem"}}>{n.date ? new Date(n.date).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : ""}</span>
           </div>
           <div style={{fontSize:".85rem"}}>{n.message}</div>
         </div>
@@ -1207,7 +1207,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const date=today();
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
-  useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),3000); return()=>clearInterval(t); },[]);
+  useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),2000); return()=>clearInterval(t); },[]);
 
   // Mostra banner iOS solo se: è iOS, non è già installata, non è stata chiusa
   useEffect(() => {
@@ -1330,7 +1330,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 <div className={`notif-dot ${n.read?"read":""}`}/>
                 <div style={{flex:1}}>
                   <div style={{fontSize:".88rem",fontWeight:n.read?400:700}}>{n.message}</div>
-                  <div className="muted mt4">{new Date(n.ts).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
+                  <div className="muted mt4">{n.date ? new Date(n.date).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : ""}</div>
                 </div>
               </div>
             ))}
