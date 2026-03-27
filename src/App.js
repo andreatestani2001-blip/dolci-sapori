@@ -464,7 +464,20 @@ async function loadState() {
 
 async function saveState(s) {
   try {
-    await sbReq("/rest/v1/appstate", "POST", { id:"main", data:s, updated_at: new Date().toISOString() });
+    const res = await fetch(SB_URL + "/rest/v1/appstate", {
+      method: "POST",
+      headers: {
+        "apikey":        SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type":  "application/json",
+        "Prefer":        "resolution=merge-duplicates",
+      },
+      body: JSON.stringify({ id:"main", data:s, updated_at: new Date().toISOString() }),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      console.error("saveState failed:", t);
+    }
   } catch(e) { console.error("saveState error", e); }
 }
 
@@ -504,7 +517,18 @@ export default function App() {
   const [user,     setUser]     = useState(null);
   const saveTimer               = useRef(null);
 
-  useEffect(() => { loadState().then(s => setAppState(s)); }, []);
+  useEffect(() => {
+    loadState().then(s => setAppState(s));
+    // Ricarica dal database ogni 5 secondi per sincronizzare tra dispositivi
+    const poll = setInterval(() => {
+      loadState().then(s => setAppState(prev => {
+        // Aggiorna solo se i dati sono cambiati
+        if (JSON.stringify(prev) !== JSON.stringify(s)) return s;
+        return prev;
+      }));
+    }, 5000);
+    return () => clearInterval(poll);
+  }, []);
 
   useEffect(() => {
     if (!appState) return;
