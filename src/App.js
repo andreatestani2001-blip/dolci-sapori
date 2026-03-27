@@ -588,23 +588,29 @@ export default function App() {
     loadState().then(s => setAppState(s));
     // Ricarica dal database ogni 5 secondi per sincronizzare tra dispositivi
     const poll = setInterval(() => {
+      if (isSaving.current) return; // non sovrascrivere durante salvataggio
       loadState().then(s => setAppState(prev => {
+        if (isSaving.current) return prev; // check di nuovo
         if (JSON.stringify(prev) !== JSON.stringify(s)) return s;
         return prev;
       }));
-    }, 2000);
+    }, 3000);
     return () => clearInterval(poll);
   }, []);
 
 
 
-  useEffect(() => {
-    if (!appState) return;
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveState(appState), 600);
-  }, [appState]);
+  const isSaving = useRef(false);
 
-  const update = useCallback(patch => setAppState(prev => ({...prev,...patch})), []);
+  const update = useCallback(patch => {
+    setAppState(prev => {
+      const next = {...prev,...patch};
+      // Salva subito su Supabase senza debounce
+      isSaving.current = true;
+      saveState(next).finally(() => { isSaving.current = false; });
+      return next;
+    });
+  }, []);
 
   if (!appState) return (
     <><style>{STYLE}</style>
@@ -725,7 +731,6 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...current,[date]:true}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(true);
-    saveState({...appState, ...patch});
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
@@ -741,7 +746,6 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...currentOpen,[date]:false}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(false);
-    saveState({...appState, ...patch}); // salva SUBITO su Supabase
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -802,7 +806,6 @@ function AdminMenu({ date, appState, update }) {
                     }
                   });
                   update({orders:newOrders});
-                  saveState({...appState,orders:newOrders});
                   showToast("✓ Prezzo applicato a tutti gli ordini!");
                 }}>✓</button>
                 <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}}
@@ -871,7 +874,6 @@ function AdminOrders({ date, appState, update }) {
     delete newOrders[`${date}:${order.userId}`];
     const patchAdmin={orders:newOrders,credits:newCredits};
     update(patchAdmin);
-    saveState({...appState,...patchAdmin});
     showToast(`Ordine di ${order.userName} annullato`);
   };
 
@@ -986,7 +988,6 @@ function AdminNotifications({ appState, update }) {
     const record={id:Date.now().toString(),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
-    saveState({...appState,...patch});
     showToast(`✓ Notifica inviata a ${record.to}`);
   };
 
@@ -1409,7 +1410,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const order={userId:user.id,userName:user.name,date,items:itemsWithNotes,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
     const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
     update(patchOrder);
-    saveState({...appState,...patchOrder});
     setQuantities({});
     setOrderNote("");
     setItemNotes({});
@@ -1423,7 +1423,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const newOrders={...appState.orders}; delete newOrders[`${date}:${user.id}`];
     const patchCancel={orders:newOrders,credits:newCredits};
     update(patchCancel);
-    saveState({...appState,...patchCancel});
   };
 
   const fullCancelOrder=()=>{
