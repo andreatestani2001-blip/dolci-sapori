@@ -1313,6 +1313,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
           <div className="header-logo"><LogoIcon size={42}/>{!BRAND.logoUrl && BRAND.name}</div>
           <div className="header-actions">
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
+            <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋 Storico</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
             </button>
@@ -1343,6 +1344,63 @@ function ClientPanel({ user, appState, update, onLogout }) {
             ))}
           </div>
         )}
+
+        {tab==="storico"&&(()=>{
+          // Calcola i giorni lun-sab della settimana corrente
+          const now = new Date();
+          const dayOfWeek = now.getDay(); // 0=dom, 1=lun...6=sab
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - (dayOfWeek===0 ? 6 : dayOfWeek-1));
+          const days = [];
+          for(let i=0;i<6;i++){
+            const d = new Date(monday);
+            d.setDate(monday.getDate()+i);
+            days.push(d.toISOString().slice(0,10));
+          }
+          const giorni = ["Lun","Mar","Mer","Gio","Ven","Sab"];
+          return(
+            <div className="card">
+              <div className="card-title">📋 I miei ordini questa settimana</div>
+              {days.map((d,i)=>{
+                const ord = appState.orders[`${d}:${user.id}`];
+                const isToday = d===today();
+                return(
+                  <div key={d} style={{
+                    borderBottom:"1px solid var(--border-lt)", padding:"10px 0",
+                    opacity: new Date(d) > now ? 0.4 : 1
+                  }}>
+                    <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontWeight:700,color:isToday?"var(--accent)":"var(--text)"}}>
+                        {isToday?"📍 ":""}{giorni[i]} {new Date(d+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
+                      </span>
+                      {ord
+                        ? <span className={`paid-badge ${ord.paid?"pagato":"non-pagato"}`} style={{cursor:"default",fontSize:".68rem"}}>
+                            {ord.paid?"✓ Pagato":"⏳ Da pagare"}
+                          </span>
+                        : <span className="muted" style={{fontSize:".78rem"}}>—</span>
+                      }
+                    </div>
+                    {ord
+                      ? <>
+                          {ord.items.map(it=>(
+                            <div key={it.id} className="flex" style={{fontSize:".83rem",justifyContent:"space-between",padding:"2px 0"}}>
+                              <span>{it.qty}× {it.name}{it.custom?" 🌟":""}</span>
+                              <span style={{color:"var(--muted)"}}>{it.price!=null?eur(it.price*it.qty):"prezzo da definire"}</span>
+                            </div>
+                          ))}
+                          <div className="flex" style={{justifyContent:"space-between",marginTop:5,fontWeight:700}}>
+                            <span>Totale</span>
+                            <span style={{color:"var(--accent)"}}>{eur(ord.total)}</span>
+                          </div>
+                        </>
+                      : <div className="muted" style={{fontSize:".8rem"}}>Nessun ordine</div>
+                    }
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {tab==="order"&&(<>
           {/* Saldo / Credito banners */}
