@@ -1079,7 +1079,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [quantities, setQuantities] = useState({});
   const [customDish, setCustomDish] = useState("");
   const [toast,      setToast]      = useState("");
+  const [showIosBanner, setShowIosBanner] = useState(false);
   const date=today();
+
+  // Mostra banner iOS solo se: è iOS, non è già installata, non è stata chiusa
+  useEffect(() => {
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInstalled = window.navigator.standalone === true;
+    const dismissed = localStorage.getItem("ios_banner_dismissed");
+    if (isIos && !isInstalled && !dismissed) setShowIosBanner(true);
+  }, []);
 
   const menu      = appState.menus[date]||[];
   const published = appState.menuPub[date]||false;
@@ -1141,6 +1150,22 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   return(
     <div className="app">
+      {showIosBanner && (
+        <div style={{
+          background:"linear-gradient(135deg,#1a1a2e,#16213e)",
+          color:"#fff", padding:"12px 16px",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          gap:"10px", fontSize:".82rem", lineHeight:"1.4",
+          borderBottom:"2px solid rgba(200,148,42,.4)"
+        }}>
+          <span>📱 <b>Aggiungi alla schermata Home!</b><br/>
+            Tocca <b>Condividi</b> (↑) → <b>"Aggiungi a schermata Home"</b>
+          </span>
+          <button onClick={()=>{ localStorage.setItem("ios_banner_dismissed","1"); setShowIosBanner(false); }}
+            style={{background:"rgba(255,255,255,.15)",border:"none",color:"#fff",borderRadius:"50%",
+              width:"26px",height:"26px",cursor:"pointer",fontSize:"1rem",flexShrink:0}}>✕</button>
+        </div>
+      )}
       <div className="header">
         <div className="header-top">
           <div className="header-logo"><LogoIcon size={42}/>{!BRAND.logoUrl && BRAND.name}</div>
