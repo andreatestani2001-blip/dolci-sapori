@@ -496,20 +496,15 @@ async function saveState(s) {
 const today   = () => new Date().toISOString().slice(0,10);
 
 function isOrdersOpen(date, appState) {
-  // Se l'admin ha impostato un override esplicito, usa quello
-  if (appState?.ordersOpen && date in appState.ordersOpen) {
-    return Boolean(appState.ordersOpen[date]);
-  }
-  // Altrimenti: logica automatica — aperto se oggi e ora < 11:30
+  const oo = appState?.ordersOpen || {};
+  // Admin ha impostato esplicitamente true o false → usa quello
+  if (date in oo) return oo[date] === true;
+  // Nessun override → aperto automaticamente se ora < 11:30 e data = oggi
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
-  if (date !== todayStr) return false;
-  const mins = now.getHours()*60 + now.getMinutes();
-  return mins < (11*60+30);
+  if (date !== now.toISOString().slice(0,10)) return false;
+  return now.getHours() * 60 + now.getMinutes() < 11 * 60 + 30;
 }
 
-// Controlla se gli ordini sono aperti per una data
-// Regola: aperti di default fino alle 11:30, poi chiusi (salvo override admin)
 
 const prevDay = d  => { const dt = new Date(d+"T12:00:00"); dt.setDate(dt.getDate()-1); return dt.toISOString().slice(0,10); };
 const fmt     = d  => new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
