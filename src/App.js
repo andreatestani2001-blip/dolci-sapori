@@ -422,7 +422,9 @@ const STYLE = `
 `;
 
 // ─── State & persistence ──────────────────────────────────────────────────
-const STORAGE_KEY = "ds_appstate_v6";
+// ─── Supabase ─────────────────────────────────────────────────────────────
+const SB_URL = "https://mvwsrnitinrkbxuymykh.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12d3Nybml0aW5ya2J4dXlteWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTkzOTksImV4cCI6MjA5MDE3NTM5OX0.lQYm72vg4gc8bfbQzMyrA_9SP324qpD0yF6xaxVA-ws";
 
 const DEFAULT_STATE = {
   users:         [{ id:"andy01", name:"Andrea Testani", role:"admin", password:"Andyssl01.", approved:true }],
@@ -434,15 +436,36 @@ const DEFAULT_STATE = {
   sentNotifs:    [],
 };
 
+async function sbReq(path, method="GET", body=null) {
+  const opts = {
+    method,
+    headers: {
+      "apikey":        SB_KEY,
+      "Authorization": "Bearer " + SB_KEY,
+      "Content-Type":  "application/json",
+      "Prefer":        "return=representation,resolution=merge-duplicates",
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SB_URL + path, opts);
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
 async function loadState() {
   try {
-    const r = await window.storage.get(STORAGE_KEY, true);
-    if (r?.value) return { ...DEFAULT_STATE, ...JSON.parse(r.value) };
-  } catch {}
+    const rows = await sbReq("/rest/v1/appstate?id=eq.main&select=data");
+    if (rows && rows.length > 0) {
+      return { ...DEFAULT_STATE, ...rows[0].data };
+    }
+  } catch(e) { console.error("loadState error", e); }
   return { ...DEFAULT_STATE };
 }
+
 async function saveState(s) {
-  try { await window.storage.set(STORAGE_KEY, JSON.stringify(s), true); } catch {}
+  try {
+    await sbReq("/rest/v1/appstate", "POST", { id:"main", data:s, updated_at: new Date().toISOString() });
+  } catch(e) { console.error("saveState error", e); }
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────
