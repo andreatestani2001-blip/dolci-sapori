@@ -496,12 +496,9 @@ const today   = () => new Date().toISOString().slice(0,10);
 
 function isOrdersOpen(date, appState) {
   const oo = appState?.ordersOpen || {};
-  // Admin ha impostato esplicitamente true o false → usa quello
-  if (date in oo) return oo[date] === true;
-  // Nessun override → aperto automaticamente se ora < 11:30 e data = oggi
-  const now = new Date();
-  if (date !== now.toISOString().slice(0,10)) return false;
-  return now.getHours() * 60 + now.getMinutes() < 11 * 60 + 30;
+  // Aperto SOLO se l'admin ha esplicitamente impostato true
+  // Di default (nessun override) = chiuso
+  return oo[date] === true;
 }
 
 
@@ -579,35 +576,7 @@ export default function App() {
     return () => clearInterval(poll);
   }, []);
 
-  // ── Auto-chiusura ordini alle 11:30 ────────────────────────────────────
-  useEffect(() => {
-    if (!appState) return;
-    const checkAutoClose = () => {
-      const now   = new Date();
-      const date  = now.toISOString().slice(0,10);
-      const mins  = now.getHours()*60 + now.getMinutes();
-      const wasOpen = !(appState.ordersOpen && date in appState.ordersOpen)
-                    ? mins < (11*60+30)
-                    : appState.ordersOpen[date];
-      // Se siamo esattamente alle 11:30 e erano ancora aperti → chiudi e notifica
-      if (wasOpen && mins >= (11*60+30) && !(appState.ordersOpen && appState.ordersOpen[date]===false)) {
-        const msg = "🔒 Le ordinazioni sono chiuse. Grazie!";
-        const approved = appState.users.filter(u=>u.role!=="admin"&&u.approved);
-        const newNotifs = {...appState.notifications};
-        approved.forEach(u=>{
-          // Evita duplicati: non inviare se già inviata oggi
-          const already = (newNotifs[u.id]||[]).some(n=>n.text===msg && n.date?.slice(0,10)===date);
-          if (!already) {
-            newNotifs[u.id] = [{id:Date.now(),text:msg,date:new Date().toISOString(),read:false}, ...(newNotifs[u.id]||[])];
-          }
-        });
-        setAppState(prev => ({...prev, ordersOpen:{...(prev.ordersOpen||{}),[date]:false}, notifications:newNotifs}));
-      }
-    };
-    const timer = setInterval(checkAutoClose, 30000); // controlla ogni 30 secondi
-    checkAutoClose(); // controlla subito
-    return () => clearInterval(timer);
-  }, [appState]);
+
 
   useEffect(() => {
     if (!appState) return;
@@ -987,7 +956,7 @@ function AdminNotifications({ appState, update }) {
             <span style={{fontWeight:700,fontSize:".86rem"}}>→ {n.to}</span>
             <span className="muted" style={{fontSize:".73rem"}}>{n.date ? new Date(n.date).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : ""}</span>
           </div>
-          <div style={{fontSize:".85rem"}}>{n.message}</div>
+          <div style={{fontSize:".85rem"}}>{n.text||n.message||""}</div>
         </div>
       ))}
     </div>
@@ -1329,7 +1298,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
               <div key={n.id} className="notif-item">
                 <div className={`notif-dot ${n.read?"read":""}`}/>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:".88rem",fontWeight:n.read?400:700}}>{n.message}</div>
+                  <div style={{fontSize:".88rem",fontWeight:n.read?400:700}}>{n.text||n.message||""}</div>
                   <div className="muted mt4">{n.date ? new Date(n.date).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : ""}</div>
                 </div>
               </div>
