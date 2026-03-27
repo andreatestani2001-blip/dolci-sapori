@@ -488,11 +488,14 @@ async function sbReq(path, method="GET", body=null) {
 // ─── OneSignal Push (via Vercel proxy) ───────────────────────────────────
 async function sendPush(title, message) {
   try {
-    await fetch("/api/send-push", {
+    console.log("Invio push:", title, message);
+    const res = await fetch("https://dolci-sapori.vercel.app/api/send-push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, message }),
     });
+    const data = await res.json();
+    console.log("Push response:", data);
   } catch(e) { console.error("Push error:", e); }
 }
 
