@@ -604,8 +604,9 @@ export default function App() {
 
   const update = useCallback(patch => {
     setAppState(prev => {
-      const next = {...prev,...patch};
-      // Salva subito su Supabase senza debounce
+      const next = typeof patch === 'function'
+        ? {...prev,...patch(prev)}
+        : {...prev,...patch};
       isSaving.current = true;
       saveState(next).finally(() => { isSaving.current = false; });
       return next;
@@ -701,9 +702,13 @@ function AdminMenu({ date, appState, update }) {
   const saveItems = list => update({menus:{...appState.menus,[date]:list}});
 
   const add = () => {
-    if (!newName.trim()) return;
-    saveItems([...items,{id:Date.now().toString(),name:newName.trim(),price:newPrice!==""?parseFloat(newPrice):null,custom:false}]);
+    const name = newName.trim();
+    const price = newPrice !== "" ? parseFloat(newPrice) : null;
+    if (!name) return;
     setNewName(""); setNewPrice("");
+    const newItem = {id:Date.now().toString(),name,price,custom:false};
+    // Usa forma funzionale per leggere lo stato più recente
+    update(prev => ({menus:{...prev.menus,[date]:[...(prev.menus[date]||[]),newItem]}}));
   };
   const updatePrice = (id,val) => saveItems(items.map(i=>i.id===id?{...i,price:val===""?null:parseFloat(val)}:i));
 
