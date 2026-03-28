@@ -870,14 +870,17 @@ function AdminMenu({ date, appState, update }) {
                       const price=parseFloat(item.price)||0;
                       const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
                       const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-                      const crAvail=(appState.credits[ord.userId]||0)+(ord.creditUsed||0);
-                      const cu=crAvail>0?Math.min(crAvail,raw):0;
-                      const diff=cu-(ord.creditUsed||0);
-                      if(diff!==0) newCredits[ord.userId]=r2((newCredits[ord.userId]||0)-diff);
-                      const nuovoTot=Math.max(0,raw-cu);
-                      const tuttiPrezzati=updItems.every(i=>i.price!=null&&i.price>0);
-                      const autoPagato = nuovoTot===0 && cu>0 && tuttiPrezzati;
-                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:autoPagato||ord.paid};
+                      // Ripristina il credito originale dell'utente prima di ricalcolare
+                      const crOriginale = r2((newCredits[ord.userId]||0)+(ord.creditUsed||0));
+                      const cu = crOriginale>0 ? Math.min(crOriginale,raw) : 0;
+                      newCredits[ord.userId] = r2(crOriginale - cu);
+                      const nuovoTot = Math.max(0,raw-cu);
+                      // Tutti i piatti hanno prezzo? Allora possiamo decidere stato pagato
+                      const tuttiPrezzati = updItems.every(i=>i.price!=null);
+                      const autoPagato = tuttiPrezzati && nuovoTot===0 && cu>0;
+                      // Se ordine era pagato ma ora ha un debito, rimetti non pagato
+                      const statoPagato = tuttiPrezzati ? (autoPagato || (ord.paid && nuovoTot===0)) : false;
+                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:statoPagato};
                     }
                   });
                   update({orders:newOrders,credits:newCredits});
