@@ -458,6 +458,14 @@ const STYLE = `
 const SB_URL = "https://mvwsrnitinrkbxuymykh.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12d3Nybml0aW5ya2J4dXlteWtoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU5OTM5OSwiZXhwIjoyMDkwMTc1Mzk5fQ.x6m_Vd2tnvEe2WTf3HpNc8jh8DQ8RznnBXAwTNm9fwM";
 
+const CATEGORIE = [
+  { id:"primi",             label:"🍝 Primi" },
+  { id:"secondi",           label:"🍖 Secondi" },
+  { id:"contorni",          label:"🥦 Contorni" },
+  { id:"insalate_classiche",label:"🥗 Insalate Classiche" },
+  { id:"insalate_speciali", label:"🥗 Insalate Speciali" },
+];
+
 const DEFAULT_STATE = {
   users:         [{ id:"andy01", name:"Andrea Testani", role:"admin", password:"Andyssl01.", approved:true }],
   credits:       {},
@@ -732,9 +740,10 @@ function AuthScreen({ appState, update, onLogin }) {
 // ADMIN – MENU
 // ════════════════════════════════════════════════════════════════════════════
 function AdminMenu({ date, appState, update }) {
-  const [newName,  setNewName]  = useState("");
-  const [newPrice, setNewPrice] = useState("");
-  const [toast,    setToast]    = useState({text:"",ok:true});
+  const [newName,     setNewName]     = useState("");
+  const [newPrice,    setNewPrice]    = useState("");
+  const [newCategoria,setNewCategoria]= useState("primi");
+  const [toast,       setToast]       = useState({text:"",ok:true});
   // Stato locale per aggiornare UI subito senza aspettare il polling
   const [localOrdersOpen, setLocalOrdersOpen] = useState(null);
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
@@ -749,8 +758,7 @@ function AdminMenu({ date, appState, update }) {
     const price = newPrice !== "" ? parseFloat(newPrice) : null;
     if (!name) return;
     setNewName(""); setNewPrice("");
-    const newItem = {id:Date.now().toString(),name,price,custom:false};
-    // Usa forma funzionale per leggere lo stato più recente
+    const newItem = {id:Date.now().toString(),name,price,custom:false,categoria:newCategoria};
     update(prev => ({menus:{...prev.menus,[date]:[...(prev.menus[date]||[]),newItem]}}));
   };
   const updatePrice = (id,val) => saveItems(items.map(i=>i.id===id?{...i,price:val===""?null:parseFloat(val)}:i));
@@ -809,9 +817,17 @@ function AdminMenu({ date, appState, update }) {
         {published&&<span style={{fontSize:".68rem",background:"#e8f5ee",color:"var(--green)",border:"1px solid #99ccb0",borderRadius:20,padding:"2px 9px",fontWeight:700}}>● Pubblicato</span>}
       </div>
 
-      {/* Normal items */}
+      {/* Piatti per categoria */}
       {normalItems.length===0&&customItems.length===0&&<div className="empty">Nessuna voce. Aggiungi o duplica da ieri.</div>}
-      {normalItems.map(item=>(
+      {CATEGORIE.map(cat=>{
+        const catItems = normalItems.filter(i=>i.categoria===cat.id || (!i.categoria && cat.id==="primi"));
+        if(catItems.length===0) return null;
+        return(<div key={cat.id} style={{marginBottom:8}}>
+          <div style={{fontSize:".75rem",fontWeight:700,color:"var(--accent)",margin:"10px 0 5px",
+            textTransform:"uppercase",letterSpacing:".04em",borderBottom:"1px solid var(--border-lt)",paddingBottom:4}}>
+            {cat.label}
+          </div>
+          {catItems.map(item=>(
         <div className="menu-item" key={item.id}>
           <span style={{fontWeight:700}}>{item.name}</span>
           <div className="flex">
@@ -823,6 +839,9 @@ function AdminMenu({ date, appState, update }) {
           </div>
         </div>
       ))}
+        </div>
+        );
+      })}
 
       {/* Custom requests */}
       {customItems.length>0&&(
@@ -867,10 +886,20 @@ function AdminMenu({ date, appState, update }) {
       )}
 
       <hr className="divider"/>
-      <div className="flex" style={{marginBottom:10}}>
-        <input placeholder="Nome piatto" value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} style={{flex:2}}/>
-        <input placeholder="€ Prezzo" type="number" step="0.50" min="0" value={newPrice} onChange={e=>setNewPrice(e.target.value)} style={{flex:"0 0 94px"}}/>
-        <button className="btn btn-primary btn-sm" onClick={add}>+ Aggiungi</button>
+      <div style={{marginBottom:10,display:"flex",flexDirection:"column",gap:7}}>
+        <div className="flex" style={{gap:7}}>
+          <select value={newCategoria} onChange={e=>setNewCategoria(e.target.value)}
+            style={{flex:"0 0 180px",padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--surface)"}}>
+            {CATEGORIE.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+          <input placeholder="Nome piatto" value={newName} onChange={e=>setNewName(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&add()} style={{flex:1}}/>
+        </div>
+        <div className="flex" style={{gap:7}}>
+          <input placeholder="€ Prezzo (opzionale)" type="number" step="0.50" min="0"
+            value={newPrice} onChange={e=>setNewPrice(e.target.value)} style={{flex:1}}/>
+          <button className="btn btn-primary btn-sm" onClick={add}>+ Aggiungi</button>
+        </div>
       </div>
       <div className="flex" style={{justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
         <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
@@ -898,8 +927,12 @@ function AdminMenu({ date, appState, update }) {
 // ADMIN – ORDINI
 // ════════════════════════════════════════════════════════════════════════════
 function AdminOrders({ date, appState, update }) {
-  const [editing,setEditing] = useState({});
-  const [toast,  setToast]   = useState({text:"",err:false});
+  const [editing,    setEditing]    = useState({});
+  const [toast,      setToast]      = useState({text:"",err:false});
+  const [showAddOrder,setShowAddOrder] = useState(false);
+  const [addOrderUser,setAddOrderUser] = useState("");
+  const [addOrderItems,setAddOrderItems] = useState({}); // {itemId: qty}
+  const [addOrderNote,setAddOrderNote] = useState("");
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const orders = Object.entries(appState.orders)
@@ -925,6 +958,30 @@ function AdminOrders({ date, appState, update }) {
     const patchAdmin={orders:newOrders,credits:newCredits};
     update(patchAdmin);
     showToast(`Ordine di ${order.userName} annullato`);
+  };
+
+  const addManualOrder=()=>{
+    if(!addOrderUser) return showToast("Seleziona un cliente",true);
+    const menu = appState.menus[date]||[];
+    const items = menu.filter(i=>!i.custom&&(addOrderItems[i.id]||0)>0)
+      .map(i=>({...i,qty:addOrderItems[i.id]}));
+    if(!items.length) return showToast("Aggiungi almeno un piatto",true);
+    const user = appState.users.find(u=>u.id===addOrderUser);
+    const rawTotal = items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+    const cr = appState.credits[addOrderUser]||0;
+    const creditUsed = cr>0?Math.min(cr,rawTotal):0;
+    const netTotal = Math.max(0,rawTotal-creditUsed);
+    const newCredits = {...appState.credits,[addOrderUser]:r2(cr-creditUsed)};
+    const order = {
+      userId:addOrderUser, userName:user.name, date,
+      items, rawTotal, creditUsed, total:netTotal,
+      paid:false, note:addOrderNote.trim(),
+      createdAt:new Date().toISOString(), manualAdmin:true
+    };
+    update({orders:{...appState.orders,[`${date}:${addOrderUser}`]:order},credits:newCredits});
+    setShowAddOrder(false);
+    setAddOrderItems({}); setAddOrderNote(""); setAddOrderUser("");
+    showToast(`✓ Ordine aggiunto per ${user.name}`);
   };
 
   const applyItemPrice=(order,itemId)=>{
@@ -964,6 +1021,56 @@ function AdminOrders({ date, appState, update }) {
     </div>
     <div className="card">
       <div className="card-title">🧾 Ordini — {fmt(date)} <span className="badge" style={{background:"var(--accent)"}}>{orders.length}</span></div>
+      {/* Bottone aggiungi ordine manuale */}
+      <div style={{marginBottom:12}}>
+        <button className="btn btn-gold btn-sm" onClick={()=>setShowAddOrder(!showAddOrder)}>
+          {showAddOrder?"✕ Annulla":"+ Aggiungi ordine manuale"}
+        </button>
+      </div>
+
+      {showAddOrder&&(()=>{
+        const menu = (appState.menus[date]||[]).filter(i=>!i.custom);
+        const clients = appState.users.filter(u=>u.role!=="admin"&&u.approved);
+        return(
+          <div className="card" style={{marginBottom:14,background:"var(--gold-lt)",border:"1px solid #f5d78e"}}>
+            <div className="card-title">📝 Nuovo ordine manuale</div>
+            <div className="field" style={{marginBottom:8}}>
+              <label>Cliente</label>
+              <select value={addOrderUser} onChange={e=>setAddOrderUser(e.target.value)}
+                style={{padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--surface)",width:"100%"}}>
+                <option value="">— Seleziona cliente —</option>
+                {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div style={{marginBottom:8}}>
+              <label style={{fontSize:".78rem",fontWeight:700,color:"var(--muted)",display:"block",marginBottom:4}}>Piatti</label>
+              {CATEGORIE.map(cat=>{
+                const catItems = menu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
+                if(!catItems.length) return null;
+                return(<div key={cat.id} style={{marginBottom:6}}>
+                  <div style={{fontSize:".72rem",fontWeight:700,color:"var(--accent)",marginBottom:3}}>{cat.label}</div>
+                  {catItems.map(item=>(
+                    <div key={item.id} className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontSize:".85rem"}}>{item.name} {item.price!=null?`(${eur(item.price)})`:"(TBD)"}</span>
+                      <div className="qty-ctrl" style={{gap:6}}>
+                        <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:Math.max(0,(p[item.id]||0)-1)}))}>−</button>
+                        <span className="qty-num" style={{minWidth:20,textAlign:"center"}}>{addOrderItems[item.id]||0}</span>
+                        <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:(p[item.id]||0)+1}))}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>);
+              })}
+            </div>
+            <div className="field" style={{marginBottom:10}}>
+              <label>Note (opzionale)</label>
+              <input value={addOrderNote} onChange={e=>setAddOrderNote(e.target.value)} placeholder="Note ordine..."/>
+            </div>
+            <button className="btn btn-primary" onClick={addManualOrder}>✓ Conferma ordine</button>
+          </div>
+        );
+      })()}
+
       {orders.length===0&&<div className="empty">Nessun ordine per questa data.</div>}
       {orders.map(order=>{
         const cr=appState.credits[order.userId]||0;
@@ -1197,9 +1304,8 @@ function AdminRiepilogo({ date, appState }) {
   orders.forEach(ord=>{
     ord.items.forEach(item=>{
       const key = item.name;
-      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false, notes:[]};
+      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false, notes:[], categoria:item.categoria||"primi"};
       piatti[key].qty += item.qty;
-      // Aggrega note uniche per piatto
       if(item.note && !piatti[key].notes.includes(item.note)){
         piatti[key].notes.push(item.note);
       }
@@ -1260,24 +1366,35 @@ function AdminRiepilogo({ date, appState }) {
         </div>
         {lista.length===0
           ? <div className="empty">Nessun ordine per oggi.</div>
-          : lista.map(p=>(
-              <div key={p.name} className="menu-item" style={{marginBottom:6}}>
-                <span style={{fontWeight:p.custom?700:500}}>
-                  {p.custom?"🌟 ":""}{p.name}
-                </span>
-                <div style={{textAlign:"right"}}>
-                  <span style={{
-                    background:"var(--accent)",color:"#fff",
-                    borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
-                  }}>{p.qty}</span>
-                  {p.notes&&p.notes.length>0&&(
-                    <div style={{fontSize:".72rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>
-                      📝 {p.notes.join(" / ")}
-                    </div>
-                  )}
+          : CATEGORIE.map(cat=>{
+              const catPiatti = lista.filter(p=>p.categoria===cat.id||(!p.categoria&&cat.id==="primi"));
+              if(!catPiatti.length) return null;
+              return(<div key={cat.id} style={{marginBottom:10}}>
+                <div style={{fontSize:".72rem",fontWeight:700,color:"var(--accent)",
+                  textTransform:"uppercase",letterSpacing:".04em",
+                  borderBottom:"1px solid var(--border-lt)",paddingBottom:3,marginBottom:5}}>
+                  {cat.label}
                 </div>
-              </div>
-            ))
+                {catPiatti.map(p=>(
+                  <div key={p.name} className="menu-item" style={{marginBottom:6}}>
+                    <span style={{fontWeight:p.custom?700:500}}>
+                      {p.custom?"🌟 ":""}{p.name}
+                    </span>
+                    <div style={{textAlign:"right"}}>
+                      <span style={{
+                        background:"var(--accent)",color:"#fff",
+                        borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
+                      }}>{p.qty}</span>
+                      {p.notes&&p.notes.length>0&&(
+                        <div style={{fontSize:".72rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>
+                          📝 {p.notes.join(" / ")}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>);
+            })
         }
       </div>
 
@@ -1678,7 +1795,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 ?<div className="empty">⏳<br/>Il menù non è ancora disponibile.<br/>Ricontrolla tra poco!</div>
                 :<>
                   {normalMenu.length===0&&<div className="empty" style={{padding:"16px 0"}}>Nessun piatto nel menù standard.</div>}
-                  {normalMenu.map(item=>(
+                  {CATEGORIE.map(cat=>{
+                    const catItems = normalMenu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
+                    if(!catItems.length) return null;
+                    return(<div key={cat.id}>
+                      <div style={{fontSize:".75rem",fontWeight:700,color:"var(--accent)",
+                        margin:"12px 0 5px",textTransform:"uppercase",letterSpacing:".04em",
+                        borderBottom:"1px solid var(--border-lt)",paddingBottom:3}}>
+                        {cat.label}
+                      </div>
+                      {catItems.map(item=>(
                     <div key={item.id}>
                       <div className="menu-order-item">
                         <div>
@@ -1701,6 +1827,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
                       )}
                     </div>
                   ))}
+                    </div>
+                  );})}
 
                   {/* Custom dishes already requested */}
                   {myCustom.length>0&&(
