@@ -1441,11 +1441,23 @@ function AdminClients({ appState, update }) {
   const applyCredit=(userId,sign)=>{
     const val=parseFloat(creditEdit[userId]);
     if(isNaN(val)||val<=0) return showToast("Importo non valido",true);
-    // Pulisci subito l'input per evitare doppio tap
     setCreditEdit(p=>{const n={...p};delete n[userId];return n;});
     const cur=appState.credits[userId]||0;
-    const newCredits = {...(appState.credits||{}), [userId]: r2(cur+sign*val)};
-    update({credits: newCredits});
+    const newCr = r2(cur+sign*val);
+    const newCredits = {...(appState.credits||{}), [userId]: newCr};
+
+    // Aggiorna gli ordini non pagati di questo utente usando il nuovo credito
+    const newOrders = {...appState.orders};
+    Object.keys(newOrders).forEach(k=>{
+      const o = newOrders[k];
+      if(!o || o.paid || o.userId!==userId) return;
+      const raw = o.rawTotal||o.total||0;
+      const cu = newCr>0 ? Math.min(newCr,raw) : 0;
+      newCredits[userId] = r2(newCr - cu);
+      newOrders[k] = {...o, creditUsed:cu, total:Math.max(0,raw-cu)};
+    });
+
+    update({credits:newCredits, orders:newOrders});
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
   };
   const resetCr=userId=>{if(!window.confirm("Azzerare il credito?")) return; update({credits:{...appState.credits,[userId]:0}});showToast("Credito azzerato");};
