@@ -862,26 +862,29 @@ function AdminMenu({ date, appState, update }) {
                   saveItems(items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0}:i));
                   // Aggiorna anche tutti gli ordini che contengono questo piatto
                   const newOrders={...appState.orders};
-                  const newCredits={...appState.credits};
+                  // Prima ripristina tutti i crediti sommando il creditUsed degli ordini coinvolti
+                  const creditiOriginali={...appState.credits};
                   Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
                     const ord=newOrders[k];
-                    const hasItem=ord.items.find(i=>i.id===item.id);
-                    if(hasItem){
-                      const price=parseFloat(item.price)||0;
-                      const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
-                      const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-                      // Ripristina il credito originale dell'utente prima di ricalcolare
-                      const crOriginale = r2((newCredits[ord.userId]||0)+(ord.creditUsed||0));
-                      const cu = crOriginale>0 ? Math.min(crOriginale,raw) : 0;
-                      newCredits[ord.userId] = r2(crOriginale - cu);
-                      const nuovoTot = Math.max(0,raw-cu);
-                      // Tutti i piatti hanno prezzo? Allora possiamo decidere stato pagato
-                      const tuttiPrezzati = updItems.every(i=>i.price!=null);
-                      const autoPagato = tuttiPrezzati && nuovoTot===0 && cu>0;
-                      // Se ordine era pagato ma ora ha un debito, rimetti non pagato
-                      const statoPagato = tuttiPrezzati ? (autoPagato || (ord.paid && nuovoTot===0)) : false;
-                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:statoPagato};
+                    if(ord&&ord.items.find(i=>i.id===item.id)){
+                      creditiOriginali[ord.userId]=r2((creditiOriginali[ord.userId]||0)+(ord.creditUsed||0));
                     }
+                  });
+                  const newCredits={...creditiOriginali};
+                  // Ora ricalcola ogni ordine con il credito originale
+                  Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                    const ord=newOrders[k];
+                    if(!ord||!ord.items.find(i=>i.id===item.id)) return;
+                    const price=parseFloat(item.price)||0;
+                    const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
+                    const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+                    const crDisp=newCredits[ord.userId]||0;
+                    const cu=crDisp>0?Math.min(crDisp,raw):0;
+                    newCredits[ord.userId]=r2(crDisp-cu);
+                    const nuovoTot=Math.max(0,raw-cu);
+                    const tuttiPrezzati=updItems.every(i=>i.price!=null);
+                    const pagato=tuttiPrezzati?(nuovoTot===0):(ord.paid&&nuovoTot===0);
+                    newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:pagato};
                   });
                   update({orders:newOrders,credits:newCredits});
                   showToast("✓ Prezzo applicato a tutti gli ordini!");
