@@ -874,7 +874,10 @@ function AdminMenu({ date, appState, update }) {
                       const cu=crAvail>0?Math.min(crAvail,raw):0;
                       const diff=cu-(ord.creditUsed||0);
                       if(diff!==0) newCredits[ord.userId]=r2((newCredits[ord.userId]||0)-diff);
-                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:Math.max(0,raw-cu)};
+                      const nuovoTot=Math.max(0,raw-cu);
+                      const tuttiPrezzati=updItems.every(i=>i.price!=null&&i.price>0);
+                      const autoPagato = nuovoTot===0 && cu>0 && tuttiPrezzati;
+                      newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:autoPagato||ord.paid};
                     }
                   });
                   update({orders:newOrders,credits:newCredits});
@@ -1457,7 +1460,8 @@ function AdminClients({ appState, update }) {
       crRimanente = r2(crRimanente - cu);
       const nuovoTotal = Math.max(0, raw-cu);
       // Se il totale diventa 0, segna automaticamente come pagato
-      const autoPaid = nuovoTotal === 0 && cu > 0;
+      const hasUnpriced = (o.items||[]).some(i=>i.price==null||i.price===0);
+      const autoPaid = nuovoTotal === 0 && cu > 0 && !hasUnpriced;
       newOrders[k] = {...o, creditUsed:cu, total:nuovoTotal, paid: autoPaid || o.paid};
     });
     newCredits[userId] = crRimanente;
@@ -1830,7 +1834,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const itemsWithNotes = items.map(i=>({...i, note:(itemNotes[i.id]||"").trim()||undefined}));
     const order={userId:user.id,userName:user.name,date,items:itemsWithNotes,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
     // Se il credito copre tutto l'ordine, segna automaticamente come pagato
-    if(netTotal===0 && creditUsed>0) order.paid = true;
+    // MA solo se non ci sono piatti custom senza prezzo (che verranno prezzati dopo)
+    const hasUnpricedItems = items.some(i=>i.price==null||i.price===0);
+    if(netTotal===0 && creditUsed>0 && !hasUnpricedItems) order.paid = true;
     const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
     update(patchOrder);
     setQuantities({});
