@@ -1092,14 +1092,16 @@ function AdminOrders({ date, appState, update }) {
     }
   };
 
-  const totalGiorno=orders.reduce((s,o)=>s+(o.total||0),0);
-  const totalPagato=orders.filter(o=>o.paid).reduce((s,o)=>s+(o.total||0),0);
-  const totalDare  =orders.filter(o=>!o.paid).reduce((s,o)=>s+(o.total||0),0);
+  const totalGiorno  = orders.reduce((s,o)=>s+(o.rawTotal||o.total||0),0);
+  const totalIncassato = orders.reduce((s,o)=>s+(o.creditUsed||0),0) // credito usato
+                       + orders.filter(o=>o.paid).reduce((s,o)=>s+(o.total||0),0); // cash pagato
+  const totalDare    = orders.filter(o=>!o.paid).reduce((s,o)=>s+(o.total||0),0);
+  const totalPagato  = totalIncassato;
 
   return (<>
     <div className="grid3" style={{marginBottom:12}}>
       <div className="stat-box"><div className="stat-num">{eur(totalGiorno)}</div><div className="stat-label">Totale giornata</div></div>
-      <div className="stat-box"><div className="stat-num" style={{color:"var(--green)"}}>{eur(totalPagato)}</div><div className="stat-label">Incassato</div></div>
+      <div className="stat-box"><div className="stat-num" style={{color:"var(--green)"}}>{eur(totalIncassato)}</div><div className="stat-label">Incassato</div></div>
       <div className="stat-box"><div className="stat-num" style={{color:"var(--red)"}}>{eur(totalDare)}</div><div className="stat-label">Da incassare</div></div>
     </div>
     <div className="card">
@@ -1326,7 +1328,12 @@ function AdminOrders({ date, appState, update }) {
                   </span>
                   <span className="muted" style={{minWidth:24}}>×{item.qty}</span>
                   {item.price!=null
-                    ?<span style={{color:"var(--accent)",fontWeight:700,minWidth:60,textAlign:"right",fontSize:".85rem"}}>{eur(item.price*item.qty)}</span>
+                    ?<span style={{color:"var(--accent)",fontWeight:700,minWidth:60,textAlign:"right",fontSize:".85rem"}}>
+                      {item.supplemento>0
+                        ? <span>{eur((item.price-item.supplemento)*item.qty)}<span style={{color:"var(--gold)",fontSize:".75rem"}}> +{eur(item.supplemento*item.qty)}</span> = {eur(item.price*item.qty)}</span>
+                        : eur(item.price*item.qty)
+                      }
+                    </span>
                     :<div className="flex" style={{gap:4}}>
                       <span className="muted" style={{fontSize:".73rem"}}>€</span>
                       <input type="number" step="0.50" min="0" placeholder="—" style={{width:70,padding:"4px 6px",fontSize:".8rem"}}
@@ -1538,9 +1545,12 @@ function AdminRiepilogo({ date, appState }) {
   });
   const lista = Object.values(piatti).sort((a,b)=>b.qty-a.qty);
 
-  const totaleOrdini = orders.length;
-  const totaleIncasso = orders.reduce((s,o)=>s+o.total,0);
-  const totalePagato  = orders.filter(o=>o.paid).reduce((s,o)=>s+o.total,0);
+  const totaleOrdini  = orders.length;
+  const totaleGiornata = orders.reduce((s,o)=>s+(o.rawTotal||o.total||0),0);
+  const totaleIncasso  = orders.reduce((s,o)=>s+(o.creditUsed||0),0)
+                       + orders.filter(o=>o.paid).reduce((s,o)=>s+(o.total||0),0);
+  const totalePagato   = totaleIncasso;
+  const daIncassare    = orders.filter(o=>!o.paid).reduce((s,o)=>s+(o.total||0),0);
 
   // Esporta come testo
   const esporta = ()=>{
@@ -1571,15 +1581,15 @@ function AdminRiepilogo({ date, appState }) {
     <div>
       <div className="grid3" style={{marginBottom:14}}>
         <div className="stat-box">
-          <div className="stat-num">{totaleOrdini}</div>
-          <div className="stat-label">Ordini</div>
+          <div className="stat-num">{eur(totaleGiornata)}</div>
+          <div className="stat-label">Totale giornata</div>
         </div>
         <div className="stat-box">
           <div className="stat-num">{eur(totaleIncasso)}</div>
-          <div className="stat-label">Totale</div>
+          <div className="stat-label">Incassato</div>
         </div>
         <div className="stat-box">
-          <div className="stat-num">{eur(totaleIncasso-totalePagato)}</div>
+          <div className="stat-num">{eur(daIncassare)}</div>
           <div className="stat-label">Da incassare</div>
         </div>
       </div>
