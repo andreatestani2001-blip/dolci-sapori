@@ -1448,14 +1448,19 @@ function AdminClients({ appState, update }) {
 
     // Aggiorna gli ordini non pagati di questo utente usando il nuovo credito
     const newOrders = {...appState.orders};
+    let crRimanente = newCr;
     Object.keys(newOrders).forEach(k=>{
       const o = newOrders[k];
       if(!o || o.paid || o.userId!==userId) return;
       const raw = o.rawTotal||o.total||0;
-      const cu = newCr>0 ? Math.min(newCr,raw) : 0;
-      newCredits[userId] = r2(newCr - cu);
-      newOrders[k] = {...o, creditUsed:cu, total:Math.max(0,raw-cu)};
+      const cu = crRimanente>0 ? Math.min(crRimanente,raw) : 0;
+      crRimanente = r2(crRimanente - cu);
+      const nuovoTotal = Math.max(0, raw-cu);
+      // Se il totale diventa 0, segna automaticamente come pagato
+      const autoPaid = nuovoTotal === 0 && cu > 0;
+      newOrders[k] = {...o, creditUsed:cu, total:nuovoTotal, paid: autoPaid || o.paid};
     });
+    newCredits[userId] = crRimanente;
 
     update({credits:newCredits, orders:newOrders});
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
