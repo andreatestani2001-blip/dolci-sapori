@@ -1023,11 +1023,14 @@ function AdminOrders({ date, appState, update }) {
     }
     if(!items.length) return showToast("Aggiungi almeno un piatto",true);
     const rawTotal=items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-    const cr=appState.credits[editingOrder.userId]||0;
-    const oldCreditUsed=editingOrder.creditUsed||0;
-    const creditUsed=cr+oldCreditUsed>0?Math.min(cr+oldCreditUsed,rawTotal):0;
-    const newCr=r2((appState.credits[editingOrder.userId]||0)+(oldCreditUsed-creditUsed));
-    const updated={...editingOrder,items,rawTotal,creditUsed,total:Math.max(0,rawTotal-creditUsed),note:editNote.trim()};
+    // Ripristina credito originale = credito attuale + quello già usato nell'ordine
+    const crOriginale=r2((appState.credits[editingOrder.userId]||0)+(editingOrder.creditUsed||0));
+    const creditUsed=crOriginale>0?Math.min(crOriginale,rawTotal):0;
+    const newCr=r2(crOriginale-creditUsed);
+    const nuovoTotal=Math.max(0,rawTotal-creditUsed);
+    const hasUnpriced=items.some(i=>i.price==null||i.price===0);
+    const pagato=!hasUnpriced&&nuovoTotal===0&&creditUsed>0;
+    const updated={...editingOrder,items,rawTotal,creditUsed,total:nuovoTotal,paid:pagato,note:editNote.trim()};
     const newCredits={...appState.credits,[editingOrder.userId]:newCr};
     update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
     setEditingOrder(null);
@@ -1321,10 +1324,15 @@ function AdminOrders({ date, appState, update }) {
                               const val=parseFloat(editing[`supp_${item.id}`])||0;
                               const updItems=order.items.map(i=>i.id===item.id?{...i,supplemento:val,price:(i.price||0)+(val-(i.supplemento||0))}:i);
                               const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-                              const cr=appState.credits[order.userId]||0;
-                              const cu=cr>0?Math.min(cr,raw):0;
-                              const updated={...order,items:updItems,rawTotal:raw,creditUsed:cu,total:Math.max(0,raw-cu)};
-                              update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated}});
+                              // Ripristina credito originale prima di ricalcolare
+                              const crOrig=r2((appState.credits[order.userId]||0)+(order.creditUsed||0));
+                              const cu=crOrig>0?Math.min(crOrig,raw):0;
+                              const nuovoTot=Math.max(0,raw-cu);
+                              const tuttiPrezzati=updItems.every(i=>i.price!=null);
+                              const pagato=tuttiPrezzati&&nuovoTot===0&&cu>0;
+                              const newCr=r2(crOrig-cu);
+                              const updated={...order,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:pagato};
+                              update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:{...appState.credits,[order.userId]:newCr}});
                               setEditing(p=>{const n={...p};delete n[`supp_${item.id}`];return n;});
                               showToast("✓ Supplemento aggiunto");
                             }
