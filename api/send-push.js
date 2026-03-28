@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Key os_v2_app_b2lxnofbnzf2li5x65q6qhclkeeovhkhu5muzdvjabatxplrrdutpxlalclvghr6jnwv7yqoqsmflmyerfnh75g623hsajanq46cuwi',
+        'Authorization': 'Bearer os_v2_app_b2lxnofbnzf2li5x65q6qhclkeeovhkhu5muzdvjabatxplrrdutpxlalclvghr6jnwv7yqoqsmflmyerfnh75g623hsajanq46cuwi',
       },
       body: JSON.stringify({
         app_id: '0e9776b8-a16e-4ba5-a3b7-f761e81c4b51',
