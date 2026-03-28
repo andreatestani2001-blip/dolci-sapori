@@ -862,6 +862,7 @@ function AdminMenu({ date, appState, update }) {
                   saveItems(items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0}:i));
                   // Aggiorna anche tutti gli ordini che contengono questo piatto
                   const newOrders={...appState.orders};
+                  const newCredits={...appState.credits};
                   Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
                     const ord=newOrders[k];
                     const hasItem=ord.items.find(i=>i.id===item.id);
@@ -869,12 +870,14 @@ function AdminMenu({ date, appState, update }) {
                       const price=parseFloat(item.price)||0;
                       const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
                       const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-                      const cr=appState.credits[ord.userId]||0;
-                      const cu=cr>0?Math.min(cr,raw):0;
+                      const crAvail=(appState.credits[ord.userId]||0)+(ord.creditUsed||0);
+                      const cu=crAvail>0?Math.min(crAvail,raw):0;
+                      const diff=cu-(ord.creditUsed||0);
+                      if(diff!==0) newCredits[ord.userId]=r2((newCredits[ord.userId]||0)-diff);
                       newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:Math.max(0,raw-cu)};
                     }
                   });
-                  update({orders:newOrders});
+                  update({orders:newOrders,credits:newCredits});
                   showToast("✓ Prezzo applicato a tutti gli ordini!");
                 }}>✓</button>
                 <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}}
@@ -952,9 +955,13 @@ function AdminOrders({ date, appState, update }) {
     .sort((a,b)=>a.userName.localeCompare(b.userName));
 
   const togglePaid = order=>{
-    const updated={...order,paid:!order.paid};
+    const nowPaid = !order.paid;
+    const updated = {...order, paid:nowPaid};
+    // Il credito non va mai restituito quando si segna pagato/non pagato
+    // Il creditUsed è già stato scalato al momento dell'ordine
+    // Non tocchiamo i crediti qui
     update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated}});
-    showToast(updated.paid?`✓ ${order.userName} segnato pagato`:`${order.userName} segnato non pagato`);
+    showToast(nowPaid?`✓ ${order.userName} segnato pagato`:`${order.userName} segnato non pagato`);
   };
 
   const cancelOrderAdmin=(order)=>{
@@ -1795,12 +1802,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
     // Aggiungi note per piatto agli items
     const itemsWithNotes = items.map(i=>({...i, note:(itemNotes[i.id]||"").trim()||undefined}));
     const order={userId:user.id,userName:user.name,date,items:itemsWithNotes,rawTotal,creditUsed,total:netTotal,paid:false,note:orderNote.trim(),createdAt:new Date().toISOString()};
+    // Se il credito copre tutto l'ordine, segna automaticamente come pagato
+    if(netTotal===0 && creditUsed>0) order.paid = true;
     const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
     update(patchOrder);
     setQuantities({});
     setOrderNote("");
     setItemNotes({});
-    setToast("✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
+    setToast(netTotal===0?"✓ Ordine pagato con credito!":"✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
   };
 
   const cancelOrder=()=>{
