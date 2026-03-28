@@ -932,7 +932,11 @@ function AdminOrders({ date, appState, update }) {
   const [showAddOrder,setShowAddOrder] = useState(false);
   const [addOrderUser,setAddOrderUser] = useState("");
   const [addOrderItems,setAddOrderItems] = useState({}); // {itemId: qty}
-  const [addOrderNote,setAddOrderNote] = useState("");
+  const [addOrderNote,    setAddOrderNote]    = useState("");
+  const [addCustomName,   setAddCustomName]   = useState("");
+  const [addCustomPrice,  setAddCustomPrice]  = useState("");
+  const [addItemNotes,    setAddItemNotes]    = useState({}); // {itemId: nota}
+  const [addItemSuppl,    setAddItemSuppl]    = useState({}); // {itemId: supplemento €}
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const orders = Object.entries(appState.orders)
@@ -963,8 +967,24 @@ function AdminOrders({ date, appState, update }) {
   const addManualOrder=()=>{
     if(!addOrderUser) return showToast("Seleziona un cliente",true);
     const menu = appState.menus[date]||[];
+    // Piatti standard con note e supplementi
     const items = menu.filter(i=>!i.custom&&(addOrderItems[i.id]||0)>0)
-      .map(i=>({...i,qty:addOrderItems[i.id]}));
+      .map(i=>({
+        ...i,
+        qty:addOrderItems[i.id],
+        note:(addItemNotes[i.id]||"").trim()||undefined,
+        price:(i.price||0)+(parseFloat(addItemSuppl[i.id])||0),
+        supplemento:parseFloat(addItemSuppl[i.id])||0,
+      }));
+    // Piatto personalizzato
+    if(addCustomName.trim()){
+      items.push({
+        id:"custom_"+Date.now(),
+        name:addCustomName.trim(),
+        price:parseFloat(addCustomPrice)||0,
+        qty:1, custom:true,
+      });
+    }
     if(!items.length) return showToast("Aggiungi almeno un piatto",true);
     const user = appState.users.find(u=>u.id===addOrderUser);
     const rawTotal = items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
@@ -981,6 +1001,8 @@ function AdminOrders({ date, appState, update }) {
     update({orders:{...appState.orders,[`${date}:${addOrderUser}`]:order},credits:newCredits});
     setShowAddOrder(false);
     setAddOrderItems({}); setAddOrderNote(""); setAddOrderUser("");
+    setAddCustomName(""); setAddCustomPrice("");
+    setAddItemNotes({}); setAddItemSuppl({});
     showToast(`✓ Ordine aggiunto per ${user.name}`);
   };
 
@@ -1050,21 +1072,57 @@ function AdminOrders({ date, appState, update }) {
                 return(<div key={cat.id} style={{marginBottom:6}}>
                   <div style={{fontSize:".72rem",fontWeight:700,color:"var(--accent)",marginBottom:3}}>{cat.label}</div>
                   {catItems.map(item=>(
-                    <div key={item.id} className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:".85rem"}}>{item.name} {item.price!=null?`(${eur(item.price)})`:"(TBD)"}</span>
-                      <div className="qty-ctrl" style={{gap:6}}>
-                        <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:Math.max(0,(p[item.id]||0)-1)}))}>−</button>
-                        <span className="qty-num" style={{minWidth:20,textAlign:"center"}}>{addOrderItems[item.id]||0}</span>
-                        <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:(p[item.id]||0)+1}))}>+</button>
+                    <div key={item.id} style={{marginBottom:8}}>
+                      <div className="flex" style={{justifyContent:"space-between"}}>
+                        <span style={{fontSize:".85rem",fontWeight:500}}>{item.name} {item.price!=null?`(${eur(item.price)})`:"(TBD)"}</span>
+                        <div className="qty-ctrl" style={{gap:6}}>
+                          <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:Math.max(0,(p[item.id]||0)-1)}))}>−</button>
+                          <span className="qty-num" style={{minWidth:20,textAlign:"center"}}>{addOrderItems[item.id]||0}</span>
+                          <button className="qty-btn" onClick={()=>setAddOrderItems(p=>({...p,[item.id]:(p[item.id]||0)+1}))}>+</button>
+                        </div>
                       </div>
+                      {(addOrderItems[item.id]||0)>0&&(
+                        <div className="flex" style={{gap:6,marginTop:4}}>
+                          <input
+                            placeholder="📝 Nota (es. abbondante)..."
+                            value={addItemNotes[item.id]||""}
+                            onChange={e=>setAddItemNotes(p=>({...p,[item.id]:e.target.value}))}
+                            style={{flex:1,fontSize:".78rem"}}
+                          />
+                          <input
+                            placeholder="+ €"
+                            type="number" step="0.50" min="0"
+                            value={addItemSuppl[item.id]||""}
+                            onChange={e=>setAddItemSuppl(p=>({...p,[item.id]:e.target.value}))}
+                            style={{width:60,fontSize:".78rem",textAlign:"right"}}
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>);
               })}
             </div>
+            {/* Piatto personalizzato */}
+            <div style={{background:"rgba(200,148,42,.08)",borderRadius:8,padding:"10px",marginBottom:10,border:"1px solid #f5d78e"}}>
+              <div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold)",marginBottom:6,textTransform:"uppercase"}}>⭐ Piatto personalizzato</div>
+              <div className="flex" style={{gap:6}}>
+                <input
+                  placeholder="Nome piatto custom..."
+                  value={addCustomName} onChange={e=>setAddCustomName(e.target.value)}
+                  style={{flex:1,fontSize:".85rem"}}
+                />
+                <input
+                  placeholder="€ Prezzo"
+                  type="number" step="0.50" min="0"
+                  value={addCustomPrice} onChange={e=>setAddCustomPrice(e.target.value)}
+                  style={{width:80,fontSize:".85rem",textAlign:"right"}}
+                />
+              </div>
+            </div>
             <div className="field" style={{marginBottom:10}}>
-              <label>Note (opzionale)</label>
-              <input value={addOrderNote} onChange={e=>setAddOrderNote(e.target.value)} placeholder="Note ordine..."/>
+              <label>Note generali ordine (opzionale)</label>
+              <input value={addOrderNote} onChange={e=>setAddOrderNote(e.target.value)} placeholder="Note generali..."/>
             </div>
             <button className="btn btn-primary" onClick={addManualOrder}>✓ Conferma ordine</button>
           </div>
@@ -1097,7 +1155,10 @@ function AdminOrders({ date, appState, update }) {
                 <div className="order-row" key={item.id}>
                   <span style={{flex:1,fontSize:".85rem",fontWeight:item.custom?700:500}}>
                     {item.custom&&"⭐ "}{item.name}
-                    {item.note&&<div style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic",marginTop:2}}>📝 {item.note}</div>}
+                    {item.note&&<div style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic",marginTop:2}}>
+                      📝 {item.note}
+                      {item.supplemento>0&&<span style={{marginLeft:6,color:"var(--gold)",fontWeight:700}}>+{eur(item.supplemento)}</span>}
+                    </div>}
                   </span>
                   <span className="muted" style={{minWidth:24}}>×{item.qty}</span>
                   {item.price!=null
