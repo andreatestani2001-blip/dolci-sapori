@@ -930,6 +930,13 @@ function AdminOrders({ date, appState, update }) {
   const [editing,    setEditing]    = useState({});
   const [toast,      setToast]      = useState({text:"",err:false});
   const [showAddOrder,setShowAddOrder] = useState(false);
+  const [editingOrder,setEditingOrder] = useState(null); // ordine in modifica
+  const [editQty,     setEditQty]      = useState({});
+  const [editItemNotes,setEditItemNotes]= useState({});
+  const [editItemSuppl,setEditItemSuppl]= useState({});
+  const [editNote,    setEditNote]     = useState("");
+  const [editCustomName,setEditCustomName]=useState("");
+  const [editCustomPrice,setEditCustomPrice]=useState("");
   const [addOrderUser,setAddOrderUser] = useState("");
   const [addOrderItems,setAddOrderItems] = useState({}); // {itemId: qty}
   const [addOrderNote,    setAddOrderNote]    = useState("");
@@ -962,6 +969,53 @@ function AdminOrders({ date, appState, update }) {
     const patchAdmin={orders:newOrders,credits:newCredits};
     update(patchAdmin);
     showToast(`Ordine di ${order.userName} annullato`);
+  };
+
+  const openEditOrder=(order)=>{
+    setEditingOrder(order);
+    const qty={};
+    const notes={};
+    const suppl={};
+    order.items.forEach(i=>{
+      qty[i.id]=i.qty;
+      if(i.note) notes[i.id]=i.note;
+      if(i.supplemento) suppl[i.id]=i.supplemento;
+    });
+    setEditQty(qty);
+    setEditItemNotes(notes);
+    setEditItemSuppl(suppl);
+    setEditNote(order.note||"");
+    setEditCustomName(""); setEditCustomPrice("");
+  };
+
+  const saveEditedOrder=()=>{
+    const menu = appState.menus[date]||[];
+    const items = menu.filter(i=>!i.custom&&(editQty[i.id]||0)>0).map(i=>({
+      ...i,
+      qty:editQty[i.id],
+      note:(editItemNotes[i.id]||"").trim()||undefined,
+      supplemento:parseFloat(editItemSuppl[i.id])||0,
+      price:(i.price||0)+(parseFloat(editItemSuppl[i.id])||0),
+    }));
+    // Mantieni i piatti custom originali che non sono nel menù
+    editingOrder.items.filter(i=>i.custom).forEach(i=>{
+      if((editQty[i.id]||0)>0) items.push({...i,qty:editQty[i.id]});
+    });
+    // Nuovo piatto custom
+    if(editCustomName.trim()){
+      items.push({id:"custom_"+Date.now(),name:editCustomName.trim(),price:parseFloat(editCustomPrice)||0,qty:1,custom:true});
+    }
+    if(!items.length) return showToast("Aggiungi almeno un piatto",true);
+    const rawTotal=items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+    const cr=appState.credits[editingOrder.userId]||0;
+    const oldCreditUsed=editingOrder.creditUsed||0;
+    const creditUsed=cr+oldCreditUsed>0?Math.min(cr+oldCreditUsed,rawTotal):0;
+    const newCr=r2((appState.credits[editingOrder.userId]||0)+(oldCreditUsed-creditUsed));
+    const updated={...editingOrder,items,rawTotal,creditUsed,total:Math.max(0,rawTotal-creditUsed),note:editNote.trim()};
+    const newCredits={...appState.credits,[editingOrder.userId]:newCr};
+    update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
+    setEditingOrder(null);
+    showToast(`✓ Ordine di ${editingOrder.userName} aggiornato`);
   };
 
   const addManualOrder=()=>{
@@ -1043,6 +1097,86 @@ function AdminOrders({ date, appState, update }) {
     </div>
     <div className="card">
       <div className="card-title">🧾 Ordini — {fmt(date)} <span className="badge" style={{background:"var(--accent)"}}>{orders.length}</span></div>
+      {/* Modal modifica ordine */}
+      {editingOrder&&(()=>{
+        const menu=(appState.menus[date]||[]).filter(i=>!i.custom);
+        const customOriginals=editingOrder.items.filter(i=>i.custom);
+        return(
+          <div className="card" style={{marginBottom:14,border:"2px solid var(--accent)",background:"rgba(139,26,26,.03)"}}>
+            <div className="card-title" style={{justifyContent:"space-between"}}>
+              <span>✏️ Modifica ordine — {editingOrder.userName}</span>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setEditingOrder(null)}>✕</button>
+            </div>
+
+            {/* Piatti per categoria */}
+            {CATEGORIE.map(cat=>{
+              const catItems=menu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
+              if(!catItems.length) return null;
+              return(<div key={cat.id} style={{marginBottom:8}}>
+                <div style={{fontSize:".72rem",fontWeight:700,color:"var(--accent)",marginBottom:4,textTransform:"uppercase"}}>{cat.label}</div>
+                {catItems.map(item=>(
+                  <div key={item.id} style={{marginBottom:6}}>
+                    <div className="flex" style={{justifyContent:"space-between"}}>
+                      <span style={{fontSize:".85rem"}}>{item.name} {item.price!=null?`(${eur(item.price)})`:"(TBD)"}</span>
+                      <div className="qty-ctrl" style={{gap:6}}>
+                        <button className="qty-btn" onClick={()=>setEditQty(p=>({...p,[item.id]:Math.max(0,(p[item.id]||0)-1)}))}>−</button>
+                        <span className="qty-num" style={{minWidth:20,textAlign:"center"}}>{editQty[item.id]||0}</span>
+                        <button className="qty-btn" onClick={()=>setEditQty(p=>({...p,[item.id]:(p[item.id]||0)+1}))}>+</button>
+                      </div>
+                    </div>
+                    {(editQty[item.id]||0)>0&&(
+                      <div className="flex" style={{gap:6,marginTop:3}}>
+                        <input placeholder="📝 Nota..." value={editItemNotes[item.id]||""}
+                          onChange={e=>setEditItemNotes(p=>({...p,[item.id]:e.target.value}))}
+                          style={{flex:1,fontSize:".78rem"}}/>
+                        <input placeholder="+ €" type="number" step="0.50" min="0"
+                          value={editItemSuppl[item.id]||""}
+                          onChange={e=>setEditItemSuppl(p=>({...p,[item.id]:e.target.value}))}
+                          style={{width:60,fontSize:".78rem",textAlign:"right"}}/>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>);
+            })}
+
+            {/* Piatti custom originali */}
+            {customOriginals.length>0&&<div style={{marginBottom:8}}>
+              <div style={{fontSize:".72rem",fontWeight:700,color:"var(--gold)",marginBottom:4,textTransform:"uppercase"}}>⭐ Piatti personalizzati</div>
+              {customOriginals.map(item=>(
+                <div key={item.id} className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:".85rem"}}>{item.name} ({eur(item.price)})</span>
+                  <div className="qty-ctrl" style={{gap:6}}>
+                    <button className="qty-btn" onClick={()=>setEditQty(p=>({...p,[item.id]:Math.max(0,(p[item.id]||0)-1)}))}>−</button>
+                    <span className="qty-num" style={{minWidth:20,textAlign:"center"}}>{editQty[item.id]??item.qty}</span>
+                    <button className="qty-btn" onClick={()=>setEditQty(p=>({...p,[item.id]:(p[item.id]??item.qty)+1}))}>+</button>
+                  </div>
+                </div>
+              ))}
+            </div>}
+
+            {/* Nuovo piatto custom */}
+            <div style={{background:"rgba(200,148,42,.08)",borderRadius:8,padding:"10px",marginBottom:10,border:"1px solid #f5d78e"}}>
+              <div style={{fontSize:".72rem",fontWeight:700,color:"var(--gold)",marginBottom:5,textTransform:"uppercase"}}>+ Aggiungi piatto</div>
+              <div className="flex" style={{gap:6}}>
+                <input placeholder="Nome piatto..." value={editCustomName}
+                  onChange={e=>setEditCustomName(e.target.value)} style={{flex:1,fontSize:".85rem"}}/>
+                <input placeholder="€" type="number" step="0.50" min="0"
+                  value={editCustomPrice} onChange={e=>setEditCustomPrice(e.target.value)}
+                  style={{width:70,fontSize:".85rem",textAlign:"right"}}/>
+              </div>
+            </div>
+
+            <div className="field" style={{marginBottom:10}}>
+              <label>Note generali</label>
+              <input value={editNote} onChange={e=>setEditNote(e.target.value)} placeholder="Note ordine..."/>
+            </div>
+
+            <button className="btn btn-primary" onClick={saveEditedOrder}>💾 Salva modifiche</button>
+          </div>
+        );
+      })()}
+
       {/* Bottone aggiungi ordine manuale */}
       <div style={{marginBottom:12}}>
         <button className="btn btn-gold btn-sm" onClick={()=>setShowAddOrder(!showAddOrder)}>
@@ -1143,6 +1277,7 @@ function AdminOrders({ date, appState, update }) {
                   <span className={`paid-badge ${order.paid?"pagato":"non-pagato"}`} onClick={()=>togglePaid(order)}>
                     {order.paid?"✓ Pagato":"✗ Non pagato"}
                   </span>
+                  <button className="btn btn-ghost btn-xs" onClick={()=>openEditOrder(order)}>✏️ Modifica</button>
                   <button className="btn btn-danger btn-xs" onClick={()=>cancelOrderAdmin(order)}>🗑 Annulla</button>
                 </div>
               </div>
@@ -1155,9 +1290,31 @@ function AdminOrders({ date, appState, update }) {
                 <div className="order-row" key={item.id}>
                   <span style={{flex:1,fontSize:".85rem",fontWeight:item.custom?700:500}}>
                     {item.custom&&"⭐ "}{item.name}
-                    {item.note&&<div style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic",marginTop:2}}>
-                      📝 {item.note}
-                      {item.supplemento>0&&<span style={{marginLeft:6,color:"var(--gold)",fontWeight:700}}>+{eur(item.supplemento)}</span>}
+                    {item.note&&<div style={{marginTop:3}}>
+                      <div style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic"}}>📝 {item.note}</div>
+                      <div className="flex" style={{gap:5,marginTop:3,alignItems:"center"}}>
+                        <span style={{fontSize:".7rem",color:"var(--muted)"}}>+ Suppl. €</span>
+                        <input type="number" step="0.50" min="0" placeholder="0.00"
+                          style={{width:65,padding:"3px 6px",fontSize:".75rem",textAlign:"right"}}
+                          value={editing[`supp_${item.id}`]??((item.supplemento||0)>0?item.supplemento:"")}
+                          onChange={e=>setEditing(p=>({...p,[`supp_${item.id}`]:e.target.value}))}
+                          onKeyDown={e=>{
+                            if(e.key==="Enter"){
+                              const val=parseFloat(editing[`supp_${item.id}`])||0;
+                              const updItems=order.items.map(i=>i.id===item.id?{...i,supplemento:val,price:(i.price||0)+(val-(i.supplemento||0))}:i);
+                              const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
+                              const cr=appState.credits[order.userId]||0;
+                              const cu=cr>0?Math.min(cr,raw):0;
+                              const updated={...order,items:updItems,rawTotal:raw,creditUsed:cu,total:Math.max(0,raw-cu)};
+                              update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated}});
+                              setEditing(p=>{const n={...p};delete n[`supp_${item.id}`];return n;});
+                              showToast("✓ Supplemento aggiunto");
+                            }
+                          }}
+                        />
+                        <span style={{fontSize:".7rem",color:"var(--muted)"}}>Invio ↵</span>
+                        {(item.supplemento||0)>0&&<span style={{color:"var(--gold)",fontWeight:700,fontSize:".78rem"}}>+{eur(item.supplemento)}</span>}
+                      </div>
                     </div>}
                   </span>
                   <span className="muted" style={{minWidth:24}}>×{item.qty}</span>
