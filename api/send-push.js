@@ -13,10 +13,10 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Key os_v2_app_b2lxnofbnzf2li5x65q6qhclkezjtykoobpet7ngth6argjzkuelxkw3ipalhfkmj5sme2lcjagsm2byteqnrcsndpdn7vmsmm4dzpi',
+        'Authorization': 'Bearer os_v2_app_a54tu2r3vzgspjyaw4dqo76nic2qp7ywkzsu2552behbxn7wql7unia2bcgpgn45nxsin2rokogdqyjcer5hih4ulib6rxuptqhcz7q',
       },
       body: JSON.stringify({
-        app_id: '0e9776b8-a16e-4ba5-a3b7-f761e81c4b51',
+        app_id: '07793a6a-3bae-4d27-a700-b707077fcd40',
         included_segments: ['All'],
         headings: { it: title, en: title },
         contents: { it: message, en: message },
