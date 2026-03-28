@@ -860,18 +860,26 @@ function AdminMenu({ date, appState, update }) {
                 <button className="btn btn-success btn-sm" onClick={()=>{
                   // Salva prezzo nel menu
                   saveItems(items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0}:i));
-                  // Aggiorna anche tutti gli ordini che contengono questo piatto
+                  // Aggiorna tutti gli ordini che contengono questo piatto
                   const newOrders={...appState.orders};
-                  // Prima ripristina tutti i crediti sommando il creditUsed degli ordini coinvolti
-                  const creditiOriginali={...appState.credits};
+                  const newCredits={...appState.credits};
+                  // Step 1: ripristina il credito originale di ogni utente coinvolto
+                  const utentiCoinvolti=new Set();
                   Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
                     const ord=newOrders[k];
-                    if(ord&&ord.items.find(i=>i.id===item.id)){
-                      creditiOriginali[ord.userId]=r2((creditiOriginali[ord.userId]||0)+(ord.creditUsed||0));
-                    }
+                    if(ord&&ord.items.find(i=>i.id===item.id)) utentiCoinvolti.add(ord.userId);
                   });
-                  const newCredits={...creditiOriginali};
-                  // Ora ricalcola ogni ordine con il credito originale
+                  utentiCoinvolti.forEach(uid=>{
+                    // Somma tutto il creditUsed degli ordini non pagati di questo utente oggi
+                    const creditoUsatoOggi=Object.keys(newOrders)
+                      .filter(k=>k.startsWith(date+":"))
+                      .reduce((s,k)=>{
+                        const o=newOrders[k];
+                        return (o&&o.userId===uid)?s+(o.creditUsed||0):s;
+                      },0);
+                    newCredits[uid]=r2((appState.credits[uid]||0)+creditoUsatoOggi);
+                  });
+                  // Step 2: ricalcola ogni ordine con il credito originale ripristinato
                   Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
                     const ord=newOrders[k];
                     if(!ord||!ord.items.find(i=>i.id===item.id)) return;
@@ -883,7 +891,7 @@ function AdminMenu({ date, appState, update }) {
                     newCredits[ord.userId]=r2(crDisp-cu);
                     const nuovoTot=Math.max(0,raw-cu);
                     const tuttiPrezzati=updItems.every(i=>i.price!=null);
-                    const pagato=tuttiPrezzati?(nuovoTot===0):(ord.paid&&nuovoTot===0);
+                    const pagato=tuttiPrezzati&&nuovoTot===0;
                     newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:pagato};
                   });
                   update({orders:newOrders,credits:newCredits});
@@ -1029,7 +1037,7 @@ function AdminOrders({ date, appState, update }) {
     const newCr=r2(crOriginale-creditUsed);
     const nuovoTotal=Math.max(0,rawTotal-creditUsed);
     const hasUnpriced=items.some(i=>i.price==null||i.price===0);
-    const pagato=!hasUnpriced&&nuovoTotal===0&&creditUsed>0;
+    const pagato=!hasUnpriced&&nuovoTotal===0;
     const updated={...editingOrder,items,rawTotal,creditUsed,total:nuovoTotal,paid:pagato,note:editNote.trim()};
     const newCredits={...appState.credits,[editingOrder.userId]:newCr};
     update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
