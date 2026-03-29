@@ -1468,13 +1468,20 @@ function AdminClients({ appState, update }) {
     const val=parseFloat(creditEdit[userId]);
     if(isNaN(val)||val<=0) return showToast("Importo non valido",true);
     setCreditEdit(p=>{const n={...p};delete n[userId];return n;});
-    const cur=appState.credits[userId]||0;
-    const newCr = r2(cur+sign*val);
-    const newCredits = {...(appState.credits||{}), [userId]: newCr};
 
-    // Aggiorna gli ordini non pagati di questo utente usando il nuovo credito
+    // Calcola il credito totale disponibile:
+    // credito attuale + creditUsed degli ordini non pagati + nuovo valore aggiunto/tolto
     const newOrders = {...appState.orders};
-    let crRimanente = newCr;
+    const creditoUsatoNonPagato = Object.keys(newOrders).reduce((s,k)=>{
+      const o=newOrders[k];
+      return (o&&!o.paid&&o.userId===userId)?s+(o.creditUsed||0):s;
+    },0);
+    const creditoTotale = r2((appState.credits[userId]||0) + creditoUsatoNonPagato + sign*val);
+    if(creditoTotale<0) return showToast("Credito insufficiente",true);
+
+    // Ricalcola gli ordini non pagati con il credito totale disponibile
+    const newCredits = {...appState.credits};
+    let crRimanente = creditoTotale;
     Object.keys(newOrders).forEach(k=>{
       const o = newOrders[k];
       if(!o || o.paid || o.userId!==userId) return;
@@ -1482,10 +1489,9 @@ function AdminClients({ appState, update }) {
       const cu = crRimanente>0 ? Math.min(crRimanente,raw) : 0;
       crRimanente = r2(crRimanente - cu);
       const nuovoTotal = Math.max(0, raw-cu);
-      // Se il totale diventa 0, segna automaticamente come pagato
       const hasUnpriced = (o.items||[]).some(i=>i.price==null||i.price===0);
-      const autoPaid = nuovoTotal === 0 && cu > 0 && !hasUnpriced;
-      newOrders[k] = {...o, creditUsed:cu, total:nuovoTotal, paid: autoPaid || o.paid};
+      const autoPaid = nuovoTotal===0 && !hasUnpriced;
+      newOrders[k] = {...o, creditUsed:cu, total:nuovoTotal, paid:autoPaid||o.paid};
     });
     newCredits[userId] = crRimanente;
 
