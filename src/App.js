@@ -1093,13 +1093,14 @@ function AdminOrders({ date, appState, update }) {
     const price=parseFloat(val); if(isNaN(price)) return;
     const updatedItems=order.items.map(i=>i.id===itemId?{...i,price}:i);
     const rawTotal=updatedItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
-    const cr=appState.credits[order.userId]||0;
-    const creditUsed=cr>0?Math.min(cr,rawTotal):0;
+    // Credito originale = credito attuale + quello già usato nell'ordine
+    const crOriginale=r2((appState.credits[order.userId]||0)+(order.creditUsed||0));
+    const creditUsed=crOriginale>0?Math.min(crOriginale,rawTotal):0;
     const netTotal=Math.max(0,rawTotal-creditUsed);
-    const diff=creditUsed-(order.creditUsed||0);
-    const newCredits={...appState.credits};
-    if(diff!==0) newCredits[order.userId]=r2((newCredits[order.userId]||0)-diff);
-    const updated={...order,items:updatedItems,rawTotal,creditUsed,total:netTotal};
+    const newCredits={...appState.credits,[order.userId]:r2(crOriginale-creditUsed)};
+    const tuttiPrezzati=updatedItems.every(i=>i.price!=null);
+    const pagato=tuttiPrezzati&&netTotal===0;
+    const updated={...order,items:updatedItems,rawTotal,creditUsed,total:netTotal,paid:pagato};
     update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:newCredits});
     setEditing(p=>{const n={...p};delete n[eKey];return n;});
     showToast("✓ Prezzo aggiornato");
