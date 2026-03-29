@@ -811,7 +811,7 @@ function AdminMenu({ date, appState, update }) {
     setLocalOrdersOpen(true);
     const fcmTokensAll = appState.fcmTokens||{};
     const fcmToks = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensAll[u.id]).filter(Boolean);
-    if(fcmToks.length>0) sendPush("🔓 Dolci Sapori", "Le ordinazioni sono aperte! Ordina subito.", fcmToks);
+    if(fcmToks.length>0) sendPush("Dolci Sapori", "🔓 Le ordinazioni sono aperte! Ordina subito.", fcmToks);
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
@@ -829,7 +829,7 @@ function AdminMenu({ date, appState, update }) {
     setLocalOrdersOpen(false);
     const fcmTokensClose = appState.fcmTokens||{};
     const fcmToksClose = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensClose[u.id]).filter(Boolean);
-    if(fcmToksClose.length>0) sendPush("🔒 Dolci Sapori", "Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
+    if(fcmToksClose.length>0) sendPush("Dolci Sapori", "🔒 Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -919,6 +919,13 @@ function AdminMenu({ date, appState, update }) {
                     const tuttiPrezzati=updItems.every(i=>i.price!=null);
                     const pagato=tuttiPrezzati&&nuovoTot===0;
                     newOrders[k]={...ord,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:pagato};
+                  });
+                  Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                    const ordNotif=newOrders[k];
+                    if(ordNotif&&ordNotif.items.find(i=>i.id===item.id)){
+                      const tok=(appState.fcmTokens||{})[ordNotif.userId];
+                      if(tok) sendPush("Dolci Sapori", `Prezzo aggiornato. Il tuo ordine: ${eur(ordNotif.total)} da pagare.`, [tok]);
+                    }
                   });
                   update({orders:newOrders,credits:newCredits});
                   showToast("✓ Prezzo applicato a tutti gli ordini!");
@@ -1067,6 +1074,8 @@ function AdminOrders({ date, appState, update }) {
     const updated={...editingOrder,items,rawTotal,creditUsed,total:nuovoTotal,paid:pagato,note:editNote.trim()};
     const newCredits={...appState.credits,[editingOrder.userId]:newCr};
     update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
+    const pushTokEdit = (appState.fcmTokens||{})[editingOrder.userId];
+    if(pushTokEdit) sendPush("Dolci Sapori", `Il tuo ordine è stato modificato. Da pagare: ${eur(nuovoTotal)}`, [pushTokEdit]);
     setEditingOrder(null);
     showToast(`✓ Ordine di ${editingOrder.userName} aggiornato`);
   };
@@ -1106,6 +1115,8 @@ function AdminOrders({ date, appState, update }) {
       createdAt:new Date().toISOString(), manualAdmin:true
     };
     update({orders:{...appState.orders,[`${date}:${addOrderUser}`]:order},credits:newCredits});
+    const pushTokManual = (appState.fcmTokens||{})[addOrderUser];
+    if(pushTokManual) sendPush("Dolci Sapori", `Il tuo ordine è stato aggiunto. Da pagare: ${eur(netTotal)}`, [pushTokManual]);
     setShowAddOrder(false);
     setAddOrderItems({}); setAddOrderNote(""); setAddOrderUser("");
     setAddCustomName(""); setAddCustomPrice("");
