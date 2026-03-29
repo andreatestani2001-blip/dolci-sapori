@@ -11,7 +11,7 @@ const FIREBASE_CONFIG = {
 };
 const VAPID_KEY = "BEjpQn5lpMIQ5mf3YjALU8gzf0zdFjUblNjBmEyi8Lq70-4mgt4Rf9XGWU9Wi5DYKfS2rLcovq_Y7X0qFwabgLY";
 
-async function initFirebase() {
+window.initFirebase = async function initFirebase() {
   try {
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
     const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
@@ -1828,6 +1828,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
   const date=today();
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
@@ -1839,6 +1840,11 @@ function ClientPanel({ user, appState, update, onLogout }) {
     const isInstalled = window.navigator.standalone === true;
     const dismissed = localStorage.getItem("ios_banner_dismissed");
     if (isIos && !isInstalled && !dismissed) setShowIosBanner(true);
+    // Mostra banner notifiche se non ancora concesse
+    if ('Notification' in window && Notification.permission === 'default') {
+      const notifDismissed = localStorage.getItem("notif_banner_dismissed");
+      if (!notifDismissed) setShowNotifBanner(true);
+    }
   }, []);
 
   const menu        = appState.menus[date]||[];
@@ -1919,6 +1925,38 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   return(
     <div className="app">
+      {showNotifBanner && (
+        <div style={{
+          background:"linear-gradient(135deg,#1a3a2e,#0d2b1e)",
+          color:"#fff", padding:"12px 16px",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          gap:"10px", fontSize:".82rem", lineHeight:"1.4",
+          borderBottom:"2px solid rgba(46,200,100,.4)"
+        }}>
+          <span>🔔 <b>Attiva le notifiche!</b><br/>
+            Ricevi avvisi quando il menù è pronto o gli ordini aprono.
+          </span>
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            <button onClick={async()=>{
+              const perm = await Notification.requestPermission();
+              if(perm==='granted') {
+                setShowNotifBanner(false);
+                localStorage.setItem("notif_banner_dismissed","1");
+                // Reinizializza Firebase per ottenere il token
+                if(window.initFirebase) window.initFirebase();
+              } else {
+                setShowNotifBanner(false);
+                localStorage.setItem("notif_banner_dismissed","1");
+              }
+            }} style={{background:"#2ec864",border:"none",color:"#fff",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:".8rem",fontWeight:700}}>
+              Attiva
+            </button>
+            <button onClick={()=>{ localStorage.setItem("notif_banner_dismissed","1"); setShowNotifBanner(false); }}
+              style={{background:"rgba(255,255,255,.15)",border:"none",color:"#fff",borderRadius:"50%",width:"26px",height:"26px",cursor:"pointer",fontSize:"1rem"}}>✕</button>
+          </div>
+        </div>
+      )}
+
       {showIosBanner && (
         <div style={{
           background:"linear-gradient(135deg,#1a1a2e,#16213e)",
