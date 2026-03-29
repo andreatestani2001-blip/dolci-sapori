@@ -32,31 +32,18 @@ export default async function handler(req, res) {
     const results = [];
 
     for (const token of tokens) {
+      // Usiamo solo webpush con notification - senza android/apns notification
+      // per evitare notifiche doppie
       const body = {
         message: {
           token,
-          notification: {
-            title,
-            body: message,
-          },
-          android: {
-            notification: { title, body: message, icon: 'logo192' }
-          },
-          apns: {
-            payload: {
-              aps: {
-                alert: { title, body: message },
-                sound: 'default',
-                badge: 1,
-              }
-            }
-          },
           webpush: {
             notification: {
               title,
               body: message,
               icon: '/logo192.png',
               badge: '/logo192.png',
+              requireInteraction: false,
             },
             fcm_options: { link: 'https://dolci-sapori.vercel.app' }
           }

@@ -486,6 +486,7 @@ const CATEGORIE = [
   { id:"contorni",          label:"🥦 Contorni" },
   { id:"insalate_classiche",label:"🥗 Insalate Classiche" },
   { id:"insalate_speciali", label:"🥗 Insalate Speciali" },
+  { id:"richieste",         label:"⭐ Richieste da Voi" },
 ];
 
 const DEFAULT_STATE = {
@@ -518,6 +519,7 @@ async function sbReq(path, method="GET", body=null) {
 
 // ─── Firebase Push ────────────────────────────────────────────────────────
 async function sendPush(title, message, tokens) {
+  if(!tokens||!tokens.length) return;
   try {
     const res = await fetch("/api/send-push", {
       method: "POST",
@@ -885,7 +887,9 @@ function AdminMenu({ date, appState, update }) {
                   value={item.price??""} onChange={e=>updatePrice(item.id,e.target.value)}/>
                 <button className="btn btn-success btn-sm" onClick={()=>{
                   // Salva prezzo nel menu
-                  saveItems(items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0}:i));
+                  // Aggiorna prezzo e imposta categoria richieste per piatti custom
+                  const updatedMenuItems = items.map(i=>i.id===item.id?{...i,price:parseFloat(item.price)||0,categoria:i.custom?"richieste":i.categoria}:i);
+                  saveItems(updatedMenuItems);
                   // Aggiorna tutti gli ordini che contengono questo piatto
                   const newOrders={...appState.orders};
                   const newCredits={...appState.credits};
@@ -910,7 +914,7 @@ function AdminMenu({ date, appState, update }) {
                     const ord=newOrders[k];
                     if(!ord||!ord.items.find(i=>i.id===item.id)) return;
                     const price=parseFloat(item.price)||0;
-                    const updItems=ord.items.map(i=>i.id===item.id?{...i,price}:i);
+                    const updItems=ord.items.map(i=>i.id===item.id?{...i,price,categoria:"richieste",custom:true}:i);
                     const raw=updItems.reduce((s,i)=>s+(i.price||0)*i.qty,0);
                     const crDisp=newCredits[ord.userId]||0;
                     const cu=crDisp>0?Math.min(crDisp,raw):0;
@@ -1139,6 +1143,9 @@ function AdminOrders({ date, appState, update }) {
     const pagato=tuttiPrezzati&&netTotal===0;
     const updated={...order,items:updatedItems,rawTotal,creditUsed,total:netTotal,paid:pagato};
     update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:newCredits});
+    // Notifica push al cliente
+    const pushTokPrice = (appState.fcmTokens||{})[order.userId];
+    if(pushTokPrice) sendPush("Dolci Sapori", `Ordine aggiornato. Da pagare: ${eur(netTotal)}`, [pushTokPrice]);
     setEditing(p=>{const n={...p};delete n[eKey];return n;});
     showToast("✓ Prezzo aggiornato");
 
@@ -2252,14 +2259,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                     <span style={{fontWeight:700}}>Da pagare:</span>
                     <span style={{color:"var(--accent)",fontWeight:900,fontSize:"1.1rem"}}>{eur(estNet)}</span>
                   </div>
-                  <div className="field" style={{marginBottom:8}}>
-                    <label>📝 Note (opzionale)</label>
-                    <input
-                      value={orderNote} onChange={e=>setOrderNote(e.target.value)}
-                      placeholder="es. senza cipolla, doppia porzione..."
-                      style={{fontSize:".85rem"}}
-                    />
-                  </div>
+
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     {ordersOpen
                       ? <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
