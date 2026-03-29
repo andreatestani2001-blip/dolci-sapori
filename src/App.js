@@ -1582,18 +1582,19 @@ function AdminRiepilogo({ date, appState }) {
     .map(([,v])=>v).filter(Boolean);
 
   // Raggruppa tutti i piatti ordinati
-  const piatti = {};
+  // Aggrega per nome + nota (separati) così "2× pasta" e "1× pasta - abbondante" restano distinti
+  const piattiMap = {};
   orders.forEach(ord=>{
     ord.items.forEach(item=>{
-      const key = item.name;
-      if(!piatti[key]) piatti[key]={name:item.name, qty:0, custom:item.custom||false, notes:[], categoria:item.categoria||"primi"};
-      piatti[key].qty += item.qty;
-      if(item.note && !piatti[key].notes.includes(item.note)){
-        piatti[key].notes.push(item.note);
-      }
+      const key = item.name + (item.note ? "__" + item.note : "");
+      if(!piattiMap[key]) piattiMap[key]={name:item.name, qty:0, custom:item.custom||false, note:item.note||null, categoria:item.categoria||"primi"};
+      piattiMap[key].qty += item.qty;
     });
   });
-  const lista = Object.values(piatti).sort((a,b)=>b.qty-a.qty);
+  const lista = Object.values(piattiMap).sort((a,b)=>{
+    if(a.name!==b.name) return a.name.localeCompare(b.name);
+    return (a.note||"").localeCompare(b.note||"");
+  });
 
   const totaleOrdini  = orders.length;
   const totaleGiornata = orders.reduce((s,o)=>s+(o.rawTotal||o.total||0),0);
@@ -1608,7 +1609,7 @@ function AdminRiepilogo({ date, appState }) {
       `RIEPILOGO ORDINI — ${new Date(date+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`,
       ``,
       `PIATTI DA PREPARARE:`,
-      ...lista.map(p=>`  ${p.qty}× ${p.name}${p.custom?" (su richiesta)":""}${p.notes&&p.notes.length>0?" - "+p.notes.join(", "):""}`),
+      ...lista.flatMap(p=>Array.from({length:p.qty},()=>`  ${p.name}${p.custom?" (su richiesta)":""}${p.note?" - "+p.note:""}`)),
       ``,
       `ORDINI (${totaleOrdini}):`,
       ...orders.map(o=>[
@@ -1660,24 +1661,14 @@ function AdminRiepilogo({ date, appState }) {
                   borderBottom:"1px solid var(--border-lt)",paddingBottom:3,marginBottom:5}}>
                   {cat.label}
                 </div>
-                {catPiatti.map(p=>(
-                  <div key={p.name} className="menu-item" style={{marginBottom:6}}>
+                {catPiatti.flatMap(p=>Array.from({length:p.qty},(_,i)=>(
+                  <div key={p.name+i} className="menu-item" style={{marginBottom:4}}>
                     <span style={{fontWeight:p.custom?700:500}}>
                       {p.custom?"🌟 ":""}{p.name}
+                      {p.note&&<span style={{fontSize:".75rem",color:"var(--muted)",fontStyle:"italic",marginLeft:6}}>- {p.note}</span>}
                     </span>
-                    <div style={{textAlign:"right"}}>
-                      <span style={{
-                        background:"var(--accent)",color:"#fff",
-                        borderRadius:20,padding:"3px 14px",fontWeight:700,fontSize:"1rem"
-                      }}>{p.qty}</span>
-                      {p.notes&&p.notes.length>0&&(
-                        <div style={{fontSize:".72rem",color:"var(--muted)",marginTop:3,fontStyle:"italic"}}>
-                          📝 {p.notes.join(" / ")}
-                        </div>
-                      )}
-                    </div>
                   </div>
-                ))}
+                )))}
               </div>);
             })
         }
