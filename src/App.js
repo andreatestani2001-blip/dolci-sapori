@@ -640,10 +640,13 @@ export default function App() {
     // Salva FCM token nel DB per questo utente
     setTimeout(async () => {
       try {
+        // Prova a ottenere il token se non ancora disponibile
+        if (!window._fcmToken && window.initFirebase) {
+          await window.initFirebase();
+          await new Promise(r=>setTimeout(r,2000));
+        }
         if (window._fcmToken) {
-          const tokens = {...(appState?.fcmTokens||{}), [u.id]: window._fcmToken};
-          setAppState(prev => ({...prev, fcmTokens: tokens}));
-          await saveState({...appState, fcmTokens: tokens});
+          update(prev => ({fcmTokens: {...(prev.fcmTokens||{}), [u.id]: window._fcmToken}}));
         }
       } catch(e) { console.log("FCM token save error:", e); }
     }, 3000);
@@ -1942,8 +1945,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
               if(perm==='granted') {
                 setShowNotifBanner(false);
                 localStorage.setItem("notif_banner_dismissed","1");
-                // Reinizializza Firebase per ottenere il token
-                if(window.initFirebase) window.initFirebase();
+                // Ottieni token FCM e salvalo subito
+                try {
+                  await window.initFirebase();
+                  // Aspetta che il token sia disponibile
+                  await new Promise(r=>setTimeout(r,2000));
+                  if(window._fcmToken && user) {
+                    const newTokens = {...(appState.fcmTokens||{}), [user.id]: window._fcmToken};
+                    update({fcmTokens: newTokens});
+                  }
+                } catch(e) { console.error('Token save error:', e); }
               } else {
                 setShowNotifBanner(false);
                 localStorage.setItem("notif_banner_dismissed","1");
