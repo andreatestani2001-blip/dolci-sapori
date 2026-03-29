@@ -40,27 +40,7 @@ if ('serviceWorker' in navigator) {
       initFirebase().catch(console.error);
     }
   });
-} eslint-disable */
-
-// ─── OneSignal Push Notifications ────────────────────────────────────────
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: "07793a6a-3bae-4d27-a700-b707077fcd40",
-    safari_web_id: "web.onesignal.auto.07793a6a-3bae-4d27-a700-b707077fcd40",
-    notifyButton: { enable: false },
-    allowLocalhostAsSecureOrigin: true,
-  });
-});
-
-// ─── Service Worker (PWA) ─────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('SW registrato:', reg.scope))
-      .catch(err => console.log('SW errore:', err));
-  });
-}
+} /* eslint-disable */
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── BRAND CONFIG (modifica qui per cambiare colori/logo/sfondo) ──────────
