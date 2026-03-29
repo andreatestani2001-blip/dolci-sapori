@@ -809,7 +809,8 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...current,[date]:true}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(true);
-    const fcmToks = Object.values(appState.fcmTokens||{}).filter(Boolean);
+    const fcmTokensAll = appState.fcmTokens||{};
+    const fcmToks = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensAll[u.id]).filter(Boolean);
     if(fcmToks.length>0) sendPush("🔓 Dolci Sapori", "Le ordinazioni sono aperte! Ordina subito.", fcmToks);
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
@@ -826,7 +827,8 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...currentOpen,[date]:false}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(false);
-    const fcmToksClose = Object.values(appState.fcmTokens||{}).filter(Boolean);
+    const fcmTokensClose = appState.fcmTokens||{};
+    const fcmToksClose = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensClose[u.id]).filter(Boolean);
     if(fcmToksClose.length>0) sendPush("🔒 Dolci Sapori", "Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
@@ -1428,10 +1430,17 @@ function AdminNotifications({ appState, update }) {
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
     // Invia anche push reale via OneSignal
-    // Raccoglie i token FCM dei destinatari
+    // Raccoglie i token FCM solo dei destinatari selezionati
     const fcmTokens = appState.fcmTokens||{};
     const pushTokens = targets.map(c=>fcmTokens[c.id]).filter(Boolean);
     if(pushTokens.length>0) sendPush("🍽 Dolci Sapori", message.trim(), pushTokens);
+    else if(target==="all") {
+      // Fallback: tutti i token tranne admin
+      const allTokens = appState.users
+        .filter(u=>u.role!=="admin"&&u.approved)
+        .map(u=>fcmTokens[u.id]).filter(Boolean);
+      if(allTokens.length>0) sendPush("🍽 Dolci Sapori", message.trim(), allTokens);
+    }
     showToast(`✓ Notifica inviata a ${record.to}`);
   };
 
