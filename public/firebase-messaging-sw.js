@@ -13,9 +13,4 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // Firebase gestisce automaticamente le notifiche in background
-// Non serve showNotification manuale - evita notifiche doppie
-messaging.onBackgroundMessage(function(payload) {
-  console.log('Background message received:', payload);
-  // Firebase mostra automaticamente la notifica dal campo notification{}
-  // Non chiamare showNotification qui per evitare duplicati
-});
+// Non serve onBackgroundMessage - Firebase lo fa già con il campo notification{}

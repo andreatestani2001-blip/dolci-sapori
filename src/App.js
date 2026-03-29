@@ -813,7 +813,7 @@ function AdminMenu({ date, appState, update }) {
     setLocalOrdersOpen(true);
     const fcmTokensAll = appState.fcmTokens||{};
     const fcmToks = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensAll[u.id]).filter(Boolean);
-    if(fcmToks.length>0) sendPush("Dolci Sapori", "🔓 Le ordinazioni sono aperte! Ordina subito.", fcmToks);
+    if(fcmToks.length>0) sendPush("🔓 Ordini aperti", "Le ordinazioni sono aperte! Ordina subito.", fcmToks);
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
@@ -831,7 +831,7 @@ function AdminMenu({ date, appState, update }) {
     setLocalOrdersOpen(false);
     const fcmTokensClose = appState.fcmTokens||{};
     const fcmToksClose = appState.users.filter(u=>u.role!=="admin"&&u.approved).map(u=>fcmTokensClose[u.id]).filter(Boolean);
-    if(fcmToksClose.length>0) sendPush("Dolci Sapori", "🔒 Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
+    if(fcmToksClose.length>0) sendPush("🔒 Ordini chiusi", "Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -928,7 +928,7 @@ function AdminMenu({ date, appState, update }) {
                     const ordNotif=newOrders[k];
                     if(ordNotif&&ordNotif.items.find(i=>i.id===item.id)){
                       const tok=(appState.fcmTokens||{})[ordNotif.userId];
-                      if(tok) sendPush("Dolci Sapori", `Prezzo aggiornato. Il tuo ordine: ${eur(ordNotif.total)} da pagare.`, [tok]);
+                      if(tok) sendPush("💰 Prezzo aggiornato", `Il prezzo del tuo ordine. Il tuo ordine: ${eur(ordNotif.total)} da pagare.`, [tok]);
                     }
                   });
                   update({orders:newOrders,credits:newCredits});
@@ -1079,7 +1079,7 @@ function AdminOrders({ date, appState, update }) {
     const newCredits={...appState.credits,[editingOrder.userId]:newCr};
     update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
     const pushTokEdit = (appState.fcmTokens||{})[editingOrder.userId];
-    if(pushTokEdit) sendPush("Dolci Sapori", `Il tuo ordine è stato modificato. Da pagare: ${eur(nuovoTotal)}`, [pushTokEdit]);
+    if(pushTokEdit) sendPush("✏️ Ordine modificato", `Il tuo ordine è stato modificato. Da pagare: ${eur(nuovoTotal)}`, [pushTokEdit]);
     setEditingOrder(null);
     showToast(`✓ Ordine di ${editingOrder.userName} aggiornato`);
   };
@@ -1120,7 +1120,7 @@ function AdminOrders({ date, appState, update }) {
     };
     update({orders:{...appState.orders,[`${date}:${addOrderUser}`]:order},credits:newCredits});
     const pushTokManual = (appState.fcmTokens||{})[addOrderUser];
-    if(pushTokManual) sendPush("Dolci Sapori", `Il tuo ordine è stato aggiunto. Da pagare: ${eur(netTotal)}`, [pushTokManual]);
+    if(pushTokManual) sendPush("📋 Ordine aggiunto", `Il tuo ordine è stato aggiunto. Da pagare: ${eur(netTotal)}`, [pushTokManual]);
     setShowAddOrder(false);
     setAddOrderItems({}); setAddOrderNote(""); setAddOrderUser("");
     setAddCustomName(""); setAddCustomPrice("");
@@ -1145,7 +1145,7 @@ function AdminOrders({ date, appState, update }) {
     update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:newCredits});
     // Notifica push al cliente
     const pushTokPrice = (appState.fcmTokens||{})[order.userId];
-    if(pushTokPrice) sendPush("Dolci Sapori", `Ordine aggiornato. Da pagare: ${eur(netTotal)}`, [pushTokPrice]);
+    if(pushTokPrice) sendPush("💰 Prezzo aggiornato", `Ordine aggiornato. Da pagare: ${eur(netTotal)}`, [pushTokPrice]);
     setEditing(p=>{const n={...p};delete n[eKey];return n;});
     showToast("✓ Prezzo aggiornato");
 
@@ -1451,13 +1451,13 @@ function AdminNotifications({ appState, update }) {
     // Raccoglie i token FCM solo dei destinatari selezionati
     const fcmTokens = appState.fcmTokens||{};
     const pushTokens = targets.map(c=>fcmTokens[c.id]).filter(Boolean);
-    if(pushTokens.length>0) sendPush("🍽 Dolci Sapori", message.trim(), pushTokens);
+    if(pushTokens.length>0) sendPush("📢 Dolci Sapori", message.trim(), pushTokens);
     else if(target==="all") {
       // Fallback: tutti i token tranne admin
       const allTokens = appState.users
         .filter(u=>u.role!=="admin"&&u.approved)
         .map(u=>fcmTokens[u.id]).filter(Boolean);
-      if(allTokens.length>0) sendPush("🍽 Dolci Sapori", message.trim(), allTokens);
+      if(allTokens.length>0) sendPush("📢 Dolci Sapori", message.trim(), allTokens);
     }
     showToast(`✓ Notifica inviata a ${record.to}`);
   };

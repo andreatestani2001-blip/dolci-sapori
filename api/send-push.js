@@ -32,18 +32,29 @@ export default async function handler(req, res) {
     const results = [];
 
     for (const token of tokens) {
-      // Usiamo solo webpush con notification - senza android/apns notification
-      // per evitare notifiche doppie
       const body = {
         message: {
           token,
+          // notification a livello top per iOS PWA
+          notification: {
+            title,
+            body: message,
+          },
+          apns: {
+            headers: { 'apns-priority': '10' },
+            payload: {
+              aps: {
+                alert: { title, body: message },
+                sound: 'default',
+              }
+            }
+          },
           webpush: {
+            headers: { Urgency: 'high' },
             notification: {
               title,
               body: message,
               icon: '/logo192.png',
-              badge: '/logo192.png',
-              requireInteraction: false,
             },
             fcm_options: { link: 'https://dolci-sapori.vercel.app' }
           }
