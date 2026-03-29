@@ -1,5 +1,47 @@
 /* eslint-disable */
 
+// ─// ─── Firebase Push Notifications ─────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCkj3CcZrVR9vxmRV8RQsdOVXhve_KMHZY",
+  authDomain: "dolci-sapori.firebaseapp.com",
+  projectId: "dolci-sapori",
+  storageBucket: "dolci-sapori.firebasestorage.app",
+  messagingSenderId: "578720526922",
+  appId: "1:578720526922:web:e1543d37d938d4c86facb3"
+};
+const VAPID_KEY = "BEjpQn5lpMIQ5mf3YjALU8gzf0zdFjUblNjBmEyi8Lq70-4mgt4Rf9XGWU9Wi5DYKfS2rLcovq_Y7X0qFwabgLY";
+
+async function initFirebase() {
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+    const app = initializeApp(FIREBASE_CONFIG);
+    const messaging = getMessaging(app);
+    const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: sw });
+    if (token) {
+      console.log('FCM Token:', token);
+      window._fcmToken = token;
+    }
+    onMessage(messaging, (payload) => {
+      console.log('Messaggio ricevuto:', payload);
+    });
+  } catch(e) { console.log('Firebase init error:', e); }
+}
+
+// ─── Service Worker (PWA) ─────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('SW registrato:', reg.scope))
+      .catch(err => console.log('SW errore:', err));
+    // Inizializza Firebase dopo SW
+    if (window.location.protocol === 'https:') {
+      initFirebase().catch(console.error);
+    }
+  });
+} eslint-disable */
+
 // ─── OneSignal Push Notifications ────────────────────────────────────────
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
@@ -475,6 +517,7 @@ const DEFAULT_STATE = {
   orders:        {},
   notifications: {},
   sentNotifs:    [],
+  fcmTokens:     {}, // { userId: fcmToken }
 };
 
 async function sbReq(path, method="GET", body=null) {
@@ -493,14 +536,13 @@ async function sbReq(path, method="GET", body=null) {
   return txt ? JSON.parse(txt) : null;
 }
 
-// ─── OneSignal Push (via Vercel proxy) ───────────────────────────────────
-async function sendPush(title, message) {
+// ─── Firebase Push ────────────────────────────────────────────────────────
+async function sendPush(title, message, tokens) {
   try {
-    console.log("Invio push:", title, message);
-    const res = await fetch("https://dolci-sapori.vercel.app/api/send-push", {
+    const res = await fetch("/api/send-push", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, message }),
+      body: JSON.stringify({ title, message, tokens }),
     });
     const data = await res.json();
     console.log("Push response:", data);
@@ -615,19 +657,16 @@ export default function App() {
   const handleLogin = (u) => {
     setUser(u);
     try { localStorage.setItem("ds_logged_user", JSON.stringify(u)); } catch {}
-    // Registra l'utente su OneSignal con tag per targeting
-    try {
-      if (window.OneSignalDeferred) {
-        window.OneSignalDeferred.push(async function(OneSignal) {
-          await OneSignal.login(u.id);
-          await OneSignal.User.addTags({
-            userId: u.id,
-            userName: u.name,
-            role: u.role,
-          });
-        });
-      }
-    } catch(e) { console.log("OneSignal tag error:", e); }
+    // Salva FCM token nel DB per questo utente
+    setTimeout(async () => {
+      try {
+        if (window._fcmToken) {
+          const tokens = {...(appState?.fcmTokens||{}), [u.id]: window._fcmToken};
+          setAppState(prev => ({...prev, fcmTokens: tokens}));
+          await saveState({...appState, fcmTokens: tokens});
+        }
+      } catch(e) { console.log("FCM token save error:", e); }
+    }, 3000);
   };
 
   const handleLogout = () => {
@@ -787,7 +826,8 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...current,[date]:true}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(true);
-    sendPush("🔓 Dolci Sapori", "Le ordinazioni sono aperte! Ordina subito.");
+    const fcmToks = Object.values(appState.fcmTokens||{}).filter(Boolean);
+    if(fcmToks.length>0) sendPush("🔓 Dolci Sapori", "Le ordinazioni sono aperte! Ordina subito.", fcmToks);
     showToast("✓ Ordini aperti! Notifica inviata.");
   };
   const closeOrders = ()=>{
@@ -803,7 +843,8 @@ function AdminMenu({ date, appState, update }) {
     const patch = {ordersOpen:{...currentOpen,[date]:false}, notifications:newNotifs};
     update(patch);
     setLocalOrdersOpen(false);
-    sendPush("🔒 Dolci Sapori", "Le ordinazioni sono chiuse. Grazie!");
+    const fcmToksClose = Object.values(appState.fcmTokens||{}).filter(Boolean);
+    if(fcmToksClose.length>0) sendPush("🔒 Dolci Sapori", "Le ordinazioni sono chiuse. Grazie!", fcmToksClose);
     showToast("🔒 Ordini chiusi, notifica inviata!");
   };
 
@@ -1404,7 +1445,10 @@ function AdminNotifications({ appState, update }) {
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
     // Invia anche push reale via OneSignal
-    sendPush("🍽 Dolci Sapori", message.trim());
+    // Raccoglie i token FCM dei destinatari
+    const fcmTokens = appState.fcmTokens||{};
+    const pushTokens = targets.map(c=>fcmTokens[c.id]).filter(Boolean);
+    if(pushTokens.length>0) sendPush("🍽 Dolci Sapori", message.trim(), pushTokens);
     showToast(`✓ Notifica inviata a ${record.to}`);
   };
 
