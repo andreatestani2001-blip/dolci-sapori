@@ -12,5 +12,12 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Firebase gestisce automaticamente le notifiche in background
-// Non serve onBackgroundMessage - Firebase lo fa già con il campo notification{}
+messaging.onBackgroundMessage(function(payload) {
+  const title = payload.notification?.title || 'Dolci Sapori';
+  const body = payload.notification?.body || payload.data?.body || '';
+  self.registration.showNotification(title, {
+    body,
+    icon: '/logo192.png',
+    badge: '/logo192.png',
+  });
+});
