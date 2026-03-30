@@ -32,12 +32,10 @@ export default async function handler(req, res) {
     const results = [];
 
     for (const token of tokens) {
-      // Usiamo SOLO data{} - il service worker gestisce tutto
-      // Così evitiamo notifiche doppie (Firebase + SW)
       const body = {
         message: {
           token,
-          data: {
+          notification: {
             title,
             body: message,
           },
@@ -45,13 +43,19 @@ export default async function handler(req, res) {
             headers: { 'apns-priority': '10' },
             payload: {
               aps: {
-                'content-available': 1,
+                alert: { title, body: message },
                 sound: 'default',
               }
             }
           },
           webpush: {
             headers: { Urgency: 'high' },
+            notification: {
+              title,
+              body: message,
+              icon: '/logo192.png',
+            },
+            fcm_options: { link: 'https://dolci-sapori.vercel.app' }
           }
         }
       };
