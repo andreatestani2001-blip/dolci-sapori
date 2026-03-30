@@ -2174,7 +2174,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
           const daysWithOrders = days.filter(d=>appState.orders[`${d}:${user.id}`]);
           return(
             <div className="card">
-              <div className="card-title">📋 I miei ordini questa settimana</div>
+              <div className="card-title">📋 I miei ordini (ultimi 30 giorni)</div>
               {daysWithOrders.length===0&&<div className="empty">Nessun ordine nell'ultimo mese.</div>}
               {daysWithOrders.map((d)=>{
                 const ord = appState.orders[`${d}:${user.id}`];
