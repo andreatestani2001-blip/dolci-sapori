@@ -766,8 +766,10 @@ function AuthScreen({ appState, update, onLogin }) {
 function AdminMenu({ date, appState, update }) {
   const [newName,     setNewName]     = useState("");
   const [newPrice,    setNewPrice]    = useState("");
-  const [newCategoria,setNewCategoria]= useState("primi");
-  const [toast,       setToast]       = useState({text:"",ok:true});
+  const [newCategoria,    setNewCategoria]    = useState("primi");
+  const [toast,           setToast]           = useState({text:"",ok:true});
+  const [editCustomAdmin, setEditCustomAdmin] = useState(null);
+  const [editCustomAdminName, setEditCustomAdminName] = useState("");
   // Stato locale per aggiornare UI subito senza aspettare il polling
   const [localOrdersOpen, setLocalOrdersOpen] = useState(null);
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
@@ -877,9 +879,53 @@ function AdminMenu({ date, appState, update }) {
           <div style={{fontSize:".78rem",fontWeight:700,color:"var(--gold)",margin:"10px 0 6px",textTransform:"uppercase",letterSpacing:".04em"}}>⭐ Richieste personalizzate clienti</div>
           {customItems.map(item=>(
             <div className="menu-item menu-item-custom" key={item.id}>
-              <div>
-                <span style={{fontWeight:700}}>{item.name}</span>
-                <div style={{fontSize:".75rem",color:"var(--muted)"}}>Richiesto da: {item.requestedBy}</div>
+              <div style={{flex:1}}>
+                {editCustomAdmin===item.id
+                  ? <div className="flex" style={{gap:6}}>
+                      <input value={editCustomAdminName}
+                        onChange={e=>setEditCustomAdminName(e.target.value)}
+                        style={{flex:1,fontSize:".85rem"}} autoFocus
+                        onKeyDown={e=>{ if(e.key==="Enter") {
+                          const newName=editCustomAdminName.trim();
+                          if(!newName) return;
+                          // Aggiorna nel menù
+                          const updMenu=items.map(i=>i.id===item.id?{...i,name:newName}:i);
+                          saveItems(updMenu);
+                          // Aggiorna negli ordini
+                          const newOrders={...appState.orders};
+                          Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                            const ord=newOrders[k];
+                            if(ord&&ord.items.find(i=>i.id===item.id))
+                              newOrders[k]={...ord,items:ord.items.map(i=>i.id===item.id?{...i,name:newName}:i)};
+                          });
+                          update({orders:newOrders});
+                          setEditCustomAdmin(null);
+                        }}}
+                      />
+                      <button className="btn btn-success btn-sm" onClick={()=>{
+                        const newName=editCustomAdminName.trim(); if(!newName) return;
+                        const updMenu=items.map(i=>i.id===item.id?{...i,name:newName}:i);
+                        saveItems(updMenu);
+                        const newOrders={...appState.orders};
+                        Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                          const ord=newOrders[k];
+                          if(ord&&ord.items.find(i=>i.id===item.id))
+                            newOrders[k]={...ord,items:ord.items.map(i=>i.id===item.id?{...i,name:newName}:i)};
+                        });
+                        update({orders:newOrders});
+                        setEditCustomAdmin(null);
+                      }}>✓</button>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>setEditCustomAdmin(null)}>✕</button>
+                    </div>
+                  : <div className="flex" style={{alignItems:"center",gap:6}}>
+                      <div>
+                        <span style={{fontWeight:700}}>{item.name}</span>
+                        <div style={{fontSize:".75rem",color:"var(--muted)"}}>Richiesto da: {item.requestedBy}</div>
+                      </div>
+                      <button className="btn btn-ghost btn-xs" onClick={()=>{setEditCustomAdmin(item.id);setEditCustomAdminName(item.name);}}
+                        style={{fontSize:".7rem",padding:"2px 6px"}}>✏️</button>
+                    </div>
+                }
               </div>
               <div className="flex">
                 <span className="muted" style={{fontSize:".82rem"}}>€</span>
@@ -2057,15 +2103,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
       <div className="header">
         <div className="header-top">
           <div className="header-logo"><LogoIcon size={42}/>{!BRAND.logoUrl && BRAND.name}</div>
-          <div className="header-actions">
+          <div className="header-actions" style={{flex:1,minWidth:0,overflow:"hidden"}}>
+            <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
-            <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋 Storico</button>
+            <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋</button>
             <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
             </button>
-            <span className="header-user" style={{display:"none"}}>👤 {user.name}</span>
-            <button className="tab" onClick={onLogout}>← Esci</button>
+            </div>
+            <button className="tab" onClick={onLogout} style={{flexShrink:0,marginLeft:4}}>⬅</button>
           </div>
         </div>
         <div style={{padding:"0 20px 8px",fontSize:".78rem",color:"rgba(255,255,255,.7)"}}>
