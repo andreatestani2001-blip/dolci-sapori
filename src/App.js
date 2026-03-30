@@ -1553,8 +1553,8 @@ function AdminClients({ appState, update }) {
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
   };
   const resetCr=userId=>{if(!window.confirm("Azzerare il credito?")) return; update({credits:{...appState.credits,[userId]:0}});showToast("Credito azzerato");};
-  const [resetPwdUser, setResetPwdUser] = React.useState(null);
-  const [newPwdAdmin,  setNewPwdAdmin]  = React.useState("");
+  const [resetPwdUser, setResetPwdUser] = useState(null);
+  const [newPwdAdmin,  setNewPwdAdmin]  = useState("");
   const saveResetPwd = () => {
     if(!newPwdAdmin.trim()||newPwdAdmin.length<4) return showToast("Password troppo corta (min 4)",true);
     const updUsers = appState.users.map(u=>u.id===resetPwdUser?{...u,password:newPwdAdmin.trim()}:u);
@@ -1882,6 +1882,21 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
   const [editingCustomId, setEditingCustomId] = useState(null);
   const [editingCustomName, setEditingCustomName] = useState("");
+  const [accName,  setAccName]  = useState(user.name);
+  const [accPwd,   setAccPwd]   = useState("");
+  const [accPwd2,  setAccPwd2]  = useState("");
+  const [accToast, setAccToast] = useState("");
+  const saveAccount = () => {
+    if(accName.trim().length<2) return setAccToast("Nome troppo corto");
+    if(accPwd && accPwd.length<4) return setAccToast("Password troppo corta (min 4)");
+    if(accPwd && accPwd!==accPwd2) return setAccToast("Le password non coincidono");
+    const updUsers = appState.users.map(u=>u.id===user.id?{...u,name:accName.trim(),...(accPwd?{password:accPwd}:{})}:u);
+    update({users:updUsers});
+    handleLogin({...user,name:accName.trim()});
+    setAccPwd(""); setAccPwd2("");
+    setAccToast("✓ Profilo aggiornato!");
+    setTimeout(()=>setAccToast(""),3000);
+  };
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
@@ -2077,48 +2092,25 @@ function ClientPanel({ user, appState, update, onLogout }) {
           </div>
         )}
 
-        {tab==="account"&&(()=>{
-          const [newName,    setNewName]    = React.useState(user.name);
-          const [newPwd,     setNewPwd]     = React.useState("");
-          const [confirmPwd, setConfirmPwd] = React.useState("");
-          const [accToast,   setAccToast]   = React.useState("");
-          const saveAccount = () => {
-            if(newName.trim().length<2) return setAccToast("Nome troppo corto");
-            if(newPwd && newPwd.length<4) return setAccToast("Password troppo corta (min 4 caratteri)");
-            if(newPwd && newPwd!==confirmPwd) return setAccToast("Le password non coincidono");
-            const updUsers = appState.users.map(u=>u.id===user.id?{
-              ...u,
-              name: newName.trim(),
-              ...(newPwd?{password:newPwd}:{})
-            }:u);
-            update({users:updUsers});
-            // Aggiorna anche l'utente loggato
-            const updUser = {...user, name:newName.trim()};
-            handleLogin(updUser);
-            setNewPwd(""); setConfirmPwd("");
-            setAccToast("✓ Profilo aggiornato!");
-            setTimeout(()=>setAccToast(""),3000);
-          };
-          return(
-            <div className="card">
-              <div className="card-title">⚙️ Il mio account</div>
-              <div className="field" style={{marginBottom:10}}>
-                <label>Nome visualizzato</label>
-                <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Il tuo nome"/>
-              </div>
-              <div className="field" style={{marginBottom:10}}>
-                <label>Nuova password</label>
-                <input type="password" value={newPwd} onChange={e=>setNewPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
-              </div>
-              <div className="field" style={{marginBottom:14}}>
-                <label>Conferma password</label>
-                <input type="password" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} placeholder="Ripeti la nuova password"/>
-              </div>
-              {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
-              <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
+        {tab==="account"&&(
+          <div className="card">
+            <div className="card-title">⚙️ Il mio account</div>
+            <div className="field" style={{marginBottom:10}}>
+              <label>Nome visualizzato</label>
+              <input value={accName} onChange={e=>setAccName(e.target.value)} placeholder="Il tuo nome"/>
             </div>
-          );
-        })()}
+            <div className="field" style={{marginBottom:10}}>
+              <label>Nuova password</label>
+              <input type="password" value={accPwd} onChange={e=>setAccPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
+            </div>
+            <div className="field" style={{marginBottom:14}}>
+              <label>Conferma password</label>
+              <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
+            </div>
+            {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
+            <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
+          </div>
+        )}
 
         {tab==="storico"&&(()=>{
           // Calcola gli ultimi 30 giorni
