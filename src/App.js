@@ -1942,6 +1942,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
     setAccPwd(""); setAccPwd2("");
     setAccToast("✓ Profilo aggiornato!");
     setTimeout(()=>setAccToast(""),3000);
+    // Mostra un alert per confermare
+    setTimeout(()=>window.alert("✓ Profilo aggiornato con successo!"),100);
   };
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
@@ -2112,7 +2114,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
             </button>
             </div>
-            <button className="tab" onClick={onLogout} style={{flexShrink:0,marginLeft:4}}>⬅</button>
+            <button className="tab" onClick={onLogout} style={{flexShrink:0,marginLeft:4}}>← Esci</button>
           </div>
         </div>
         <div style={{padding:"0 20px 8px",fontSize:".78rem",color:"rgba(255,255,255,.7)"}}>
