@@ -1553,6 +1553,15 @@ function AdminClients({ appState, update }) {
     showToast(sign>0?`✓ Credito aggiunto: +${eur(val)}`:`✓ Credito scalato: −${eur(val)}`);
   };
   const resetCr=userId=>{if(!window.confirm("Azzerare il credito?")) return; update({credits:{...appState.credits,[userId]:0}});showToast("Credito azzerato");};
+  const [resetPwdUser, setResetPwdUser] = React.useState(null);
+  const [newPwdAdmin,  setNewPwdAdmin]  = React.useState("");
+  const saveResetPwd = () => {
+    if(!newPwdAdmin.trim()||newPwdAdmin.length<4) return showToast("Password troppo corta (min 4)",true);
+    const updUsers = appState.users.map(u=>u.id===resetPwdUser?{...u,password:newPwdAdmin.trim()}:u);
+    update({users:updUsers});
+    setResetPwdUser(null); setNewPwdAdmin("");
+    showToast("✓ Password aggiornata!");
+  };
 
   return(<>
     {pending.length>0&&(
@@ -1593,7 +1602,22 @@ function AdminClients({ appState, update }) {
                 <div className="avatar">{initials(u.name)}</div>
                 <div>
                   <div style={{fontWeight:700}}>{u.name}</div>
-                  <div className="muted">@{u.id} · pw: {u.password}</div>
+                  <div className="flex" style={{alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span className="muted">@{u.id} · pw: {u.password}</span>
+                  <button className="btn btn-ghost btn-xs" onClick={()=>{setResetPwdUser(u.id);setNewPwdAdmin("");}}
+                    style={{fontSize:".7rem"}}>🔑 Reset pw</button>
+                </div>
+                {resetPwdUser===u.id&&(
+                  <div className="flex" style={{gap:6,marginTop:6}}>
+                    <input type="text" placeholder="Nuova password..."
+                      value={newPwdAdmin} onChange={e=>setNewPwdAdmin(e.target.value)}
+                      style={{flex:1,fontSize:".82rem"}}
+                      onKeyDown={e=>e.key==="Enter"&&saveResetPwd()}
+                    />
+                    <button className="btn btn-success btn-sm" onClick={saveResetPwd}>✓</button>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>setResetPwdUser(null)}>✕</button>
+                  </div>
+                )}
                 </div>
               </div>
               {/* Credit + Debt summary */}
@@ -1856,6 +1880,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [customDish, setCustomDish] = useState("");
   const [orderNote,  setOrderNote]  = useState("");
   const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
+  const [editingCustomId, setEditingCustomId] = useState(null);
+  const [editingCustomName, setEditingCustomName] = useState("");
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
@@ -1950,8 +1976,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const estNet  =Math.max(0,estRaw-crUsable);
 
   // Separate normal and custom menu items
-  const normalMenu=menu.filter(i=>!i.custom);
-  const myCustom =menu.filter(i=>i.custom&&i.requestedBy===user.name);
+  // Piatti custom con prezzo → visibili a tutti nella categoria richieste
+  // Piatti custom senza prezzo → visibili solo al richiedente
+  const normalMenu=menu.filter(i=>!i.custom || (i.custom && i.price!=null));
+  const myCustom =menu.filter(i=>i.custom&&i.price==null&&i.requestedBy===user.name);
 
   return(
     <div className="app">
@@ -2017,6 +2045,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
           <div className="header-actions">
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
             <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋 Storico</button>
+            <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
             </button>
@@ -2048,33 +2077,74 @@ function ClientPanel({ user, appState, update, onLogout }) {
           </div>
         )}
 
+        {tab==="account"&&(()=>{
+          const [newName,    setNewName]    = React.useState(user.name);
+          const [newPwd,     setNewPwd]     = React.useState("");
+          const [confirmPwd, setConfirmPwd] = React.useState("");
+          const [accToast,   setAccToast]   = React.useState("");
+          const saveAccount = () => {
+            if(newName.trim().length<2) return setAccToast("Nome troppo corto");
+            if(newPwd && newPwd.length<4) return setAccToast("Password troppo corta (min 4 caratteri)");
+            if(newPwd && newPwd!==confirmPwd) return setAccToast("Le password non coincidono");
+            const updUsers = appState.users.map(u=>u.id===user.id?{
+              ...u,
+              name: newName.trim(),
+              ...(newPwd?{password:newPwd}:{})
+            }:u);
+            update({users:updUsers});
+            // Aggiorna anche l'utente loggato
+            const updUser = {...user, name:newName.trim()};
+            handleLogin(updUser);
+            setNewPwd(""); setConfirmPwd("");
+            setAccToast("✓ Profilo aggiornato!");
+            setTimeout(()=>setAccToast(""),3000);
+          };
+          return(
+            <div className="card">
+              <div className="card-title">⚙️ Il mio account</div>
+              <div className="field" style={{marginBottom:10}}>
+                <label>Nome visualizzato</label>
+                <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Il tuo nome"/>
+              </div>
+              <div className="field" style={{marginBottom:10}}>
+                <label>Nuova password</label>
+                <input type="password" value={newPwd} onChange={e=>setNewPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
+              </div>
+              <div className="field" style={{marginBottom:14}}>
+                <label>Conferma password</label>
+                <input type="password" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} placeholder="Ripeti la nuova password"/>
+              </div>
+              {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
+              <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
+            </div>
+          );
+        })()}
+
         {tab==="storico"&&(()=>{
-          // Calcola i giorni lun-sab della settimana corrente
+          // Calcola gli ultimi 30 giorni
           const now = new Date();
-          const dayOfWeek = now.getDay(); // 0=dom, 1=lun...6=sab
-          const monday = new Date(now);
-          monday.setDate(now.getDate() - (dayOfWeek===0 ? 6 : dayOfWeek-1));
           const days = [];
-          for(let i=0;i<6;i++){
-            const d = new Date(monday);
-            d.setDate(monday.getDate()+i);
+          for(let i=29;i>=0;i--){
+            const d = new Date(now);
+            d.setDate(now.getDate()-i);
             days.push(d.toISOString().slice(0,10));
           }
-          const giorni = ["Lun","Mar","Mer","Gio","Ven","Sab"];
+          // Filtra solo i giorni con ordini
+          const daysWithOrders = days.filter(d=>appState.orders[`${d}:${user.id}`]);
           return(
             <div className="card">
               <div className="card-title">📋 I miei ordini questa settimana</div>
-              {days.map((d,i)=>{
+              {daysWithOrders.length===0&&<div className="empty">Nessun ordine nell'ultimo mese.</div>}
+              {daysWithOrders.map((d)=>{
                 const ord = appState.orders[`${d}:${user.id}`];
                 const isToday = d===today();
                 return(
                   <div key={d} style={{
-                    borderBottom:"1px solid var(--border-lt)", padding:"10px 0",
-                    opacity: new Date(d) > now ? 0.4 : 1
+                    borderBottom:"1px solid var(--border-lt)", padding:"10px 0"
                   }}>
                     <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
                       <span style={{fontWeight:700,color:isToday?"var(--accent)":"var(--text)"}}>
-                        {isToday?"📍 ":""}{giorni[i]} {new Date(d+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
+                        {isToday?"📍 ":""}{new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"})}
                       </span>
                       {ord
                         ? <span className={`paid-badge ${ord.paid?"pagato":"non-pagato"}`} style={{cursor:"default",fontSize:".68rem"}}>
@@ -2217,8 +2287,37 @@ function ClientPanel({ user, appState, update, onLogout }) {
                       {myCustom.map(item=>(
                         <div key={item.id}>
                           <div className="menu-order-item menu-order-item-custom">
-                            <div>
-                              <div style={{fontWeight:700}}>{item.name}</div>
+                            <div style={{flex:1}}>
+                              {editingCustomId===item.id
+                                ? <div className="flex" style={{gap:6}}>
+                                    <input value={editingCustomName}
+                                      onChange={e=>setEditingCustomName(e.target.value)}
+                                      style={{flex:1,fontSize:".85rem"}}
+                                      autoFocus
+                                    />
+                                    <button className="btn btn-success btn-sm" onClick={()=>{
+                                      if(!editingCustomName.trim()) return;
+                                      const newName=editingCustomName.trim();
+                                      const updatedMenu=menu.map(i=>i.id===item.id?{...i,name:newName}:i);
+                                      // Aggiorna anche gli ordini esistenti che contengono questo piatto
+                                      const newOrders={...appState.orders};
+                                      Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                                        const ord=newOrders[k];
+                                        if(ord&&ord.items.find(i=>i.id===item.id)){
+                                          newOrders[k]={...ord,items:ord.items.map(i=>i.id===item.id?{...i,name:newName}:i)};
+                                        }
+                                      });
+                                      update({menus:{...appState.menus,[date]:updatedMenu},orders:newOrders});
+                                      setEditingCustomId(null);
+                                    }}>✓</button>
+                                    <button className="btn btn-ghost btn-sm" onClick={()=>setEditingCustomId(null)}>✕</button>
+                                  </div>
+                                : <div className="flex" style={{alignItems:"center",gap:6}}>
+                                    <div style={{fontWeight:700}}>{item.name}</div>
+                                    <button className="btn btn-ghost btn-xs" onClick={()=>{setEditingCustomId(item.id);setEditingCustomName(item.name);}}
+                                      style={{fontSize:".7rem",padding:"2px 6px"}}>✏️</button>
+                                  </div>
+                              }
                               <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>In attesa del prezzo</span>}</div>
                             </div>
                             <div className="qty-ctrl">
