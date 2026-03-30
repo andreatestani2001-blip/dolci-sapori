@@ -443,9 +443,9 @@ const STYLE = `
       linear-gradient(165deg, ${BRAND.bgColor}, #f0e0c8);
   }
   .auth-box {
-    background: rgba(255,255,255,.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: 1px solid rgba(232,220,203,.8);
     border-radius: 22px; padding: 38px 36px; width: 380px;
     box-shadow: 0 20px 60px rgba(26,15,6,.16), 0 2px 8px rgba(26,15,6,.06);
@@ -453,7 +453,7 @@ const STYLE = `
   .auth-logo {
     font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600;
     color: var(--accent); margin-bottom: 4px;
-    display: flex; align-items: center; gap: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center;
     letter-spacing: .02em;
   }
   .auth-logo-icon { height: 56px; display: flex; align-items: center; }
