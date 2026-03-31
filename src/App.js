@@ -1939,6 +1939,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [editingCustomId, setEditingCustomId] = useState(null);
   const [editingCustomName, setEditingCustomName] = useState("");
   const [accName,  setAccName]  = useState(user.name);
+  const [atBottom, setAtBottom] = useState(false);
+  const orderFormRef = useRef(null);
   const [accPwd,   setAccPwd]   = useState("");
   const [accPwd2,  setAccPwd2]  = useState("");
   const [accToast, setAccToast] = useState("");
@@ -1962,6 +1964,18 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
   useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),2000); return()=>clearInterval(t); },[]);
+
+  // Rileva se utente è in fondo alla pagina
+  useEffect(()=>{
+    const handleScroll = () => {
+      const scrolled = window.scrollY + window.innerHeight;
+      const total = document.documentElement.scrollHeight;
+      setAtBottom(scrolled >= total - 80);
+    };
+    window.addEventListener('scroll', handleScroll, {passive:true});
+    handleScroll();
+    return ()=>window.removeEventListener('scroll', handleScroll);
+  },[tab]);
 
   // Mostra banner iOS solo se: è iOS, non è già installata, non è stata chiusa
   useEffect(() => {
@@ -2228,6 +2242,21 @@ function ClientPanel({ user, appState, update, onLogout }) {
         })()}
 
         {tab==="order"&&(<>
+          {/* Bottone sticky in basso con totale */}
+          {ordersOpen && !myOrder && estRaw>0 && !atBottom && (
+            <div style={{
+              position:"fixed", bottom:0, left:0, right:0, zIndex:200,
+              padding:"10px 16px 20px",
+              background:"linear-gradient(transparent, rgba(253,246,238,0.98) 30%)",
+              pointerEvents:"none"
+            }}>
+              <button className="btn btn-primary" onClick={sendOrder}
+                style={{width:"100%",pointerEvents:"all",fontSize:"1rem",padding:"14px",
+                  boxShadow:"0 4px 20px rgba(139,26,26,.3)",borderRadius:14}}>
+                📨 Invia ordine — {crUsable>0?<><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>:eur(estRaw)}
+              </button>
+            </div>
+          )}
           {/* Saldo / Credito banners */}
           {credit>0&&(
             <div className="banner banner-green">
