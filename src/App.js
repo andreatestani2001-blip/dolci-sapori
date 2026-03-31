@@ -1941,6 +1941,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [accName,  setAccName]  = useState(user.name);
   const [atBottom, setAtBottom] = useState(false);
   const [menuCompact, setMenuCompact] = useState(()=>{try{return localStorage.getItem('menu_compact')==='1'}catch{return false}});
+  const [openCats, setOpenCats] = useState({});
+  const toggleCat = (catId) => setOpenCats(p=>({...p,[catId]:!p[catId]}));
   const orderFormRef = useRef(null);
   const [accPwd,   setAccPwd]   = useState("");
   const [accPwd2,  setAccPwd2]  = useState("");
@@ -2335,42 +2337,33 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   {CATEGORIE.map(cat=>{
                     const catItems = normalMenu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
                     if(!catItems.length) return null;
+                    const catQty = catItems.reduce((s,i)=>s+(quantities[i.id]||0),0);
+                    const isOpen = menuCompact ? (openCats[cat.id]!==false) : true;
                     return(<div key={cat.id}>
-                      <div style={{fontSize:".75rem",fontWeight:700,color:"var(--accent)",
+                      <div onClick={()=>menuCompact&&toggleCat(cat.id)} style={{
+                        fontSize:".75rem",fontWeight:700,color:"var(--accent)",
                         margin:"12px 0 5px",textTransform:"uppercase",letterSpacing:".04em",
-                        borderBottom:"1px solid var(--border-lt)",paddingBottom:3}}>
-                        {cat.label}
+                        borderBottom:"1px solid var(--border-lt)",paddingBottom:3,
+                        display:"flex",justifyContent:"space-between",alignItems:"center",
+                        cursor:menuCompact?"pointer":"default",
+                        userSelect:"none"
+                      }}>
+                        <span>{cat.label}{catQty>0&&<span style={{background:"var(--accent)",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:".7rem",marginLeft:6}}>{catQty}</span>}</span>
+                        {menuCompact&&<span style={{fontSize:"1rem",color:"var(--muted)"}}>{isOpen?"▲":"▼"}</span>}
                       </div>
-                      {catItems.map(item=>(
+                      {isOpen&&catItems.map(item=>(
                     <div key={item.id}>
-                      {menuCompact ? (
-                        // ── VISTA COMPATTA ──
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                          padding:"7px 4px",borderBottom:"1px solid var(--border-lt)",gap:8}}>
-                          <div style={{flex:1,minWidth:0}}>
-                            <span style={{fontWeight:600,fontSize:".88rem"}}>{item.name}</span>
-                            {item.price!=null&&<span style={{color:"var(--accent)",fontSize:".78rem",marginLeft:6}}>{eur(item.price)}</span>}
-                          </div>
-                          <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                            <button className="qty-btn" style={{width:26,height:26,fontSize:"1rem"}} onClick={()=>setQty(item.id,-1)}>−</button>
-                            <span style={{minWidth:16,textAlign:"center",fontWeight:700,fontSize:".9rem"}}>{quantities[item.id]||0}</span>
-                            <button className="qty-btn" style={{width:26,height:26,fontSize:"1rem"}} onClick={()=>setQty(item.id,+1)}>+</button>
-                          </div>
+                      <div className="menu-order-item">
+                        <div>
+                          <div style={{fontWeight:700}}>{item.name}</div>
+                          <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>Prezzo da definire</span>}</div>
                         </div>
-                      ) : (
-                        // ── VISTA ESTESA ──
-                        <div className="menu-order-item">
-                          <div>
-                            <div style={{fontWeight:700}}>{item.name}</div>
-                            <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>Prezzo da definire</span>}</div>
-                          </div>
-                          <div className="qty-ctrl">
-                            <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
-                            <span className="qty-num">{quantities[item.id]||0}</span>
-                            <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
-                          </div>
+                        <div className="qty-ctrl">
+                          <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
+                          <span className="qty-num">{quantities[item.id]||0}</span>
+                          <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
                         </div>
-                      )}
+                      </div>
                       {(quantities[item.id]||0)>0&&(
                         <input
                           value={itemNotes[item.id]||""}
