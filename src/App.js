@@ -1940,6 +1940,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [editingCustomName, setEditingCustomName] = useState("");
   const [accName,  setAccName]  = useState(user.name);
   const [atBottom, setAtBottom] = useState(false);
+  const [menuCompact, setMenuCompact] = useState(()=>{try{return localStorage.getItem('menu_compact')==='1'}catch{return false}});
   const orderFormRef = useRef(null);
   const [accPwd,   setAccPwd]   = useState("");
   const [accPwd2,  setAccPwd2]  = useState("");
@@ -2320,7 +2321,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
             </div>
           ):(
             <div className="card">
-              <div className="card-title">🍴 Menù — {fmt(date)}</div>
+              <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div className="card-title" style={{marginBottom:0}}>🍴 Menù — {fmt(date)}</div>
+                <button onClick={()=>setMenuCompact(v=>{const n=!v;try{localStorage.setItem('menu_compact',n?'1':'0')}catch{}return n;})}
+                  style={{background:"var(--surface)",border:"1px solid var(--border-lt)",borderRadius:8,padding:"4px 10px",fontSize:".75rem",cursor:"pointer",color:"var(--muted)"}}>
+                  {menuCompact?"☷ Esteso":"☰ Compatto"}
+                </button>
+              </div>
               {!published
                 ?<div className="empty">⏳<br/>Il menù non è ancora disponibile.<br/>Ricontrolla tra poco!</div>
                 :<>
@@ -2336,17 +2343,34 @@ function ClientPanel({ user, appState, update, onLogout }) {
                       </div>
                       {catItems.map(item=>(
                     <div key={item.id}>
-                      <div className="menu-order-item">
-                        <div>
-                          <div style={{fontWeight:700}}>{item.name}</div>
-                          <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>Prezzo da definire</span>}</div>
+                      {menuCompact ? (
+                        // ── VISTA COMPATTA ──
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                          padding:"7px 4px",borderBottom:"1px solid var(--border-lt)",gap:8}}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <span style={{fontWeight:600,fontSize:".88rem"}}>{item.name}</span>
+                            {item.price!=null&&<span style={{color:"var(--accent)",fontSize:".78rem",marginLeft:6}}>{eur(item.price)}</span>}
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                            <button className="qty-btn" style={{width:26,height:26,fontSize:"1rem"}} onClick={()=>setQty(item.id,-1)}>−</button>
+                            <span style={{minWidth:16,textAlign:"center",fontWeight:700,fontSize:".9rem"}}>{quantities[item.id]||0}</span>
+                            <button className="qty-btn" style={{width:26,height:26,fontSize:"1rem"}} onClick={()=>setQty(item.id,+1)}>+</button>
+                          </div>
                         </div>
-                        <div className="qty-ctrl">
-                          <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
-                          <span className="qty-num">{quantities[item.id]||0}</span>
-                          <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
+                      ) : (
+                        // ── VISTA ESTESA ──
+                        <div className="menu-order-item">
+                          <div>
+                            <div style={{fontWeight:700}}>{item.name}</div>
+                            <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>Prezzo da definire</span>}</div>
+                          </div>
+                          <div className="qty-ctrl">
+                            <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
+                            <span className="qty-num">{quantities[item.id]||0}</span>
+                            <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       {(quantities[item.id]||0)>0&&(
                         <input
                           value={itemNotes[item.id]||""}
