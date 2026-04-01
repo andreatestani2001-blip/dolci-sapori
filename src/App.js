@@ -2338,7 +2338,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                     const catItems = normalMenu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
                     if(!catItems.length) return null;
                     const catQty = catItems.reduce((s,i)=>s+(quantities[i.id]||0),0);
-                    const isOpen = menuCompact ? (openCats[cat.id]!==false) : true;
+                    const isOpen = menuCompact ? (openCats[cat.id]===true) : true;
                     return(<div key={cat.id}>
                       <div onClick={()=>menuCompact&&toggleCat(cat.id)} style={{
                         fontSize:".75rem",fontWeight:700,color:"var(--accent)",
