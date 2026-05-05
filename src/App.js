@@ -51,6 +51,7 @@ if ('serviceWorker' in navigator) {
   });
 } /* eslint-disable */
 import { useState, useEffect, useCallback, useRef } from "react";
+import bcrypt from "bcryptjs";
 
 // ─── BRAND CONFIG (modifica qui per cambiare colori/logo/sfondo) ──────────
 const BRAND = {
@@ -736,7 +737,12 @@ function AuthScreen({ appState, update, onLogin }) {
     const username = form.username.trim().toLowerCase();
     const password = form.password.trim();
     // Prima prova login normale (non admin)
-    const u = appState.users.find(u=>u.id===username&&u.password===password&&u.role!=="admin");
+    const u = appState.users.find(u=>{
+      if(u.id!==username||u.role==="admin") return false;
+      // Supporta sia password in chiaro (vecchie) che hashate (bcrypt)
+      if(u.password?.startsWith("$2")) return bcrypt.compareSync(password, u.password);
+      return u.password===password;
+    });
     if (u) {
       if (!u.approved) return bad("Account in attesa di approvazione.");
       return onLogin(u);
@@ -778,7 +784,7 @@ function AuthScreen({ appState, update, onLogin }) {
     if (id.length<3) return bad("Username troppo corto (min 3 caratteri).");
     if (form.password!==form.confirmPwd) return bad("Le password non coincidono.");
     if (appState.users.find(u=>u.id===id)) return bad("Username già in uso.");
-    update({users:[...appState.users,{id,name:form.name.trim(),role:"client",password:form.password.trim(),approved:false}]});
+    update({users:[...appState.users,{id,name:form.name.trim(),role:"client",password:bcrypt.hashSync(form.password.trim(),10),approved:false}]});
     ok("Registrazione inviata! Attendi l'approvazione prima di accedere.");
     setMode("login"); setForm({username:"",password:"",name:"",confirmPwd:""});
   };
@@ -1665,7 +1671,8 @@ function AdminClients({ appState, update }) {
   const [newPwdAdmin,  setNewPwdAdmin]  = useState("");
   const saveResetPwd = () => {
     if(!newPwdAdmin.trim()||newPwdAdmin.length<4) return showToast("Password troppo corta (min 4)",true);
-    const updUsers = appState.users.map(u=>u.id===resetPwdUser?{...u,password:newPwdAdmin.trim()}:u);
+    const hashed = bcrypt.hashSync(newPwdAdmin.trim(), 10);
+    const updUsers = appState.users.map(u=>u.id===resetPwdUser?{...u,password:hashed}:u);
     update({users:updUsers});
     setResetPwdUser(null); setNewPwdAdmin("");
     showToast("✓ Password aggiornata!");
@@ -2003,7 +2010,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
     if(accName.trim().length<2) return setAccToast("Nome troppo corto");
     if(accPwd && accPwd.length<4) return setAccToast("Password troppo corta (min 4)");
     if(accPwd && accPwd!==accPwd2) return setAccToast("Le password non coincidono");
-    const updUsers = appState.users.map(u=>u.id===user.id?{...u,name:accName.trim(),...(accPwd?{password:accPwd}:{})}:u);
+    const updUsers = appState.users.map(u=>u.id===user.id?{...u,name:accName.trim(),...(accPwd?{password:bcrypt.hashSync(accPwd,10)}:{})}:u);
     update({users:updUsers});
     handleLogin({...user,name:accName.trim()});
     setAccPwd(""); setAccPwd2("");
