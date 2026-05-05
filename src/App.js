@@ -501,7 +501,7 @@ const CATEGORIE = [
 ];
 
 const DEFAULT_STATE = {
-  users:         [{ id:"andy01", name:"Andrea Testani", role:"admin", password:"Andyssl01.", approved:true }],
+  users:         [], // admin gestito server-side
   credits:       {},
   menus:         {},
   menuPub:       {},
@@ -649,7 +649,9 @@ export default function App() {
 
   const handleLogin = (u) => {
     setUser(u);
-    try { localStorage.setItem("ds_logged_user", JSON.stringify(u)); } catch {}
+    // Salva senza password nel localStorage
+    const {password:_, ...uSafe} = u;
+    try { localStorage.setItem("ds_logged_user", JSON.stringify(uSafe)); } catch {}
     // Salva FCM token nel DB per questo utente
     setTimeout(async () => {
       try {
@@ -733,34 +735,28 @@ function AuthScreen({ appState, update, onLogin }) {
   const doLogin = async () => {
     const username = form.username.trim().toLowerCase();
     const password = form.password.trim();
-    // Cerca utente normale
+    // Prima prova login normale (non admin)
     const u = appState.users.find(u=>u.id===username&&u.password===password&&u.role!=="admin");
     if (u) {
       if (!u.approved) return bad("Account in attesa di approvazione.");
       return onLogin(u);
     }
-    // Se potrebbe essere admin, vai al step 2
-    const maybeAdmin = appState.users.find(u=>u.id===username&&u.role==="admin");
-    if (maybeAdmin) {
-      // Verifica password admin via server
-      try {
-        const res = await fetch("/api/admin-auth", {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({username, password, secret:"__check__"})
-        });
-        // Se risponde 401 con "Credenziali non corrette" → password sbagliata
-        // Se risponde 401 con "Codice segreto" → password ok, chiedi secret
-        const data = await res.json();
-        if(res.status===401 && data.error?.includes("Credenziali")) return bad("Credenziali non corrette.");
-        if(res.status===401 && data.error?.includes("segreto")) {
-          setPendingAdmin(maybeAdmin);
-          setAdminStep(true);
-          setMsg({text:"",err:false});
-          return;
-        }
-        if(res.ok) return onLogin(maybeAdmin);
-      } catch(e) { return bad("Errore di connessione."); }
-    }
+    // Prova admin via server (step 1: verifica credenziali)
+    try {
+      const res = await fetch("/api/admin-auth", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({username, password, secret:"__check__"})
+      });
+      const data = await res.json();
+      if(res.status===401 && data.error?.includes("Credenziali")) return bad("Credenziali non corrette.");
+      if(res.status===401 && data.error?.includes("segreto")) {
+        // Credenziali admin ok, chiedi codice segreto
+        setPendingAdmin({id:username, name:"Andrea Testani", role:"admin", approved:true});
+        setAdminStep(true);
+        setMsg({text:"",err:false});
+        return;
+      }
+    } catch(e) {}
     bad("Credenziali non corrette.");
   };
 
@@ -773,7 +769,7 @@ function AuthScreen({ appState, update, onLogin }) {
       });
       const data = await res.json();
       if(!res.ok) return bad(data.error||"Codice segreto non corretto.");
-      onLogin(pendingAdmin);
+      onLogin({id:form.username.trim().toLowerCase(), name:"Andrea Testani", role:"admin", approved:true});
     } catch(e) { bad("Errore di connessione."); }
   };
   const doRegister = () => {
