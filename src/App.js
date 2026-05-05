@@ -1628,7 +1628,7 @@ function AdminClients({ appState, update }) {
     if(!id||!newForm.name.trim()||!newForm.password) return showToast("Compila tutti i campi",true);
     if(id.length<3) return showToast("Username troppo corto",true);
     if(appState.users.find(u=>u.id===id)) return showToast("Username già in uso",true);
-    update({users:[...appState.users,{id,name:newForm.name.trim(),role:"client",password:newForm.password.trim(),approved:true}]});
+    update({users:[...appState.users,{id,name:newForm.name.trim(),role:"client",password:bcrypt.hashSync(newForm.password.trim(),10),approved:true}]});
     setNewForm({name:"",id:"",password:""}); showToast("✓ Cliente aggiunto");
   };
 
@@ -1718,7 +1718,7 @@ function AdminClients({ appState, update }) {
                 <div>
                   <div style={{fontWeight:700}}>{u.name}</div>
                   <div className="flex" style={{alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                  <span className="muted">@{u.id} · pw: {u.password}</span>
+                  <span className="muted">@{u.id} · {u.password?.startsWith("$2") ? <span style={{color:"var(--green)"}}>🔒 protetta</span> : <span style={{color:"var(--yellow)"}}>⚠ pw: {u.password}</span>}</span>
                   <button className="btn btn-ghost btn-xs" onClick={()=>{setResetPwdUser(u.id);setNewPwdAdmin("");}}
                     style={{fontSize:".7rem"}}>🔑 Reset pw</button>
                 </div>
