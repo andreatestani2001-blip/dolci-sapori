@@ -497,6 +497,7 @@ const CATEGORIE = [
   { id:"insalate_classiche",label:"🥗 Insalate Classiche" },
   { id:"insalate_speciali", label:"🥗 Insalate Speciali" },
   { id:"richieste",         label:"⭐ Richieste da Voi" },
+  { id:"frutta",            label:"🍎 Frutta" },
 ];
 
 const DEFAULT_STATE = {
@@ -719,18 +720,61 @@ export default function App() {
 // AUTH
 // ════════════════════════════════════════════════════════════════════════════
 function AuthScreen({ appState, update, onLogin }) {
-  const [mode,setMode] = useState("login");
-  const [form,setForm] = useState({username:"",password:"",name:"",confirmPwd:""});
-  const [msg, setMsg]  = useState({text:"",err:false});
+  const [mode,setMode]         = useState("login");
+  const [form,setForm]         = useState({username:"",password:"",name:"",confirmPwd:""});
+  const [msg, setMsg]          = useState({text:"",err:false});
+  const [adminStep, setAdminStep] = useState(false); // true = chiedi codice segreto
+  const [adminSecret, setAdminSecret] = useState("");
+  const [pendingAdmin, setPendingAdmin] = useState(null);
   const f   = k => e => setForm(p=>({...p,[k]:e.target.value}));
   const bad = t => setMsg({text:t,err:true});
   const ok  = t => setMsg({text:t,err:false});
 
-  const doLogin = () => {
-    const u = appState.users.find(u=>u.id===form.username.trim().toLowerCase()&&u.password===form.password.trim());
-    if (!u) return bad("Credenziali non corrette.");
-    if (!u.approved) return bad("Account in attesa di approvazione.");
-    onLogin(u);
+  const doLogin = async () => {
+    const username = form.username.trim().toLowerCase();
+    const password = form.password.trim();
+    // Cerca utente normale
+    const u = appState.users.find(u=>u.id===username&&u.password===password&&u.role!=="admin");
+    if (u) {
+      if (!u.approved) return bad("Account in attesa di approvazione.");
+      return onLogin(u);
+    }
+    // Se potrebbe essere admin, vai al step 2
+    const maybeAdmin = appState.users.find(u=>u.id===username&&u.role==="admin");
+    if (maybeAdmin) {
+      // Verifica password admin via server
+      try {
+        const res = await fetch("/api/admin-auth", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({username, password, secret:"__check__"})
+        });
+        // Se risponde 401 con "Credenziali non corrette" → password sbagliata
+        // Se risponde 401 con "Codice segreto" → password ok, chiedi secret
+        const data = await res.json();
+        if(res.status===401 && data.error?.includes("Credenziali")) return bad("Credenziali non corrette.");
+        if(res.status===401 && data.error?.includes("segreto")) {
+          setPendingAdmin(maybeAdmin);
+          setAdminStep(true);
+          setMsg({text:"",err:false});
+          return;
+        }
+        if(res.ok) return onLogin(maybeAdmin);
+      } catch(e) { return bad("Errore di connessione."); }
+    }
+    bad("Credenziali non corrette.");
+  };
+
+  const doAdminSecret = async () => {
+    if(!adminSecret.trim()) return bad("Inserisci il codice segreto.");
+    try {
+      const res = await fetch("/api/admin-auth", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({username:form.username.trim().toLowerCase(), password:form.password.trim(), secret:adminSecret.trim()})
+      });
+      const data = await res.json();
+      if(!res.ok) return bad(data.error||"Codice segreto non corretto.");
+      onLogin(pendingAdmin);
+    } catch(e) { bad("Errore di connessione."); }
   };
   const doRegister = () => {
     const id = form.username.trim().toLowerCase().replace(/\s+/g,"");
@@ -759,7 +803,19 @@ function AuthScreen({ appState, update, onLogin }) {
         <div className="field"><label>Password</label><input type="password" value={form.password} onChange={f("password")} onKeyDown={e=>e.key==="Enter"&&(mode==="login"?doLogin():doRegister())}/></div>
         {mode==="register"&&<div className="field"><label>Conferma password</label><input type="password" value={form.confirmPwd} onChange={f("confirmPwd")} onKeyDown={e=>e.key==="Enter"&&doRegister()}/></div>}
         {msg.text&&<div style={{fontSize:".81rem",padding:"8px 11px",borderRadius:8,marginBottom:11,background:msg.err?"#fdf0ee":"#e8f5ee",color:msg.err?"var(--red)":"var(--green)",border:`1px solid ${msg.err?"#f0b9b4":"#99ccb0"}`}}>{msg.text}</div>}
-        <button className="btn btn-primary w100" style={{justifyContent:"center"}} onClick={mode==="login"?doLogin:doRegister}>{mode==="login"?"Accedi →":"Registrati →"}</button>
+                {!adminStep&&<button className="btn btn-primary w100" style={{justifyContent:"center"}} onClick={mode==="login"?doLogin:doRegister}>{mode==="login"?"Accedi →":"Registrati →"}</button>}
+        {adminStep&&(<>
+          <div className="field" style={{marginBottom:10}}>
+            <label>🔐 Codice segreto admin</label>
+            <input type="password" value={adminSecret} onChange={e=>setAdminSecret(e.target.value)}
+              placeholder="Inserisci il codice segreto"
+              onKeyDown={e=>e.key==="Enter"&&doAdminSecret()}
+              autoFocus/>
+          </div>
+          <button className="btn btn-primary w100" onClick={doAdminSecret} style={{justifyContent:"center"}}>Conferma →</button>
+          <button className="btn btn-ghost" onClick={()=>{setAdminStep(false);setAdminSecret("");setPendingAdmin(null);}}
+            style={{width:"100%",marginTop:6,fontSize:".85rem"}}>← Torna al login</button>
+        </>)}
         <hr className="divider"/>
         <div className="muted" style={{textAlign:"center",cursor:"pointer"}} onClick={()=>{setMode(m=>m==="login"?"register":"login");setMsg({text:"",err:false});}}>
           {mode==="login"?<>Non hai un account? <b style={{color:"var(--accent)"}}>Registrati</b></>:<>Hai già un account? <b style={{color:"var(--accent)"}}>Accedi</b></>}
