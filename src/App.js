@@ -487,9 +487,10 @@ const STYLE = `
 `;
 
 // ─── State & persistence ──────────────────────────────────────────────────
-// ─── Supabase ─────────────────────────────────────────────────────────────
-const SB_URL = "https://mvwsrnitinrkbxuymykh.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12d3Nybml0aW5ya2J4dXlteWtoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU5OTM5OSwiZXhwIjoyMDkwMTc1Mzk5fQ.x6m_Vd2tnvEe2WTf3HpNc8jh8DQ8RznnBXAwTNm9fwM";
+// ─── Backend (proxy via Vercel) ───────────────────────────────────────────
+// Le chiamate a Supabase passano per i due endpoint serverless
+// (/api/state-load e /api/state-save) per non esporre la chiave segreta
+// nel browser. La chiave vive solo nelle env var di Vercel.
 
 const CATEGORIE = [
   { id:"primi",             label:"🍝 Primi" },
@@ -513,22 +514,6 @@ const DEFAULT_STATE = {
   fcmTokens:     {}, // { userId: fcmToken }
 };
 
-async function sbReq(path, method="GET", body=null) {
-  const opts = {
-    method,
-    headers: {
-      "apikey":        SB_KEY,
-      "Authorization": "Bearer " + SB_KEY,
-      "Content-Type":  "application/json",
-      "Prefer":        "return=representation,resolution=merge-duplicates",
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(SB_URL + path, opts);
-  const txt = await res.text();
-  return txt ? JSON.parse(txt) : null;
-}
-
 // ─── Firebase Push ────────────────────────────────────────────────────────
 async function sendPush(title, message, tokens) {
   if(!tokens||!tokens.length) return;
@@ -545,7 +530,12 @@ async function sendPush(title, message, tokens) {
 
 async function loadState() {
   try {
-    const rows = await sbReq("/rest/v1/appstate?id=eq.main&select=data");
+    const res = await fetch("/api/state-load");
+    if (!res.ok) {
+      console.error("loadState failed:", res.status);
+      return { ...DEFAULT_STATE };
+    }
+    const rows = await res.json();
     if (rows && rows.length > 0) {
       const state = { ...DEFAULT_STATE, ...rows[0].data };
       // Pulisci notifiche più vecchie di 7 giorni
@@ -568,15 +558,10 @@ async function loadState() {
 
 async function saveState(s) {
   try {
-    const res = await fetch(SB_URL + "/rest/v1/appstate", {
+    const res = await fetch("/api/state-save", {
       method: "POST",
-      headers: {
-        "apikey":        SB_KEY,
-        "Authorization": "Bearer " + SB_KEY,
-        "Content-Type":  "application/json",
-        "Prefer":        "resolution=merge-duplicates",
-      },
-      body: JSON.stringify({ id:"main", data:s, updated_at: new Date().toISOString() }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: s }),
     });
     if (!res.ok) {
       const t = await res.text();
