@@ -498,6 +498,7 @@ const CATEGORIE = [
   { id:"contorni",          label:"🥦 Contorni" },
   { id:"insalate_classiche",label:"🥗 Insalate Classiche" },
   { id:"insalate_speciali", label:"🥗 Insalate Speciali" },
+  { id:"fresh_collection",  label:"☀️❄️ Fresh Collection" },
   { id:"richieste",         label:"⭐ Richieste da Voi" },
   { id:"frutta",            label:"🍎 Frutta" },
 ];
