@@ -2008,7 +2008,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
-  const date=today();
+  const [date, setDate] = useState(today());
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
   useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),2000); return()=>clearInterval(t); },[]);
@@ -2115,6 +2115,31 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // Piatti custom senza prezzo → visibili solo al richiedente
   const normalMenu=menu.filter(i=>!i.custom || (i.custom && i.price!=null));
   const myCustom =menu.filter(i=>i.custom&&i.price==null&&i.requestedBy===user.name);
+
+  // ─── Date navigation ────────────────────────────────────────────────
+  // Giorni con menu pubblicato (oggi + futuri) → determinano max date picker
+  const publishedDates = Object.keys(appState.menuPub||{})
+    .filter(d => appState.menuPub[d]===true && d>=today())
+    .sort();
+  const maxDate = publishedDates.length ? publishedDates[publishedDates.length-1] : today();
+
+  // Costruisci i prossimi 3 giorni (oggi, domani, dopodomani)
+  const nextThree = [0,1,2].map(offset=>{
+    const d = new Date(); d.setDate(d.getDate()+offset);
+    return d.toISOString().slice(0,10);
+  });
+  const tabLabels = ["Oggi","Domani","Dopodomani"];
+
+  // Cambio giorno → resetta gli input in corso per non trascinare
+  // ordinazioni da un giorno all'altro
+  const changeDate = (newDate) => {
+    if (newDate===date) return;
+    setDate(newDate);
+    setQuantities({});
+    setItemNotes({});
+    setOrderNote("");
+    setCustomDish("");
+  };
 
   return(
     <div className="app">
@@ -2321,6 +2346,74 @@ function ClientPanel({ user, appState, update, onLogout }) {
           {unpaid===0&&credit===0&&(
             <div className="banner banner-green" style={{padding:"10px 15px"}}>
               <span style={{fontWeight:700,color:"var(--green)"}}>✅ Sei in pari! Nessun importo da saldare.</span>
+            </div>
+          )}
+
+          {/* ─── Selettore giorno ─────────────────────────────────── */}
+          <div style={{
+            display:"flex", gap:6, marginBottom:12,
+            background:"var(--surface)", padding:6, borderRadius:12,
+            border:"1px solid var(--border-lt)"
+          }}>
+            {nextThree.map((d,i)=>{
+              const isActive = d===date;
+              const isPublished = appState.menuPub?.[d]===true;
+              return (
+                <button key={d}
+                  onClick={()=>isPublished && changeDate(d)}
+                  disabled={!isPublished}
+                  style={{
+                    flex:1, padding:"8px 4px",
+                    background: isActive ? "var(--accent)" : "transparent",
+                    color: isActive ? "#fff" : (isPublished ? "var(--text)" : "var(--muted)"),
+                    border:"none", borderRadius:8,
+                    cursor: isPublished ? "pointer" : "not-allowed",
+                    opacity: isPublished ? 1 : 0.45,
+                    fontWeight: isActive ? 700 : 500,
+                    transition:"all .15s",
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:2
+                  }}>
+                  <span style={{fontSize:".82rem"}}>{tabLabels[i]}</span>
+                  <span style={{fontSize:".68rem", opacity:.85}}>{fmtS(d)}</span>
+                </button>
+              );
+            })}
+            <label style={{
+              display:"flex", alignItems:"center", justifyContent:"center",
+              padding:"0 12px", background:"transparent",
+              borderRadius:8, cursor:"pointer", position:"relative",
+              border: !nextThree.includes(date) ? "2px solid var(--accent)" : "none"
+            }}>
+              <span style={{fontSize:"1.2rem"}}>📅</span>
+              <input type="date"
+                value={date}
+                min={today()}
+                max={maxDate}
+                onChange={(e)=>{
+                  const v = e.target.value;
+                  if (!v) return;
+                  if (appState.menuPub?.[v]===true) changeDate(v);
+                  else showToast?.("Menù non disponibile per quel giorno", true);
+                }}
+                style={{
+                  position:"absolute", inset:0, opacity:0, cursor:"pointer",
+                  width:"100%", height:"100%"
+                }}
+              />
+            </label>
+          </div>
+          {/* Indicatore data se fuori dai 3 tab */}
+          {!nextThree.includes(date) && (
+            <div style={{
+              textAlign:"center", marginBottom:12, marginTop:-4,
+              fontSize:".82rem", color:"var(--accent)", fontWeight:600
+            }}>
+              📅 Stai vedendo il menù di <b>{fmt(date)}</b>
+              {" · "}
+              <span onClick={()=>changeDate(today())}
+                style={{textDecoration:"underline", cursor:"pointer"}}>
+                torna a oggi
+              </span>
             </div>
           )}
 
