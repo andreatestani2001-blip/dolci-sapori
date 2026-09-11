@@ -597,6 +597,229 @@ function getUserDebt(userId, orders) {
 }
 
 // Logo component
+// ─── Classifica top clienti del mese ─────────────────────────────────────
+function Leaderboard({ appState, currentUserId }) {
+  const now = new Date();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const monthName = now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+
+  // Somma rawTotal degli ordini del mese corrente per ogni cliente
+  const totals = {};
+  Object.entries(appState.orders||{}).forEach(([key, order]) => {
+    if (!order) return;
+    if (!key.startsWith(monthPrefix)) return; // key = "YYYY-MM-DD:userId"
+    const uid = order.userId;
+    totals[uid] = (totals[uid]||0) + (order.rawTotal || 0);
+  });
+
+  const clients = appState.users.filter(u => u.role === 'client');
+  const ranking = clients
+    .map(u => ({ id: u.id, name: u.name, total: totals[u.id] || 0 }))
+    .filter(r => r.total > 0)
+    .sort((a,b) => b.total - a.total);
+
+  const maxTotal = ranking[0]?.total || 1;
+  const myRank = currentUserId ? ranking.findIndex(r => r.id === currentUserId) : -1;
+  const badges = ['🥇','🥈','🥉'];
+
+  if (ranking.length === 0) return (
+    <div className="card">
+      <div className="card-title">🏆 Top del mese</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
+      <div className="empty">Nessun ordine questo mese ancora.<br/>Ordina per entrare in classifica! 🚀</div>
+    </div>
+  );
+
+  return (
+    <div className="card">
+      <div className="card-title">🏆 Top del mese</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
+
+      {/* Banner posizione utente se fuori dai primi 3 */}
+      {currentUserId && myRank >= 3 && (
+        <div style={{
+          background:'linear-gradient(135deg,#fbf1d9,#f4e2ac)',
+          border:'1px solid #d4af37', borderRadius:10,
+          padding:'10px 14px', marginBottom:14, fontSize:'.9rem',
+          display:'flex', alignItems:'center', justifyContent:'space-between'
+        }}>
+          <span>⭐ <b>Sei al {myRank+1}° posto</b></span>
+          <span style={{fontWeight:700,color:'#8b6a15'}}>€{ranking[myRank].total.toFixed(2)}</span>
+        </div>
+      )}
+      {currentUserId && myRank === -1 && (
+        <div style={{
+          background:'#fdf6ee', border:'1px dashed var(--border)',
+          borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:'.85rem',
+          color:'var(--muted)', textAlign:'center'
+        }}>
+          Non sei ancora in classifica questo mese.
+        </div>
+      )}
+
+      {ranking.slice(0, 10).map((r, i) => {
+        const isMe = r.id === currentUserId;
+        const pct = (r.total / maxTotal) * 100;
+        const isPodium = i < 3;
+        return (
+          <div key={r.id} style={{
+            padding:'10px 12px', marginBottom:6,
+            background: isMe ? 'rgba(139,26,26,.06)' : 'transparent',
+            border: isMe ? '1.5px solid var(--accent)' : '1px solid var(--border-lt)',
+            borderRadius: 10, position: 'relative', overflow: 'hidden'
+          }}>
+            {/* Barra proporzionale sfondo */}
+            <div style={{
+              position:'absolute', left:0, top:0, bottom:0,
+              width:`${pct}%`,
+              background: isPodium
+                ? 'linear-gradient(90deg,rgba(212,175,55,.18),rgba(212,175,55,.06))'
+                : 'rgba(0,0,0,.03)',
+              zIndex:0, transition:'width .6s ease-out'
+            }}/>
+            <div style={{
+              position:'relative', zIndex:1,
+              display:'flex', justifyContent:'space-between', alignItems:'center', gap:10
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{
+                  fontSize: isPodium ? '1.35rem' : '.95rem',
+                  minWidth:32, textAlign:'center',
+                  fontWeight: isPodium ? 400 : 700,
+                  color: isPodium ? undefined : 'var(--muted)'
+                }}>{badges[i] || `${i+1}°`}</span>
+                <span style={{fontWeight:isMe?700:500}}>
+                  {r.name}
+                  {isMe && <span style={{color:'var(--accent)',fontSize:'.75rem',marginLeft:6,fontWeight:600}}>(tu)</span>}
+                </span>
+              </div>
+              <span style={{
+                fontWeight:700,
+                fontFamily:"'Playfair Display',serif",
+                fontSize: isPodium ? '1.15rem' : '1rem',
+                color: isPodium ? '#8b6a15' : 'var(--text)'
+              }}>
+                €{r.total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Splash screen cinematica (3 secondi, una volta a sessione) ──────────
+function SplashScreen({ onComplete }) {
+  useEffect(() => {
+    const t = setTimeout(onComplete, 3200);
+    return () => clearTimeout(t);
+  }, [onComplete]);
+  return (
+    <>
+      <style>{`
+        .splash-screen {
+          position: fixed; inset: 0; z-index: 9999;
+          background: radial-gradient(circle at center, #fdf6ee 0%, #f4e2ac 100%);
+          display: flex; align-items: center; justify-content: center;
+          animation: splashFadeOut 0.5s ease-in 2.7s forwards;
+        }
+        .splash-wrap {
+          display: flex; flex-direction: column; align-items: center;
+          animation: splashScale 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative;
+        }
+        .splash-halo {
+          position: absolute; inset: -60px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(212,175,55,.45), transparent 65%);
+          animation: splashHalo 2.2s ease-in-out;
+          z-index: 0; pointer-events: none;
+        }
+        .splash-halo-2 {
+          position: absolute; inset: -30px;
+          border-radius: 50%;
+          border: 2px solid rgba(212,175,55,.5);
+          animation: splashRing 1.8s ease-out 0.4s;
+          z-index: 0; opacity: 0;
+        }
+        .splash-logo {
+          position: relative; z-index: 2;
+          animation: splashRotate 1.6s ease-out 0.4s;
+        }
+        .splash-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.9rem; font-weight: 700;
+          color: #8b1a1a;
+          margin-top: 22px; opacity: 0;
+          animation: splashTitleIn 0.9s ease-out 1.2s forwards;
+          letter-spacing: 0.02em; text-align: center;
+          position: relative; z-index: 2;
+        }
+        .splash-subtitle {
+          font-size: 0.78rem; color: #8b6a15;
+          margin-top: 6px; opacity: 0;
+          letter-spacing: 0.35em; text-transform: uppercase;
+          animation: splashTitleIn 0.9s ease-out 1.6s forwards;
+          position: relative; z-index: 2;
+        }
+        .splash-shine {
+          position: absolute; top: 0; left: -100%;
+          width: 60%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+          animation: splashShine 1.4s ease-out 1.9s;
+          z-index: 3; pointer-events: none;
+        }
+        @keyframes splashScale {
+          0% { transform: scale(0) rotate(-90deg); opacity: 0; }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes splashRotate {
+          0% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(360deg) scale(1.15); }
+          100% { transform: rotate(720deg) scale(1); }
+        }
+        @keyframes splashHalo {
+          0% { opacity: 0; transform: scale(0.4); }
+          40% { opacity: 1; transform: scale(1.3); }
+          100% { opacity: 0; transform: scale(2.2); }
+        }
+        @keyframes splashRing {
+          0% { opacity: 0; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.4); }
+          100% { opacity: 0; transform: scale(2); }
+        }
+        @keyframes splashTitleIn {
+          0% { opacity: 0; transform: translateY(15px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes splashShine {
+          0% { left: -100%; }
+          100% { left: 200%; }
+        }
+        @keyframes splashFadeOut {
+          0% { opacity: 1; }
+          100% { opacity: 0; visibility: hidden; pointer-events: none; }
+        }
+      `}</style>
+      <div className="splash-screen">
+        <div className="splash-wrap">
+          <div className="splash-halo"/>
+          <div className="splash-halo-2"/>
+          <div className="splash-logo">
+            <LogoIcon size={130}/>
+          </div>
+          <div className="splash-title">
+            {BRAND.name || 'Forno Dolci Sapori'}
+            <div className="splash-shine"/>
+          </div>
+          <div className="splash-subtitle">Sapori di casa</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function LogoIcon({ size=36, style={} }) {
   if (BRAND.logoUrl) return (
     <img src={BRAND.logoUrl} alt="logo" style={{height:size, width:"auto", maxWidth: size*3.2, objectFit:"contain", flexShrink:0, filter:"drop-shadow(0 1px 3px rgba(0,0,0,.25))", ...style}}/>
@@ -614,6 +837,9 @@ function LogoIcon({ size=36, style={} }) {
 export default function App() {
   const [appState, setAppState] = useState(null);
   const [user,     setUser]     = useState(null);
+  const [showSplash, setShowSplash] = useState(() => {
+    try { return !sessionStorage.getItem('ds_splash_shown'); } catch { return true; }
+  });
   const saveTimer               = useRef(null);
 
   // ── Rimani loggato ──────────────────────────────────────────────────────
@@ -695,6 +921,10 @@ export default function App() {
 
   return (
     <><style>{STYLE}</style>
+    {showSplash && <SplashScreen onComplete={()=>{
+      setShowSplash(false);
+      try { sessionStorage.setItem('ds_splash_shown','1'); } catch {}
+    }}/>}
     <div className="app-bg" style={{backgroundImage:`url(${BRAND.bgImage})`}}/>
     {!user
       ? <AuthScreen appState={appState} update={update} onLogin={handleLogin}/>
@@ -2399,7 +2629,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
         </div>
         <div className="header-tabs">
-          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"]].map(([v,l])=>(
+          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"]].map(([v,l])=>(
             <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
               {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
             </button>
@@ -2407,7 +2637,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
-        {!["summary","clients","notif"].includes(tab)&&(
+        {!["summary","clients","notif","top"].includes(tab)&&(
           <div className="date-nav">
             <span style={{fontWeight:700,color:"var(--accent)"}}>📅</span>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:165}}/>
@@ -2421,6 +2651,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
+        {tab==="top"     &&<Leaderboard              appState={appState}/>}
       </div>
     </div>
   );
@@ -2660,6 +2891,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
             <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋</button>
+            <button className={`tab ${tab==="top"?"active":""}`} onClick={()=>setTab("top")}>🏆</button>
             <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
@@ -2675,6 +2907,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
+
+        {tab==="top" && <Leaderboard appState={appState} currentUserId={user.id}/>}
 
         {tab==="notifs"&&(
           <div className="card">
