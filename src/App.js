@@ -817,6 +817,167 @@ function AuthScreen({ appState, update, onLogin }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – MENU
 // ════════════════════════════════════════════════════════════════════════════
+// ─── Import menù da WhatsApp ──────────────────────────────────────────────
+// Parser deterministico: prende il testo grezzo del messaggio WhatsApp del
+// fornitore e restituisce { date, categories }, dove categories è una mappa
+// { primi: [{name,price}], secondi: [...], ... } solo per le sezioni presenti.
+function parseWhatsAppMenu(text) {
+  // Rimuovi caratteri invisibili (word joiner, zero-width) che il fornitore
+  // spesso inserisce inavvertitamente dopo i trattini
+  const clean = text.replace(/[\u2060\u200B\u200C\u200D\uFEFF]/g, '');
+  const lines = clean.split(/\r?\n/);
+
+  const result = { date: null, categories: {} };
+
+  // Mappa emoji-testata → id categoria interno
+  const catMap = [
+    ['🍝', 'primi'],
+    ['🍖', 'secondi'],
+    ['🥦', 'contorni'],
+    ['🥗', 'insalate_classiche'],
+    ['☀️', 'fresh_collection'],
+    ['❄️', 'fresh_collection'],
+    ['🍎', 'frutta'],
+  ];
+
+  let currentCat = null;
+  let currentCatDefaultPrice = null; // per "(Tutto €X)"
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    // Data (formato 📆 DD/MM/YYYY)
+    if (!result.date) {
+      const m = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        result.date = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+      }
+    }
+
+    // Header categoria
+    const catMatch = catMap.find(([emoji]) => line.startsWith(emoji));
+    if (catMatch) {
+      currentCat = catMatch[1];
+      if (!result.categories[currentCat]) result.categories[currentCat] = [];
+      // Prezzo globale nell'header: "(Tutto €3,50)"
+      const globalMatch = line.match(/Tutto\s*€\s*([\d,\.]+)/i);
+      currentCatDefaultPrice = globalMatch
+        ? parseFloat(globalMatch[1].replace(',','.'))
+        : null;
+      continue;
+    }
+
+    if (!currentCat) continue;
+    // Deve essere una riga piatto (inizia con - o •)
+    if (!/^[-•]\s*/.test(line)) continue;
+
+    let dishLine = line.replace(/^[-•]\s*/, '').trim();
+
+    // Barrato (piatto esaurito) → salta completamente
+    if (/^~.*~$/.test(dishLine)) continue;
+
+    // Rimuovi corsivo _testo_
+    dishLine = dishLine.replace(/_([^_]+)_/g, '$1');
+
+    // Doppio prezzo: "nome (intero €X - mezzo €Y)" → split in 2 piatti
+    const doubleMatch = dishLine.match(
+      /^(.+?)\s*\(\s*intero\s*€\s*([\d,\.]+)\s*[-–]\s*mezzo\s*€\s*([\d,\.]+)\s*\)/i
+    );
+    if (doubleMatch) {
+      const baseName = doubleMatch[1].trim();
+      result.categories[currentCat].push({
+        name: `${baseName} intero`,
+        price: parseFloat(doubleMatch[2].replace(',','.'))
+      });
+      result.categories[currentCat].push({
+        name: `${baseName} mezzo`,
+        price: parseFloat(doubleMatch[3].replace(',','.'))
+      });
+      continue;
+    }
+
+    // Prezzo singolo alla fine: "nome €X,YY"
+    const priceMatch = dishLine.match(/^(.+?)\s+€\s*([\d,\.]+)\s*$/);
+    if (priceMatch) {
+      result.categories[currentCat].push({
+        name: priceMatch[1].trim(),
+        price: parseFloat(priceMatch[2].replace(',','.'))
+      });
+    } else {
+      // Nessun prezzo esplicito → applica default categoria (se dichiarato)
+      result.categories[currentCat].push({
+        name: dishLine,
+        price: currentCatDefaultPrice
+      });
+    }
+  }
+
+  return result;
+}
+
+// Merge intelligente tra menu attuale e menu parsato.
+// Regole:
+//  - Piatti custom (richieste clienti): mai toccati
+//  - Categorie NON menzionate nel parsed: intatte
+//  - Categorie menzionate: sincronizzazione per nome
+//     • esistente + presente → mantiene id, aggiorna prezzo
+//     • non esistente + presente → aggiunto
+//     • esistente + assente → rimosso
+function mergeParsedMenu(currentItems, parsed) {
+  const norm = s => (s||'').toLowerCase().trim().replace(/\s+/g,' ');
+  const customItems = currentItems.filter(i => i.custom);
+  const nonCustom   = currentItems.filter(i => !i.custom);
+  const parsedCats  = new Set(Object.keys(parsed.categories));
+
+  const changes = { added:[], removed:[], updated:[], unchanged:[] };
+  const result = [];
+
+  // 1. Categorie non toccate: mantieni tutto
+  result.push(...nonCustom.filter(i => !parsedCats.has(i.categoria||'primi')));
+
+  // 2. Categorie sincronizzate
+  for (const cat of parsedCats) {
+    const currentInCat = nonCustom.filter(i => (i.categoria||'primi') === cat);
+    const parsedInCat  = parsed.categories[cat];
+    const currentByName = new Map(currentInCat.map(i => [norm(i.name), i]));
+    const parsedByName  = new Map(parsedInCat.map(p => [norm(p.name), p]));
+
+    for (const parsedDish of parsedInCat) {
+      const existing = currentByName.get(norm(parsedDish.name));
+      if (existing) {
+        const priceChanged = (existing.price ?? null) !== (parsedDish.price ?? null);
+        result.push({ ...existing, price: parsedDish.price });
+        if (priceChanged) changes.updated.push({
+          name: existing.name, oldPrice: existing.price, newPrice: parsedDish.price, cat
+        });
+        else changes.unchanged.push({ name: existing.name, cat });
+      } else {
+        const newItem = {
+          id: Date.now().toString() + Math.random().toString(36).slice(2,5),
+          name: parsedDish.name,
+          price: parsedDish.price,
+          custom: false,
+          categoria: cat
+        };
+        result.push(newItem);
+        changes.added.push({ name: parsedDish.name, price: parsedDish.price, cat });
+      }
+    }
+    for (const currentDish of currentInCat) {
+      if (!parsedByName.has(norm(currentDish.name))) {
+        changes.removed.push({ name: currentDish.name, cat });
+      }
+    }
+  }
+
+  // 3. Custom (richieste clienti) sempre in fondo, intatti
+  result.push(...customItems);
+
+  return { newMenu: result, changes };
+}
+
 function AdminMenu({ date, appState, update }) {
   const [newName,     setNewName]     = useState("");
   const [newPrice,    setNewPrice]    = useState("");
@@ -824,6 +985,10 @@ function AdminMenu({ date, appState, update }) {
   const [toast,           setToast]           = useState({text:"",ok:true});
   const [editCustomAdmin, setEditCustomAdmin] = useState(null);
   const [editCustomAdminName, setEditCustomAdminName] = useState("");
+  // Import da WhatsApp
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importPreview, setImportPreview] = useState(null); // {parsed, changes}
   // Stato locale per aggiornare UI subito senza aspettare il polling
   const [localOrdersOpen, setLocalOrdersOpen] = useState(null);
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
@@ -850,6 +1015,31 @@ function AdminMenu({ date, appState, update }) {
       .filter(i=>!i.custom) // non duplicare piatti personalizzati di ieri
       .map(i=>({...i,id:Date.now().toString()+Math.random().toString(36).slice(2,5)}));
     saveItems(newItems); showToast("✓ Menù di ieri duplicato!");
+  };
+
+  // Import da WhatsApp: analizza il testo e prepara il preview
+  const analyzeImport = () => {
+    const text = importText.trim();
+    if (!text) return showToast("Incolla prima il messaggio", false);
+    const parsed = parseWhatsAppMenu(text);
+    const catsFound = Object.keys(parsed.categories).length;
+    if (catsFound===0) return showToast("Nessuna categoria riconosciuta nel testo", false);
+    const { newMenu, changes } = mergeParsedMenu(items, parsed);
+    setImportPreview({ parsed, newMenu, changes });
+  };
+  const applyImport = () => {
+    if (!importPreview) return;
+    saveItems(importPreview.newMenu);
+    setShowImport(false);
+    setImportText("");
+    setImportPreview(null);
+    const { added, removed, updated } = importPreview.changes;
+    showToast(`✓ Menù aggiornato: +${added.length} nuovi, ${updated.length} aggiornati, -${removed.length} rimossi`);
+  };
+  const closeImport = () => {
+    setShowImport(false);
+    setImportText("");
+    setImportPreview(null);
   };
 
   const publish   = ()=>{update({menuPub:{...appState.menuPub,[date]:true}});  showToast("✓ Menù pubblicato!");};
@@ -1059,7 +1249,13 @@ function AdminMenu({ date, appState, update }) {
         </div>
       </div>
       <div className="flex" style={{justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-        <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
+        <div className="flex" style={{gap:7,flexWrap:"wrap"}}>
+          <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
+          <button className="btn btn-sm" onClick={()=>setShowImport(true)}
+            style={{background:"#25D366",color:"#fff",border:"1px solid #128C7E"}}>
+            📱 Importa da WhatsApp
+          </button>
+        </div>
         <div className="flex" style={{gap:7,flexWrap:"wrap"}}>
           {published
             ?<button className="btn btn-ghost btn-sm" onClick={unpublish}>Nascondi</button>
@@ -1076,6 +1272,130 @@ function AdminMenu({ date, appState, update }) {
         </div>
       </div>
       {toast.text&&<div className={`toast ${!toast.ok?"toast-err":""}`}>{toast.text}</div>}
+
+      {/* ─── Modal Import da WhatsApp ─────────────────────────────────── */}
+      {showImport && (
+        <div style={{
+          position:"fixed", inset:0, zIndex:1000,
+          background:"rgba(0,0,0,.5)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          padding:12
+        }} onClick={closeImport}>
+          <div onClick={e=>e.stopPropagation()} style={{
+            background:"var(--surface)", borderRadius:14, width:"100%", maxWidth:600,
+            maxHeight:"90vh", overflow:"auto", padding:18,
+            boxShadow:"0 20px 60px rgba(0,0,0,.35)"
+          }}>
+            <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontWeight:700,fontSize:"1.05rem"}}>📱 Importa menù da WhatsApp</div>
+              <button className="btn btn-ghost btn-sm" onClick={closeImport}>✕</button>
+            </div>
+
+            {!importPreview ? (
+              <>
+                <div className="muted" style={{fontSize:".82rem",marginBottom:8}}>
+                  Incolla il messaggio del fornitore. Verranno riconosciute solo le categorie presenti — quelle non incluse resteranno intatte.
+                </div>
+                <textarea value={importText}
+                  onChange={e=>setImportText(e.target.value)}
+                  placeholder="Incolla qui il messaggio WhatsApp…"
+                  style={{
+                    width:"100%", minHeight:200, padding:10,
+                    border:"1px solid var(--border)", borderRadius:8,
+                    fontFamily:"inherit", fontSize:".88rem", resize:"vertical"
+                  }}/>
+                <div className="flex" style={{justifyContent:"flex-end",gap:8,marginTop:12}}>
+                  <button className="btn btn-ghost btn-sm" onClick={closeImport}>Annulla</button>
+                  <button className="btn btn-primary" onClick={analyzeImport} disabled={!importText.trim()}>
+                    🔍 Analizza
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Preview */}
+                {importPreview.parsed.date && importPreview.parsed.date !== date && (
+                  <div style={{
+                    background:"#fff8e1", border:"1px solid #ffc107",
+                    borderRadius:8, padding:10, marginBottom:12, fontSize:".85rem"
+                  }}>
+                    ⚠️ Il messaggio è per <b>{fmt(importPreview.parsed.date)}</b>, ma stai lavorando su <b>{fmt(date)}</b>.<br/>
+                    L'import verrà applicato al giorno selezionato ({fmtS(date)}).
+                  </div>
+                )}
+                <div style={{marginBottom:12,fontSize:".85rem"}}>
+                  <b>Categorie rilevate:</b>{" "}
+                  {Object.keys(importPreview.parsed.categories).map(c=>{
+                    const cat = CATEGORIE.find(x=>x.id===c);
+                    return cat ? cat.label : c;
+                  }).join(", ")}
+                </div>
+
+                {importPreview.changes.added.length>0 && (
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontWeight:700,color:"var(--green)",fontSize:".82rem",marginBottom:4}}>
+                      + AGGIUNTI ({importPreview.changes.added.length})
+                    </div>
+                    {importPreview.changes.added.map((c,i)=>(
+                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
+                        <span style={{color:"var(--green)"}}>●</span> {c.name} {c.price!=null && `— €${c.price.toFixed(2).replace('.',',')}`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {importPreview.changes.updated.length>0 && (
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontWeight:700,color:"#b58900",fontSize:".82rem",marginBottom:4}}>
+                      ↻ PREZZO AGGIORNATO ({importPreview.changes.updated.length})
+                    </div>
+                    {importPreview.changes.updated.map((c,i)=>(
+                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
+                        <span style={{color:"#b58900"}}>●</span> {c.name} —{" "}
+                        <s style={{opacity:.6}}>€{(c.oldPrice||0).toFixed(2).replace('.',',')}</s>{" "}
+                        <b>€{(c.newPrice||0).toFixed(2).replace('.',',')}</b>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {importPreview.changes.removed.length>0 && (
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontWeight:700,color:"var(--red)",fontSize:".82rem",marginBottom:4}}>
+                      − RIMOSSI ({importPreview.changes.removed.length})
+                    </div>
+                    {importPreview.changes.removed.map((c,i)=>(
+                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
+                        <span style={{color:"var(--red)"}}>●</span> {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {importPreview.changes.unchanged.length>0 && (
+                  <div className="muted" style={{fontSize:".78rem",marginBottom:10,fontStyle:"italic"}}>
+                    {importPreview.changes.unchanged.length} piatti invariati.
+                  </div>
+                )}
+
+                {importPreview.changes.added.length===0 &&
+                 importPreview.changes.updated.length===0 &&
+                 importPreview.changes.removed.length===0 && (
+                  <div className="empty">Nessuna modifica da applicare.</div>
+                )}
+
+                <div className="flex" style={{justifyContent:"space-between",gap:8,marginTop:14}}>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setImportPreview(null)}>← Indietro</button>
+                  <div className="flex" style={{gap:8}}>
+                    <button className="btn btn-ghost btn-sm" onClick={closeImport}>Annulla</button>
+                    <button className="btn btn-success" onClick={applyImport}>✓ Applica</button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
