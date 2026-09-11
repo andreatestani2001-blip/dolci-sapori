@@ -596,6 +596,114 @@ function getUserDebt(userId, orders) {
     .reduce((s,[,o]) => s+(o.total||0), 0);
 }
 
+// ─── Compleanno, festività, wrap dell'anno ───────────────────────────────
+// Ritorna "MM-DD" del compleanno se il cliente ne ha uno, altrimenti null
+function getBirthdayMD(user) {
+  if (!user?.birthDate) return null;
+  // birthDate salvata come "YYYY-MM-DD"
+  const parts = user.birthDate.split('-');
+  if (parts.length !== 3) return null;
+  return `${parts[1]}-${parts[2]}`;
+}
+function isBirthdayToday(user) {
+  const bd = getBirthdayMD(user);
+  if (!bd) return false;
+  const now = new Date();
+  const todayMD = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return bd === todayMD;
+}
+
+// Calcolo Pasqua con algoritmo di Gauss (funziona per anni 1583-4099)
+function easterDate(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2*e + 2*i - h - k) % 7;
+  const m = Math.floor((a + 11*h + 22*l) / 451);
+  const month = Math.floor((h + l - 7*m + 114) / 31);
+  const day = ((h + l - 7*m + 114) % 31) + 1;
+  return `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+function addDaysMD(md, year, delta) {
+  const [m, d] = md.split('-').map(Number);
+  const dt = new Date(year, m-1, d);
+  dt.setDate(dt.getDate() + delta);
+  return `${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+// Ritorna la festività di oggi come {emoji, name} oppure null
+function getHolidayToday() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const md = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  const easter = easterDate(year);
+  const easterMonday = addDaysMD(easter, year, 1);
+
+  const HOLIDAYS = {
+    '01-01': { emoji:'🥂', name:'Buon anno' },
+    '01-06': { emoji:'✨', name:'Buona Epifania' },
+    '04-25': { emoji:'🇮🇹', name:'Festa della Liberazione' },
+    '05-01': { emoji:'🌷', name:'Buon Primo Maggio' },
+    '06-02': { emoji:'🇮🇹', name:'Festa della Repubblica' },
+    '08-15': { emoji:'☀️', name:'Buon Ferragosto' },
+    '11-01': { emoji:'🕯️', name:'Ognissanti' },
+    '12-08': { emoji:'⛄', name:'Buona Immacolata' },
+    '12-24': { emoji:'🎄', name:'Buona Vigilia di Natale' },
+    '12-25': { emoji:'🎁', name:'Buon Natale' },
+    '12-26': { emoji:'🎄', name:'Buon Santo Stefano' },
+    '12-31': { emoji:'🎆', name:'Buon anno che verrà' },
+    [easter]: { emoji:'🐣', name:'Buona Pasqua' },
+    [easterMonday]: { emoji:'🌸', name:'Buona Pasquetta' },
+  };
+  return HOLIDAYS[md] || null;
+}
+
+// Range "Il tuo anno" attivo (15 dic → 1 gen incluso)
+function isYearWrapActive() {
+  const now = new Date();
+  const m = now.getMonth()+1;
+  const d = now.getDate();
+  return (m===12 && d>=15) || (m===1 && d===1);
+}
+// Calcola le stats dell'anno per un utente
+function calculateYearWrap(userId, orders, year) {
+  const yearPrefix = `${year}-`;
+  const dayNames = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  const dishCount = {};
+  const dayCount = [0,0,0,0,0,0,0];
+  let totalSpent = 0, orderCount = 0;
+  Object.entries(orders||{}).forEach(([key, order]) => {
+    if (!order || order.userId !== userId) return;
+    if (!key.startsWith(yearPrefix)) return;
+    const dateStr = key.split(':')[0];
+    const dt = new Date(dateStr+'T12:00:00');
+    dayCount[dt.getDay()]++;
+    totalSpent += order.rawTotal || 0;
+    orderCount++;
+    (order.items||[]).forEach(item => {
+      const name = item.name;
+      dishCount[name] = (dishCount[name]||0) + (item.qty||0);
+    });
+  });
+  const topDish = Object.entries(dishCount).sort((a,b)=>b[1]-a[1])[0];
+  const topDayIdx = dayCount.indexOf(Math.max(...dayCount));
+  return {
+    orderCount,
+    totalSpent,
+    topDish: topDish ? { name: topDish[0], count: topDish[1] } : null,
+    topDay: dayCount[topDayIdx] > 0 ? dayNames[topDayIdx] : null,
+    year
+  };
+}
+
 // Logo component
 // ─── Classifica top clienti del mese ─────────────────────────────────────
 function Leaderboard({ appState, currentUserId }) {
@@ -817,6 +925,228 @@ function SplashScreen({ onComplete }) {
         </div>
       </div>
     </>
+  );
+}
+
+// ─── Coriandoli animati (CSS puro) ───────────────────────────────────────
+function Confetti({ count = 40 }) {
+  const colors = ['#d4af37','#c1440e','#8b1a1a','#2e8b57','#4a76b8','#e8a530','#b03060'];
+  const pieces = Array.from({length:count}, (_,i)=>({
+    id:i,
+    left: Math.random()*100,
+    delay: Math.random()*3,
+    duration: 3 + Math.random()*3,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    size: 6 + Math.random()*6,
+    rotate: Math.random()*360
+  }));
+  return (
+    <>
+      <style>{`
+        @keyframes confettiFall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0.7; }
+        }
+        .confetti-piece {
+          position: fixed; top: -20px;
+          pointer-events: none; z-index: 9998;
+          animation: confettiFall linear infinite;
+        }
+      `}</style>
+      {pieces.map(p=>(
+        <div key={p.id} className="confetti-piece" style={{
+          left: `${p.left}%`,
+          width: p.size, height: p.size*0.4,
+          background: p.color,
+          borderRadius: 2,
+          animationDelay: `${p.delay}s`,
+          animationDuration: `${p.duration}s`,
+          transform: `rotate(${p.rotate}deg)`
+        }}/>
+      ))}
+    </>
+  );
+}
+
+// ─── Popup compleanno (fullscreen, chiudibile) ───────────────────────────
+function BirthdayPopup({ userName, onClose }) {
+  return (
+    <>
+      <Confetti count={50}/>
+      <div onClick={onClose} style={{
+        position:'fixed', inset:0, zIndex:9999,
+        background:'rgba(0,0,0,.6)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        padding:20, animation:'birthdayFadeIn .4s ease-out'
+      }}>
+        <style>{`
+          @keyframes birthdayFadeIn { 0%{opacity:0} 100%{opacity:1} }
+          @keyframes birthdayPop {
+            0%{transform:scale(0) rotate(-15deg);opacity:0}
+            60%{transform:scale(1.05) rotate(2deg);opacity:1}
+            100%{transform:scale(1) rotate(0deg);opacity:1}
+          }
+          @keyframes birthdayBounce {
+            0%,100%{transform:translateY(0)}
+            50%{transform:translateY(-8px)}
+          }
+        `}</style>
+        <div onClick={e=>e.stopPropagation()} style={{
+          background:'linear-gradient(135deg,#fff6e0,#fce4a0)',
+          borderRadius:20, padding:'30px 25px', maxWidth:340,
+          textAlign:'center', boxShadow:'0 20px 60px rgba(0,0,0,.4)',
+          border:'2px solid #d4af37',
+          animation:'birthdayPop .6s cubic-bezier(.34,1.56,.64,1)'
+        }}>
+          <div style={{fontSize:'4rem', marginBottom:10, animation:'birthdayBounce 1.5s ease-in-out infinite'}}>🎂</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.7rem',fontWeight:700,color:'#8b1a1a',marginBottom:6}}>
+            Buon compleanno<br/>{userName}!
+          </div>
+          <div style={{fontSize:'.9rem',color:'#8b6a15',marginBottom:20,lineHeight:1.5,letterSpacing:'.02em'}}>
+            Tanti auguri da tutti noi<br/>del <b>Forno Dolci Sapori</b> 🥐
+          </div>
+          <button onClick={onClose} style={{
+            background:'#8b1a1a', color:'#fff', border:'none',
+            padding:'12px 32px', borderRadius:12, fontSize:'.95rem',
+            fontWeight:700, cursor:'pointer', letterSpacing:'.05em'
+          }}>Grazie! 🎉</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Banner compleanno sottile (resta tutta la giornata) ──────────────────
+function BirthdayBanner({ userName }) {
+  return (
+    <div style={{
+      background:'linear-gradient(135deg,#fce4a0,#f5c56b)',
+      color:'#5a3d0a', padding:'10px 16px',
+      display:'flex', alignItems:'center', gap:8,
+      fontSize:'.88rem', borderBottom:'1px solid #d4af37',
+      fontWeight:600
+    }}>
+      <span style={{fontSize:'1.3rem'}}>🎂</span>
+      <span>Buon compleanno <b>{userName}</b>! Auguri dal Forno Dolci Sapori 🥐</span>
+    </div>
+  );
+}
+
+// ─── Banner festività ────────────────────────────────────────────────────
+function HolidayBanner({ holiday }) {
+  return (
+    <div style={{
+      background:'linear-gradient(135deg,rgba(212,175,55,.25),rgba(212,175,55,.08))',
+      color:'#5a3d0a', padding:'8px 16px',
+      display:'flex', alignItems:'center', gap:8,
+      fontSize:'.85rem', borderBottom:'1px solid rgba(212,175,55,.4)',
+      fontWeight:600, textAlign:'center', justifyContent:'center'
+    }}>
+      <span style={{fontSize:'1.15rem'}}>{holiday.emoji}</span>
+      <span>{holiday.name} dal <b>Forno Dolci Sapori</b></span>
+    </div>
+  );
+}
+
+// ─── Popup "Il tuo anno" (fullscreen, apparirà 1x al giorno) ─────────────
+function YearWrapPopup({ stats, userName, onClose }) {
+  const noData = stats.orderCount === 0;
+  return (
+    <>
+      {!noData && <Confetti count={30}/>}
+      <div onClick={onClose} style={{
+        position:'fixed', inset:0, zIndex:9999,
+        background:'rgba(0,0,0,.7)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        padding:20, animation:'birthdayFadeIn .4s ease-out'
+      }}>
+        <style>{`
+          @keyframes wrapSlide {
+            0%{transform:translateY(30px);opacity:0}
+            100%{transform:translateY(0);opacity:1}
+          }
+          @keyframes wrapItemIn {
+            0%{transform:translateX(-20px);opacity:0}
+            100%{transform:translateX(0);opacity:1}
+          }
+        `}</style>
+        <div onClick={e=>e.stopPropagation()} style={{
+          background:'linear-gradient(160deg,#2b1810 0%,#3d2416 40%,#5a3520 100%)',
+          borderRadius:20, padding:'28px 22px', maxWidth:340, width:'100%',
+          color:'#fce4a0', boxShadow:'0 30px 80px rgba(0,0,0,.6)',
+          border:'2px solid #d4af37',
+          animation:'wrapSlide .6s ease-out'
+        }}>
+          <div style={{textAlign:'center',marginBottom:20}}>
+            <div style={{fontSize:'.75rem',letterSpacing:'.35em',opacity:.7,marginBottom:4}}>IL TUO</div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:'2.5rem',fontWeight:700,color:'#d4af37',lineHeight:1}}>
+              {stats.year}
+            </div>
+            <div style={{fontSize:'.85rem',marginTop:8,opacity:.85}}>
+              Insieme al Forno Dolci Sapori
+            </div>
+          </div>
+
+          {noData ? (
+            <div style={{textAlign:'center',padding:'20px 0',opacity:.85}}>
+              Ci vediamo l'anno prossimo, {userName}! 🥐
+            </div>
+          ) : (
+            <>
+              {stats.topDish && (
+                <div style={{padding:'12px 14px',marginBottom:10,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .3s both'}}>
+                  <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>🍽 PIATTO PIÙ AMATO</div>
+                  <div style={{fontSize:'1.05rem',fontWeight:700,color:'#fff'}}>{stats.topDish.name}</div>
+                  <div style={{fontSize:'.78rem',opacity:.8}}>ordinato {stats.topDish.count} volte</div>
+                </div>
+              )}
+              <div style={{padding:'12px 14px',marginBottom:10,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .5s both'}}>
+                <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>💰 HAI SPESO</div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.6rem',fontWeight:700,color:'#d4af37'}}>€{stats.totalSpent.toFixed(2)}</div>
+                <div style={{fontSize:'.78rem',opacity:.8}}>in {stats.orderCount} ordini</div>
+              </div>
+              {stats.topDay && (
+                <div style={{padding:'12px 14px',marginBottom:14,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .7s both'}}>
+                  <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>📅 GIORNO PREFERITO</div>
+                  <div style={{fontSize:'1.05rem',fontWeight:700,color:'#fff'}}>{stats.topDay}</div>
+                </div>
+              )}
+              <div style={{textAlign:'center',fontSize:'.85rem',fontStyle:'italic',opacity:.9,margin:'14px 0',lineHeight:1.5}}>
+                🎉 Grazie di essere<br/>stato con noi, {userName}!
+              </div>
+            </>
+          )}
+
+          <button onClick={onClose} style={{
+            width:'100%', background:'#d4af37', color:'#2b1810', border:'none',
+            padding:'12px', borderRadius:12, fontSize:'.95rem',
+            fontWeight:700, cursor:'pointer', letterSpacing:'.05em', marginTop:6
+          }}>Chiudi</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Card compatta "Il tuo anno" (dopo aver chiuso il popup) ─────────────
+function YearWrapCard({ stats, onOpen }) {
+  return (
+    <div onClick={onOpen} style={{
+      background:'linear-gradient(135deg,#2b1810,#5a3520)',
+      color:'#fce4a0', borderRadius:12, padding:'14px 16px',
+      marginBottom:12, cursor:'pointer',
+      border:'1.5px solid #d4af37',
+      display:'flex',alignItems:'center',justifyContent:'space-between',gap:10
+    }}>
+      <div>
+        <div style={{fontSize:'.68rem',letterSpacing:'.25em',opacity:.75}}>IL TUO</div>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.4rem',fontWeight:700,color:'#d4af37',lineHeight:1.1}}>
+          {stats.year} 🎉
+        </div>
+        <div style={{fontSize:'.75rem',opacity:.85,marginTop:2}}>Tocca per rivedere il riepilogo</div>
+      </div>
+      <span style={{fontSize:'1.4rem',color:'#d4af37'}}>›</span>
+    </div>
   );
 }
 
@@ -2293,6 +2623,25 @@ function AdminClients({ appState, update }) {
                 {cr>0&&<button className="btn btn-ghost btn-sm" style={{color:"var(--red)",borderColor:"#f0b9b4"}} onClick={()=>resetCr(u.id)}>Azzera</button>}
               </div>
             </div>
+            {/* Compleanno */}
+            <div style={{background:"var(--bg)",borderRadius:9,padding:"10px 12px",border:"1px solid var(--border)",marginTop:8}}>
+              <div className="muted" style={{fontSize:".7rem",marginBottom:7,fontWeight:700,textTransform:"uppercase",letterSpacing:".04em"}}>🎂 Compleanno</div>
+              <div className="flex" style={{flexWrap:"wrap",gap:7,alignItems:"center"}}>
+                <input type="date" value={u.birthDate||""}
+                  max={today()}
+                  style={{padding:"6px 8px",fontSize:".8rem"}}
+                  onChange={e=>{
+                    const newBirth = e.target.value;
+                    update({users:appState.users.map(x=>x.id===u.id?{...x,birthDate:newBirth||undefined}:x)});
+                    showToast(newBirth?"✓ Compleanno salvato":"✓ Compleanno rimosso");
+                  }}/>
+                {u.birthDate && (
+                  <span style={{fontSize:".78rem",color:"var(--muted)",fontStyle:"italic"}}>
+                    {new Date(u.birthDate+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"long"})}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         );
       })}
@@ -2676,14 +3025,20 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const orderFormRef = useRef(null);
   const [accPwd,   setAccPwd]   = useState("");
   const [accPwd2,  setAccPwd2]  = useState("");
+  const [accBirthDate, setAccBirthDate] = useState(user.birthDate || "");
   const [accToast, setAccToast] = useState("");
   const saveAccount = () => {
     if(accName.trim().length<2) return setAccToast("Nome troppo corto");
     if(accPwd && accPwd.length<4) return setAccToast("Password troppo corta (min 4)");
     if(accPwd && accPwd!==accPwd2) return setAccToast("Le password non coincidono");
-    const updUsers = appState.users.map(u=>u.id===user.id?{...u,name:accName.trim(),...(accPwd?{password:bcrypt.hashSync(accPwd,10)}:{})}:u);
+    const updUsers = appState.users.map(u=>u.id===user.id?{
+      ...u,
+      name:accName.trim(),
+      ...(accPwd?{password:bcrypt.hashSync(accPwd,10)}:{}),
+      ...(accBirthDate?{birthDate:accBirthDate}:{})
+    }:u);
     update({users:updUsers});
-    handleLogin({...user,name:accName.trim()});
+    handleLogin({...user,name:accName.trim(),...(accBirthDate?{birthDate:accBirthDate}:{})});
     setAccPwd(""); setAccPwd2("");
     setAccToast("✓ Profilo aggiornato!");
     setTimeout(()=>setAccToast(""),3000);
@@ -2693,6 +3048,25 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
+  // Compleanno & Wrap dell'anno
+  const isBirthday = isBirthdayToday(user);
+  const todayISO = today();
+  const [showBdayPopup, setShowBdayPopup] = useState(() => {
+    if (!isBirthday) return false;
+    try { return localStorage.getItem('bday_shown_'+todayISO) !== '1'; } catch { return true; }
+  });
+  const holiday = getHolidayToday();
+  const wrapActive = isYearWrapActive();
+  const wrapYear = new Date().getFullYear() === new Date(todayISO).getFullYear()
+    ? (new Date().getMonth()===0 ? new Date().getFullYear()-1 : new Date().getFullYear())
+    : new Date(todayISO).getFullYear();
+  const [showWrapPopup, setShowWrapPopup] = useState(() => {
+    if (!wrapActive) return false;
+    try { return localStorage.getItem('wrap_shown_'+todayISO) !== '1'; } catch { return true; }
+  });
+  const yearStats = wrapActive
+    ? calculateYearWrap(user.id, appState.orders, wrapYear)
+    : null;
   const [date, setDate] = useState(today());
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
@@ -2828,6 +3202,24 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   return(
     <div className="app">
+      {/* Popup compleanno (una volta al giorno) */}
+      {showBdayPopup && (
+        <BirthdayPopup userName={user.name} onClose={()=>{
+          setShowBdayPopup(false);
+          try { localStorage.setItem('bday_shown_'+todayISO,'1'); } catch {}
+        }}/>
+      )}
+      {/* Popup wrap dell'anno (una volta al giorno nel range 15/12 - 01/01) */}
+      {showWrapPopup && yearStats && (
+        <YearWrapPopup stats={yearStats} userName={user.name} onClose={()=>{
+          setShowWrapPopup(false);
+          try { localStorage.setItem('wrap_shown_'+todayISO,'1'); } catch {}
+        }}/>
+      )}
+      {/* Banner compleanno (resta tutta la giornata) */}
+      {isBirthday && <BirthdayBanner userName={user.name}/>}
+      {/* Banner festività (se oggi è una festa italiana) */}
+      {holiday && !isBirthday && <HolidayBanner holiday={holiday}/>}
       {showNotifBanner && (
         <div style={{
           background:"linear-gradient(135deg,#1a3a2e,#0d2b1e)",
@@ -2947,6 +3339,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
               <label>Conferma password</label>
               <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
             </div>
+            <div className="field" style={{marginBottom:14}}>
+              <label>🎂 Data di nascita (opzionale)</label>
+              <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)}
+                max={today()} style={{width:'100%'}}/>
+              <div style={{fontSize:'.72rem',color:'var(--muted)',marginTop:4,fontStyle:'italic'}}>
+                Ti faremo gli auguri il giorno del tuo compleanno! 🎉
+              </div>
+            </div>
             {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
             <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
           </div>
@@ -3009,6 +3409,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
         })()}
 
         {tab==="order"&&(<>
+          {/* Card "Il tuo anno" (visibile 15/12 - 01/01, dopo aver chiuso il popup) */}
+          {wrapActive && !showWrapPopup && yearStats && yearStats.orderCount>0 && (
+            <YearWrapCard stats={yearStats} onOpen={()=>setShowWrapPopup(true)}/>
+          )}
           {/* Bottone sticky in basso con totale */}
           {ordersOpen && !myOrder && estRaw>0 && !atBottom && (
             <div style={{
