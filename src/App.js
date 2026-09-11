@@ -1920,6 +1920,8 @@ function AdminClients({ appState, update }) {
   const [newForm,    setNewForm]    = useState({name:"",id:"",password:""});
   const [creditEdit, setCreditEdit] = useState({});
   const [toast,      setToast]      = useState({text:"",err:false});
+  const [restorePreview, setRestorePreview] = useState(null); // {data, filename, exportedAt}
+  const [isBackupWorking, setIsBackupWorking] = useState(false);
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const clients  = appState.users.filter(u=>u.role==="client");
@@ -2064,7 +2066,139 @@ function AdminClients({ appState, update }) {
           </div>
         );
       })}
+
+      {/* ─── Backup & Ripristino ─────────────────────────────────── */}
+      <div className="card" style={{marginTop:20,border:"1px dashed var(--border)",background:"var(--surface)"}}>
+        <div className="card-title" style={{marginBottom:6}}>🔒 Backup dati</div>
+        <div className="muted" style={{fontSize:".82rem",marginBottom:12,lineHeight:1.5}}>
+          Scarica una copia completa di tutti i dati (clienti, crediti, debiti, ordini storici, menù, notifiche).
+          Conserva il file in un posto sicuro (Google Drive, iCloud, email). Consigliato 1 volta a settimana.
+        </div>
+        <div className="flex" style={{gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-primary btn-sm" disabled={isBackupWorking}
+            onClick={async()=>{
+              setIsBackupWorking(true);
+              try {
+                const res = await fetch("/api/state-load");
+                if (!res.ok) throw new Error("Errore caricamento dati");
+                const rows = await res.json();
+                if (!rows || !rows.length) {
+                  showToast("Nessun dato da salvare",true);
+                  return;
+                }
+                const backup = {
+                  version: 1,
+                  app: "dolci-sapori",
+                  exportedAt: new Date().toISOString(),
+                  data: rows[0].data
+                };
+                const blob = new Blob([JSON.stringify(backup,null,2)], {type:"application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                const timeStr = new Date().toISOString().slice(11,16).replace(":","");
+                a.download = `dolci-sapori-backup-${dateStr}-${timeStr}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("✓ Backup scaricato!");
+              } catch(err) {
+                console.error("Backup error:",err);
+                showToast("Errore durante il backup",true);
+              } finally {
+                setIsBackupWorking(false);
+              }
+            }}>
+            💾 Scarica backup
+          </button>
+          <label className="btn btn-ghost btn-sm" style={{cursor:"pointer",margin:0}}>
+            📤 Ripristina da file…
+            <input type="file" accept=".json,application/json"
+              style={{display:"none"}}
+              onChange={(e)=>{
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                  try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (!parsed || !parsed.data || !Array.isArray(parsed.data.users)) {
+                      return showToast("File non valido o corrotto",true);
+                    }
+                    setRestorePreview({
+                      data: parsed.data,
+                      filename: file.name,
+                      exportedAt: parsed.exportedAt || null
+                    });
+                  } catch(err) {
+                    showToast("Impossibile leggere il file JSON",true);
+                  }
+                };
+                reader.readAsText(file);
+                e.target.value = "";
+              }}/>
+          </label>
+        </div>
+      </div>
     </div>
+
+    {/* Modal conferma ripristino */}
+    {restorePreview && (
+      <div style={{
+        position:"fixed",inset:0,zIndex:1000,
+        background:"rgba(0,0,0,.55)",
+        display:"flex",alignItems:"center",justifyContent:"center",padding:12
+      }} onClick={()=>setRestorePreview(null)}>
+        <div onClick={e=>e.stopPropagation()} style={{
+          background:"var(--surface)",borderRadius:14,width:"100%",maxWidth:500,
+          padding:20,boxShadow:"0 20px 60px rgba(0,0,0,.4)"
+        }}>
+          <div style={{fontWeight:700,fontSize:"1.05rem",marginBottom:10}}>
+            ⚠️ Confermare ripristino?
+          </div>
+          <div style={{background:"#fff3cd",border:"1px solid #ffc107",borderRadius:8,padding:12,marginBottom:14,fontSize:".85rem",lineHeight:1.5}}>
+            <b>Attenzione!</b> Tutti i dati attuali (utenti, crediti, debiti, ordini, menù)
+            verranno <b>completamente sostituiti</b> con quelli del file.<br/><br/>
+            Questa operazione <b>non è reversibile</b>.
+          </div>
+          <div style={{fontSize:".85rem",marginBottom:6}}>
+            📁 <b>File:</b> {restorePreview.filename}
+          </div>
+          {restorePreview.exportedAt && (
+            <div style={{fontSize:".85rem",marginBottom:6}}>
+              🕒 <b>Data backup:</b> {new Date(restorePreview.exportedAt).toLocaleString("it-IT")}
+            </div>
+          )}
+          <div style={{fontSize:".85rem",marginBottom:14}}>
+            👥 <b>Utenti nel backup:</b> {restorePreview.data.users?.length||0} ·
+            📦 <b>Ordini:</b> {Object.keys(restorePreview.data.orders||{}).length}
+          </div>
+          <div className="flex" style={{justifyContent:"flex-end",gap:8}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setRestorePreview(null)}>Annulla</button>
+            <button className="btn btn-danger" onClick={async()=>{
+              try {
+                const res = await fetch("/api/state-save",{
+                  method:"POST",
+                  headers:{"Content-Type":"application/json"},
+                  body:JSON.stringify({data:restorePreview.data})
+                });
+                if (!res.ok) throw new Error("Errore salvataggio");
+                setRestorePreview(null);
+                showToast("✓ Ripristino completato! Ricarico...");
+                setTimeout(()=>window.location.reload(),1500);
+              } catch(err) {
+                console.error("Restore error:",err);
+                showToast("Errore durante il ripristino",true);
+              }
+            }}>
+              ✓ Sì, ripristina
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {toast.text&&<div className={`toast ${toast.err?"toast-err":""}`}>{toast.text}</div>}
   </>);
 }
