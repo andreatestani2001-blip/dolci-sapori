@@ -813,7 +813,7 @@ function SplashScreen({ onComplete }) {
             {BRAND.name || 'Forno Dolci Sapori'}
             <div className="splash-shine"/>
           </div>
-          <div className="splash-subtitle">Sapori di casa</div>
+          <div className="splash-subtitle">Dal 1996 sulla vostra tavola</div>
         </div>
       </div>
     </>
