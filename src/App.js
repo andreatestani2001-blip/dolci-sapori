@@ -2891,7 +2891,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
             <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋</button>
-            <button className={`tab ${tab==="top"?"active":""}`} onClick={()=>setTab("top")}>🏆</button>
+            <button className={`tab ${tab==="top"?"active":""}`} onClick={()=>setTab("top")}
+              style={tab!=="top" ? {
+                background:'linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.08))',
+                border:'1px solid rgba(212,175,55,.5)',
+                fontWeight:700,
+                color:'#8b6a15'
+              } : undefined}>🏆 Top</button>
             <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
