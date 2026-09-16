@@ -706,16 +706,25 @@ function calculateYearWrap(userId, orders, year) {
 
 // Logo component
 // ─── Classifica top clienti del mese ─────────────────────────────────────
-function Leaderboard({ appState, currentUserId }) {
+function Leaderboard({ appState, currentUserId, period='month' }) {
   const now = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthName = now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const isYear = period === 'year';
+  const prefix = isYear
+    ? `${now.getFullYear()}-`
+    : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const periodLabel = isYear
+    ? String(now.getFullYear())
+    : now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const title = isYear ? '🏆 Top dell\'anno' : '🏆 Top del mese';
+  const emptyMsg = isYear
+    ? "Nessun ordine quest'anno ancora."
+    : "Nessun ordine questo mese ancora.";
 
-  // Somma rawTotal degli ordini del mese corrente per ogni cliente
+  // Somma rawTotal degli ordini del periodo per ogni cliente
   const totals = {};
   Object.entries(appState.orders||{}).forEach(([key, order]) => {
     if (!order) return;
-    if (!key.startsWith(monthPrefix)) return; // key = "YYYY-MM-DD:userId"
+    if (!key.startsWith(prefix)) return; // key = "YYYY-MM-DD:userId"
     const uid = order.userId;
     totals[uid] = (totals[uid]||0) + (order.rawTotal || 0);
   });
@@ -732,16 +741,16 @@ function Leaderboard({ appState, currentUserId }) {
 
   if (ranking.length === 0) return (
     <div className="card">
-      <div className="card-title">🏆 Top del mese</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
-      <div className="empty">Nessun ordine questo mese ancora.<br/>Ordina per entrare in classifica! 🚀</div>
+      <div className="card-title">{title}</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
+      <div className="empty">{emptyMsg}<br/>Ordina per entrare in classifica! 🚀</div>
     </div>
   );
 
   return (
     <div className="card">
-      <div className="card-title">🏆 Top del mese</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
+      <div className="card-title">{title}</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
 
       {/* Banner posizione utente se fuori dai primi 3 */}
       {currentUserId && myRank >= 3 && (
@@ -761,7 +770,7 @@ function Leaderboard({ appState, currentUserId }) {
           borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:'.85rem',
           color:'var(--muted)', textAlign:'center'
         }}>
-          Non sei ancora in classifica questo mese.
+          Non sei ancora in classifica {isYear ? "quest'anno" : "questo mese"}.
         </div>
       )}
 
@@ -3000,7 +3009,10 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
-        {tab==="top"     &&<Leaderboard              appState={appState}/>}
+        {tab==="top"     &&<>
+          <Leaderboard appState={appState} period="month"/>
+          <Leaderboard appState={appState} period="year"/>
+        </>}
       </div>
     </div>
   );
@@ -3306,7 +3318,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
       </div>
       <div className="main">
 
-        {tab==="top" && <Leaderboard appState={appState} currentUserId={user.id}/>}
+        {tab==="top" && <>
+          <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
+          <Leaderboard appState={appState} currentUserId={user.id} period="year"/>
+        </>}
 
         {tab==="notifs"&&(
           <div className="card">
