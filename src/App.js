@@ -596,569 +596,7 @@ function getUserDebt(userId, orders) {
     .reduce((s,[,o]) => s+(o.total||0), 0);
 }
 
-// ─── Compleanno, festività, wrap dell'anno ───────────────────────────────
-// Ritorna "MM-DD" del compleanno se il cliente ne ha uno, altrimenti null
-function getBirthdayMD(user) {
-  if (!user?.birthDate) return null;
-  // birthDate salvata come "YYYY-MM-DD"
-  const parts = user.birthDate.split('-');
-  if (parts.length !== 3) return null;
-  return `${parts[1]}-${parts[2]}`;
-}
-function isBirthdayToday(user) {
-  const bd = getBirthdayMD(user);
-  if (!bd) return false;
-  const now = new Date();
-  const todayMD = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  return bd === todayMD;
-}
-
-// Calcolo Pasqua con algoritmo di Gauss (funziona per anni 1583-4099)
-function easterDate(year) {
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19*a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const l = (32 + 2*e + 2*i - h - k) % 7;
-  const m = Math.floor((a + 11*h + 22*l) / 451);
-  const month = Math.floor((h + l - 7*m + 114) / 31);
-  const day = ((h + l - 7*m + 114) % 31) + 1;
-  return `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-}
-function addDaysMD(md, year, delta) {
-  const [m, d] = md.split('-').map(Number);
-  const dt = new Date(year, m-1, d);
-  dt.setDate(dt.getDate() + delta);
-  return `${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-}
-
-// Ritorna la festività di oggi come {emoji, name} oppure null
-function getHolidayToday() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const md = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-
-  const easter = easterDate(year);
-  const easterMonday = addDaysMD(easter, year, 1);
-
-  const HOLIDAYS = {
-    '01-01': { emoji:'🥂', name:'Buon anno' },
-    '01-06': { emoji:'✨', name:'Buona Epifania' },
-    '04-25': { emoji:'🇮🇹', name:'Festa della Liberazione' },
-    '05-01': { emoji:'🌷', name:'Buon Primo Maggio' },
-    '06-02': { emoji:'🇮🇹', name:'Festa della Repubblica' },
-    '08-15': { emoji:'☀️', name:'Buon Ferragosto' },
-    '11-01': { emoji:'🕯️', name:'Ognissanti' },
-    '12-08': { emoji:'⛄', name:'Buona Immacolata' },
-    '12-24': { emoji:'🎄', name:'Buona Vigilia di Natale' },
-    '12-25': { emoji:'🎁', name:'Buon Natale' },
-    '12-26': { emoji:'🎄', name:'Buon Santo Stefano' },
-    '12-31': { emoji:'🎆', name:'Buon anno che verrà' },
-    [easter]: { emoji:'🐣', name:'Buona Pasqua' },
-    [easterMonday]: { emoji:'🌸', name:'Buona Pasquetta' },
-  };
-  return HOLIDAYS[md] || null;
-}
-
-// Range "Il tuo anno" attivo (15 dic → 1 gen incluso)
-function isYearWrapActive() {
-  const now = new Date();
-  const m = now.getMonth()+1;
-  const d = now.getDate();
-  return (m===12 && d>=15) || (m===1 && d===1);
-}
-// Calcola le stats dell'anno per un utente
-function calculateYearWrap(userId, orders, year) {
-  const yearPrefix = `${year}-`;
-  const dayNames = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-  const dishCount = {};
-  const dayCount = [0,0,0,0,0,0,0];
-  let totalSpent = 0, orderCount = 0;
-  Object.entries(orders||{}).forEach(([key, order]) => {
-    if (!order || order.userId !== userId) return;
-    if (!key.startsWith(yearPrefix)) return;
-    const dateStr = key.split(':')[0];
-    const dt = new Date(dateStr+'T12:00:00');
-    dayCount[dt.getDay()]++;
-    totalSpent += order.rawTotal || 0;
-    orderCount++;
-    (order.items||[]).forEach(item => {
-      const name = item.name;
-      dishCount[name] = (dishCount[name]||0) + (item.qty||0);
-    });
-  });
-  const topDish = Object.entries(dishCount).sort((a,b)=>b[1]-a[1])[0];
-  const topDayIdx = dayCount.indexOf(Math.max(...dayCount));
-  return {
-    orderCount,
-    totalSpent,
-    topDish: topDish ? { name: topDish[0], count: topDish[1] } : null,
-    topDay: dayCount[topDayIdx] > 0 ? dayNames[topDayIdx] : null,
-    year
-  };
-}
-
 // Logo component
-// ─── Classifica top clienti del mese ─────────────────────────────────────
-function Leaderboard({ appState, currentUserId, period='month' }) {
-  const now = new Date();
-  const isYear = period === 'year';
-  const prefix = isYear
-    ? `${now.getFullYear()}-`
-    : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const periodLabel = isYear
-    ? String(now.getFullYear())
-    : now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
-  const title = isYear ? '🏆 Top dell\'anno' : '🏆 Top del mese';
-  const emptyMsg = isYear
-    ? "Nessun ordine quest'anno ancora."
-    : "Nessun ordine questo mese ancora.";
-
-  // Somma rawTotal degli ordini del periodo per ogni cliente
-  const totals = {};
-  Object.entries(appState.orders||{}).forEach(([key, order]) => {
-    if (!order) return;
-    if (!key.startsWith(prefix)) return; // key = "YYYY-MM-DD:userId"
-    const uid = order.userId;
-    totals[uid] = (totals[uid]||0) + (order.rawTotal || 0);
-  });
-
-  const clients = appState.users.filter(u => u.role === 'client');
-  const ranking = clients
-    .map(u => ({ id: u.id, name: u.name, total: totals[u.id] || 0 }))
-    .filter(r => r.total > 0)
-    .sort((a,b) => b.total - a.total);
-
-  const maxTotal = ranking[0]?.total || 1;
-  const myRank = currentUserId ? ranking.findIndex(r => r.id === currentUserId) : -1;
-  const badges = ['🥇','🥈','🥉'];
-
-  if (ranking.length === 0) return (
-    <div className="card">
-      <div className="card-title">{title}</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
-      <div className="empty">{emptyMsg}<br/>Ordina per entrare in classifica! 🚀</div>
-    </div>
-  );
-
-  return (
-    <div className="card">
-      <div className="card-title">{title}</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
-
-      {/* Banner posizione utente se fuori dai primi 3 */}
-      {currentUserId && myRank >= 3 && (
-        <div style={{
-          background:'linear-gradient(135deg,#fbf1d9,#f4e2ac)',
-          border:'1px solid #d4af37', borderRadius:10,
-          padding:'10px 14px', marginBottom:14, fontSize:'.9rem',
-          display:'flex', alignItems:'center', justifyContent:'space-between'
-        }}>
-          <span>⭐ <b>Sei al {myRank+1}° posto</b></span>
-          <span style={{fontWeight:700,color:'#8b6a15'}}>€{ranking[myRank].total.toFixed(2)}</span>
-        </div>
-      )}
-      {currentUserId && myRank === -1 && (
-        <div style={{
-          background:'#fdf6ee', border:'1px dashed var(--border)',
-          borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:'.85rem',
-          color:'var(--muted)', textAlign:'center'
-        }}>
-          Non sei ancora in classifica {isYear ? "quest'anno" : "questo mese"}.
-        </div>
-      )}
-
-      {ranking.slice(0, 10).map((r, i) => {
-        const isMe = r.id === currentUserId;
-        const pct = (r.total / maxTotal) * 100;
-        const isPodium = i < 3;
-        return (
-          <div key={r.id} style={{
-            padding:'10px 12px', marginBottom:6,
-            background: isMe ? 'rgba(139,26,26,.06)' : 'transparent',
-            border: isMe ? '1.5px solid var(--accent)' : '1px solid var(--border-lt)',
-            borderRadius: 10, position: 'relative', overflow: 'hidden'
-          }}>
-            {/* Barra proporzionale sfondo */}
-            <div style={{
-              position:'absolute', left:0, top:0, bottom:0,
-              width:`${pct}%`,
-              background: isPodium
-                ? 'linear-gradient(90deg,rgba(212,175,55,.18),rgba(212,175,55,.06))'
-                : 'rgba(0,0,0,.03)',
-              zIndex:0, transition:'width .6s ease-out'
-            }}/>
-            <div style={{
-              position:'relative', zIndex:1,
-              display:'flex', justifyContent:'space-between', alignItems:'center', gap:10
-            }}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <span style={{
-                  fontSize: isPodium ? '1.35rem' : '.95rem',
-                  minWidth:32, textAlign:'center',
-                  fontWeight: isPodium ? 400 : 700,
-                  color: isPodium ? undefined : 'var(--muted)'
-                }}>{badges[i] || `${i+1}°`}</span>
-                <span style={{fontWeight:isMe?700:500}}>
-                  {r.name}
-                  {isMe && <span style={{color:'var(--accent)',fontSize:'.75rem',marginLeft:6,fontWeight:600}}>(tu)</span>}
-                </span>
-              </div>
-              <span style={{
-                fontWeight:700,
-                fontFamily:"'Playfair Display',serif",
-                fontSize: isPodium ? '1.15rem' : '1rem',
-                color: isPodium ? '#8b6a15' : 'var(--text)'
-              }}>
-                €{r.total.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Splash screen cinematica (3 secondi, una volta a sessione) ──────────
-function SplashScreen({ onComplete }) {
-  useEffect(() => {
-    const t = setTimeout(onComplete, 3200);
-    return () => clearTimeout(t);
-  }, [onComplete]);
-  return (
-    <>
-      <style>{`
-        .splash-screen {
-          position: fixed; inset: 0; z-index: 9999;
-          background: radial-gradient(circle at center, #fdf6ee 0%, #f4e2ac 100%);
-          display: flex; align-items: center; justify-content: center;
-          animation: splashFadeOut 0.5s ease-in 2.7s forwards;
-        }
-        .splash-wrap {
-          display: flex; flex-direction: column; align-items: center;
-          animation: splashScale 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-          position: relative;
-        }
-        .splash-halo {
-          position: absolute; inset: -60px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(212,175,55,.45), transparent 65%);
-          animation: splashHalo 2.2s ease-in-out;
-          z-index: 0; pointer-events: none;
-        }
-        .splash-halo-2 {
-          position: absolute; inset: -30px;
-          border-radius: 50%;
-          border: 2px solid rgba(212,175,55,.5);
-          animation: splashRing 1.8s ease-out 0.4s;
-          z-index: 0; opacity: 0;
-        }
-        .splash-logo {
-          position: relative; z-index: 2;
-          animation: splashRotate 1.6s ease-out 0.4s;
-        }
-        .splash-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.9rem; font-weight: 700;
-          color: #8b1a1a;
-          margin-top: 22px; opacity: 0;
-          animation: splashTitleIn 0.9s ease-out 1.2s forwards;
-          letter-spacing: 0.02em; text-align: center;
-          position: relative; z-index: 2;
-        }
-        .splash-subtitle {
-          font-size: 0.78rem; color: #8b6a15;
-          margin-top: 6px; opacity: 0;
-          letter-spacing: 0.35em; text-transform: uppercase;
-          animation: splashTitleIn 0.9s ease-out 1.6s forwards;
-          position: relative; z-index: 2;
-        }
-        .splash-shine {
-          position: absolute; top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
-          animation: splashShine 1.4s ease-out 1.9s;
-          z-index: 3; pointer-events: none;
-        }
-        @keyframes splashScale {
-          0% { transform: scale(0) rotate(-90deg); opacity: 0; }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        @keyframes splashRotate {
-          0% { transform: rotate(0deg) scale(1); }
-          50% { transform: rotate(360deg) scale(1.15); }
-          100% { transform: rotate(720deg) scale(1); }
-        }
-        @keyframes splashHalo {
-          0% { opacity: 0; transform: scale(0.4); }
-          40% { opacity: 1; transform: scale(1.3); }
-          100% { opacity: 0; transform: scale(2.2); }
-        }
-        @keyframes splashRing {
-          0% { opacity: 0; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.4); }
-          100% { opacity: 0; transform: scale(2); }
-        }
-        @keyframes splashTitleIn {
-          0% { opacity: 0; transform: translateY(15px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes splashShine {
-          0% { left: -100%; }
-          100% { left: 200%; }
-        }
-        @keyframes splashFadeOut {
-          0% { opacity: 1; }
-          100% { opacity: 0; visibility: hidden; pointer-events: none; }
-        }
-      `}</style>
-      <div className="splash-screen">
-        <div className="splash-wrap">
-          <div className="splash-halo"/>
-          <div className="splash-halo-2"/>
-          <div className="splash-logo">
-            <LogoIcon size={130}/>
-          </div>
-          <div className="splash-title">
-            {BRAND.name || 'Forno Dolci Sapori'}
-            <div className="splash-shine"/>
-          </div>
-          <div className="splash-subtitle">Dal 1996 sulla vostra tavola</div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Coriandoli animati (CSS puro) ───────────────────────────────────────
-function Confetti({ count = 40 }) {
-  const colors = ['#d4af37','#c1440e','#8b1a1a','#2e8b57','#4a76b8','#e8a530','#b03060'];
-  const pieces = Array.from({length:count}, (_,i)=>({
-    id:i,
-    left: Math.random()*100,
-    delay: Math.random()*3,
-    duration: 3 + Math.random()*3,
-    color: colors[Math.floor(Math.random()*colors.length)],
-    size: 6 + Math.random()*6,
-    rotate: Math.random()*360
-  }));
-  return (
-    <>
-      <style>{`
-        @keyframes confettiFall {
-          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(110vh) rotate(720deg); opacity: 0.7; }
-        }
-        .confetti-piece {
-          position: fixed; top: -20px;
-          pointer-events: none; z-index: 9998;
-          animation: confettiFall linear infinite;
-        }
-      `}</style>
-      {pieces.map(p=>(
-        <div key={p.id} className="confetti-piece" style={{
-          left: `${p.left}%`,
-          width: p.size, height: p.size*0.4,
-          background: p.color,
-          borderRadius: 2,
-          animationDelay: `${p.delay}s`,
-          animationDuration: `${p.duration}s`,
-          transform: `rotate(${p.rotate}deg)`
-        }}/>
-      ))}
-    </>
-  );
-}
-
-// ─── Popup compleanno (fullscreen, chiudibile) ───────────────────────────
-function BirthdayPopup({ userName, onClose }) {
-  return (
-    <>
-      <Confetti count={50}/>
-      <div onClick={onClose} style={{
-        position:'fixed', inset:0, zIndex:9999,
-        background:'rgba(0,0,0,.6)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        padding:20, animation:'birthdayFadeIn .4s ease-out'
-      }}>
-        <style>{`
-          @keyframes birthdayFadeIn { 0%{opacity:0} 100%{opacity:1} }
-          @keyframes birthdayPop {
-            0%{transform:scale(0) rotate(-15deg);opacity:0}
-            60%{transform:scale(1.05) rotate(2deg);opacity:1}
-            100%{transform:scale(1) rotate(0deg);opacity:1}
-          }
-          @keyframes birthdayBounce {
-            0%,100%{transform:translateY(0)}
-            50%{transform:translateY(-8px)}
-          }
-        `}</style>
-        <div onClick={e=>e.stopPropagation()} style={{
-          background:'linear-gradient(135deg,#fff6e0,#fce4a0)',
-          borderRadius:20, padding:'30px 25px', maxWidth:340,
-          textAlign:'center', boxShadow:'0 20px 60px rgba(0,0,0,.4)',
-          border:'2px solid #d4af37',
-          animation:'birthdayPop .6s cubic-bezier(.34,1.56,.64,1)'
-        }}>
-          <div style={{fontSize:'4rem', marginBottom:10, animation:'birthdayBounce 1.5s ease-in-out infinite'}}>🎂</div>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.7rem',fontWeight:700,color:'#8b1a1a',marginBottom:6}}>
-            Buon compleanno<br/>{userName}!
-          </div>
-          <div style={{fontSize:'.9rem',color:'#8b6a15',marginBottom:20,lineHeight:1.5,letterSpacing:'.02em'}}>
-            Tanti auguri da tutti noi<br/>del <b>Forno Dolci Sapori</b> 🥐
-          </div>
-          <button onClick={onClose} style={{
-            background:'#8b1a1a', color:'#fff', border:'none',
-            padding:'12px 32px', borderRadius:12, fontSize:'.95rem',
-            fontWeight:700, cursor:'pointer', letterSpacing:'.05em'
-          }}>Grazie! 🎉</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Banner compleanno sottile (resta tutta la giornata) ──────────────────
-function BirthdayBanner({ userName }) {
-  return (
-    <div style={{
-      background:'linear-gradient(135deg,#fce4a0,#f5c56b)',
-      color:'#5a3d0a', padding:'10px 16px',
-      display:'flex', alignItems:'center', gap:8,
-      fontSize:'.88rem', borderBottom:'1px solid #d4af37',
-      fontWeight:600
-    }}>
-      <span style={{fontSize:'1.3rem'}}>🎂</span>
-      <span>Buon compleanno <b>{userName}</b>! Auguri dal Forno Dolci Sapori 🥐</span>
-    </div>
-  );
-}
-
-// ─── Banner festività ────────────────────────────────────────────────────
-function HolidayBanner({ holiday }) {
-  return (
-    <div style={{
-      background:'linear-gradient(135deg,rgba(212,175,55,.25),rgba(212,175,55,.08))',
-      color:'#5a3d0a', padding:'8px 16px',
-      display:'flex', alignItems:'center', gap:8,
-      fontSize:'.85rem', borderBottom:'1px solid rgba(212,175,55,.4)',
-      fontWeight:600, textAlign:'center', justifyContent:'center'
-    }}>
-      <span style={{fontSize:'1.15rem'}}>{holiday.emoji}</span>
-      <span>{holiday.name} dal <b>Forno Dolci Sapori</b></span>
-    </div>
-  );
-}
-
-// ─── Popup "Il tuo anno" (fullscreen, apparirà 1x al giorno) ─────────────
-function YearWrapPopup({ stats, userName, onClose }) {
-  const noData = stats.orderCount === 0;
-  return (
-    <>
-      {!noData && <Confetti count={30}/>}
-      <div onClick={onClose} style={{
-        position:'fixed', inset:0, zIndex:9999,
-        background:'rgba(0,0,0,.7)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        padding:20, animation:'birthdayFadeIn .4s ease-out'
-      }}>
-        <style>{`
-          @keyframes wrapSlide {
-            0%{transform:translateY(30px);opacity:0}
-            100%{transform:translateY(0);opacity:1}
-          }
-          @keyframes wrapItemIn {
-            0%{transform:translateX(-20px);opacity:0}
-            100%{transform:translateX(0);opacity:1}
-          }
-        `}</style>
-        <div onClick={e=>e.stopPropagation()} style={{
-          background:'linear-gradient(160deg,#2b1810 0%,#3d2416 40%,#5a3520 100%)',
-          borderRadius:20, padding:'28px 22px', maxWidth:340, width:'100%',
-          color:'#fce4a0', boxShadow:'0 30px 80px rgba(0,0,0,.6)',
-          border:'2px solid #d4af37',
-          animation:'wrapSlide .6s ease-out'
-        }}>
-          <div style={{textAlign:'center',marginBottom:20}}>
-            <div style={{fontSize:'.75rem',letterSpacing:'.35em',opacity:.7,marginBottom:4}}>IL TUO</div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:'2.5rem',fontWeight:700,color:'#d4af37',lineHeight:1}}>
-              {stats.year}
-            </div>
-            <div style={{fontSize:'.85rem',marginTop:8,opacity:.85}}>
-              Insieme al Forno Dolci Sapori
-            </div>
-          </div>
-
-          {noData ? (
-            <div style={{textAlign:'center',padding:'20px 0',opacity:.85}}>
-              Ci vediamo l'anno prossimo, {userName}! 🥐
-            </div>
-          ) : (
-            <>
-              {stats.topDish && (
-                <div style={{padding:'12px 14px',marginBottom:10,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .3s both'}}>
-                  <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>🍽 PIATTO PIÙ AMATO</div>
-                  <div style={{fontSize:'1.05rem',fontWeight:700,color:'#fff'}}>{stats.topDish.name}</div>
-                  <div style={{fontSize:'.78rem',opacity:.8}}>ordinato {stats.topDish.count} volte</div>
-                </div>
-              )}
-              <div style={{padding:'12px 14px',marginBottom:10,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .5s both'}}>
-                <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>💰 HAI SPESO</div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.6rem',fontWeight:700,color:'#d4af37'}}>€{stats.totalSpent.toFixed(2)}</div>
-                <div style={{fontSize:'.78rem',opacity:.8}}>in {stats.orderCount} ordini</div>
-              </div>
-              {stats.topDay && (
-                <div style={{padding:'12px 14px',marginBottom:14,background:'rgba(212,175,55,.1)',borderRadius:12,animation:'wrapItemIn .5s ease-out .7s both'}}>
-                  <div style={{fontSize:'.7rem',opacity:.7,letterSpacing:'.1em',marginBottom:3}}>📅 GIORNO PREFERITO</div>
-                  <div style={{fontSize:'1.05rem',fontWeight:700,color:'#fff'}}>{stats.topDay}</div>
-                </div>
-              )}
-              <div style={{textAlign:'center',fontSize:'.85rem',fontStyle:'italic',opacity:.9,margin:'14px 0',lineHeight:1.5}}>
-                🎉 Grazie di essere<br/>stato con noi, {userName}!
-              </div>
-            </>
-          )}
-
-          <button onClick={onClose} style={{
-            width:'100%', background:'#d4af37', color:'#2b1810', border:'none',
-            padding:'12px', borderRadius:12, fontSize:'.95rem',
-            fontWeight:700, cursor:'pointer', letterSpacing:'.05em', marginTop:6
-          }}>Chiudi</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Card compatta "Il tuo anno" (dopo aver chiuso il popup) ─────────────
-function YearWrapCard({ stats, onOpen }) {
-  return (
-    <div onClick={onOpen} style={{
-      background:'linear-gradient(135deg,#2b1810,#5a3520)',
-      color:'#fce4a0', borderRadius:12, padding:'14px 16px',
-      marginBottom:12, cursor:'pointer',
-      border:'1.5px solid #d4af37',
-      display:'flex',alignItems:'center',justifyContent:'space-between',gap:10
-    }}>
-      <div>
-        <div style={{fontSize:'.68rem',letterSpacing:'.25em',opacity:.75}}>IL TUO</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:'1.4rem',fontWeight:700,color:'#d4af37',lineHeight:1.1}}>
-          {stats.year} 🎉
-        </div>
-        <div style={{fontSize:'.75rem',opacity:.85,marginTop:2}}>Tocca per rivedere il riepilogo</div>
-      </div>
-      <span style={{fontSize:'1.4rem',color:'#d4af37'}}>›</span>
-    </div>
-  );
-}
-
 function LogoIcon({ size=36, style={} }) {
   if (BRAND.logoUrl) return (
     <img src={BRAND.logoUrl} alt="logo" style={{height:size, width:"auto", maxWidth: size*3.2, objectFit:"contain", flexShrink:0, filter:"drop-shadow(0 1px 3px rgba(0,0,0,.25))", ...style}}/>
@@ -1176,9 +614,6 @@ function LogoIcon({ size=36, style={} }) {
 export default function App() {
   const [appState, setAppState] = useState(null);
   const [user,     setUser]     = useState(null);
-  const [showSplash, setShowSplash] = useState(() => {
-    try { return !sessionStorage.getItem('ds_splash_shown'); } catch { return true; }
-  });
   const saveTimer               = useRef(null);
 
   // ── Rimani loggato ──────────────────────────────────────────────────────
@@ -1260,10 +695,6 @@ export default function App() {
 
   return (
     <><style>{STYLE}</style>
-    {showSplash && <SplashScreen onComplete={()=>{
-      setShowSplash(false);
-      try { sessionStorage.setItem('ds_splash_shown','1'); } catch {}
-    }}/>}
     <div className="app-bg" style={{backgroundImage:`url(${BRAND.bgImage})`}}/>
     {!user
       ? <AuthScreen appState={appState} update={update} onLogin={handleLogin}/>
@@ -1386,167 +817,6 @@ function AuthScreen({ appState, update, onLogin }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – MENU
 // ════════════════════════════════════════════════════════════════════════════
-// ─── Import menù da WhatsApp ──────────────────────────────────────────────
-// Parser deterministico: prende il testo grezzo del messaggio WhatsApp del
-// fornitore e restituisce { date, categories }, dove categories è una mappa
-// { primi: [{name,price}], secondi: [...], ... } solo per le sezioni presenti.
-function parseWhatsAppMenu(text) {
-  // Rimuovi caratteri invisibili (word joiner, zero-width) che il fornitore
-  // spesso inserisce inavvertitamente dopo i trattini
-  const clean = text.replace(/[\u2060\u200B\u200C\u200D\uFEFF]/g, '');
-  const lines = clean.split(/\r?\n/);
-
-  const result = { date: null, categories: {} };
-
-  // Mappa emoji-testata → id categoria interno
-  const catMap = [
-    ['🍝', 'primi'],
-    ['🍖', 'secondi'],
-    ['🥦', 'contorni'],
-    ['🥗', 'insalate_classiche'],
-    ['☀️', 'fresh_collection'],
-    ['❄️', 'fresh_collection'],
-    ['🍎', 'frutta'],
-  ];
-
-  let currentCat = null;
-  let currentCatDefaultPrice = null; // per "(Tutto €X)"
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
-
-    // Data (formato 📆 DD/MM/YYYY)
-    if (!result.date) {
-      const m = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if (m) {
-        const [, dd, mm, yyyy] = m;
-        result.date = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
-      }
-    }
-
-    // Header categoria
-    const catMatch = catMap.find(([emoji]) => line.startsWith(emoji));
-    if (catMatch) {
-      currentCat = catMatch[1];
-      if (!result.categories[currentCat]) result.categories[currentCat] = [];
-      // Prezzo globale nell'header: "(Tutto €3,50)"
-      const globalMatch = line.match(/Tutto\s*€\s*([\d,\.]+)/i);
-      currentCatDefaultPrice = globalMatch
-        ? parseFloat(globalMatch[1].replace(',','.'))
-        : null;
-      continue;
-    }
-
-    if (!currentCat) continue;
-    // Deve essere una riga piatto (inizia con - o •)
-    if (!/^[-•]\s*/.test(line)) continue;
-
-    let dishLine = line.replace(/^[-•]\s*/, '').trim();
-
-    // Barrato (piatto esaurito) → salta completamente
-    if (/^~.*~$/.test(dishLine)) continue;
-
-    // Rimuovi corsivo _testo_
-    dishLine = dishLine.replace(/_([^_]+)_/g, '$1');
-
-    // Doppio prezzo: "nome (intero €X - mezzo €Y)" → split in 2 piatti
-    const doubleMatch = dishLine.match(
-      /^(.+?)\s*\(\s*intero\s*€\s*([\d,\.]+)\s*[-–]\s*mezzo\s*€\s*([\d,\.]+)\s*\)/i
-    );
-    if (doubleMatch) {
-      const baseName = doubleMatch[1].trim();
-      result.categories[currentCat].push({
-        name: `${baseName} intero`,
-        price: parseFloat(doubleMatch[2].replace(',','.'))
-      });
-      result.categories[currentCat].push({
-        name: `${baseName} mezzo`,
-        price: parseFloat(doubleMatch[3].replace(',','.'))
-      });
-      continue;
-    }
-
-    // Prezzo singolo alla fine: "nome €X,YY"
-    const priceMatch = dishLine.match(/^(.+?)\s+€\s*([\d,\.]+)\s*$/);
-    if (priceMatch) {
-      result.categories[currentCat].push({
-        name: priceMatch[1].trim(),
-        price: parseFloat(priceMatch[2].replace(',','.'))
-      });
-    } else {
-      // Nessun prezzo esplicito → applica default categoria (se dichiarato)
-      result.categories[currentCat].push({
-        name: dishLine,
-        price: currentCatDefaultPrice
-      });
-    }
-  }
-
-  return result;
-}
-
-// Merge intelligente tra menu attuale e menu parsato.
-// Regole:
-//  - Piatti custom (richieste clienti): mai toccati
-//  - Categorie NON menzionate nel parsed: intatte
-//  - Categorie menzionate: sincronizzazione per nome
-//     • esistente + presente → mantiene id, aggiorna prezzo
-//     • non esistente + presente → aggiunto
-//     • esistente + assente → rimosso
-function mergeParsedMenu(currentItems, parsed) {
-  const norm = s => (s||'').toLowerCase().trim().replace(/\s+/g,' ');
-  const customItems = currentItems.filter(i => i.custom);
-  const nonCustom   = currentItems.filter(i => !i.custom);
-  const parsedCats  = new Set(Object.keys(parsed.categories));
-
-  const changes = { added:[], removed:[], updated:[], unchanged:[] };
-  const result = [];
-
-  // 1. Categorie non toccate: mantieni tutto
-  result.push(...nonCustom.filter(i => !parsedCats.has(i.categoria||'primi')));
-
-  // 2. Categorie sincronizzate
-  for (const cat of parsedCats) {
-    const currentInCat = nonCustom.filter(i => (i.categoria||'primi') === cat);
-    const parsedInCat  = parsed.categories[cat];
-    const currentByName = new Map(currentInCat.map(i => [norm(i.name), i]));
-    const parsedByName  = new Map(parsedInCat.map(p => [norm(p.name), p]));
-
-    for (const parsedDish of parsedInCat) {
-      const existing = currentByName.get(norm(parsedDish.name));
-      if (existing) {
-        const priceChanged = (existing.price ?? null) !== (parsedDish.price ?? null);
-        result.push({ ...existing, price: parsedDish.price });
-        if (priceChanged) changes.updated.push({
-          name: existing.name, oldPrice: existing.price, newPrice: parsedDish.price, cat
-        });
-        else changes.unchanged.push({ name: existing.name, cat });
-      } else {
-        const newItem = {
-          id: Date.now().toString() + Math.random().toString(36).slice(2,5),
-          name: parsedDish.name,
-          price: parsedDish.price,
-          custom: false,
-          categoria: cat
-        };
-        result.push(newItem);
-        changes.added.push({ name: parsedDish.name, price: parsedDish.price, cat });
-      }
-    }
-    for (const currentDish of currentInCat) {
-      if (!parsedByName.has(norm(currentDish.name))) {
-        changes.removed.push({ name: currentDish.name, cat });
-      }
-    }
-  }
-
-  // 3. Custom (richieste clienti) sempre in fondo, intatti
-  result.push(...customItems);
-
-  return { newMenu: result, changes };
-}
-
 function AdminMenu({ date, appState, update }) {
   const [newName,     setNewName]     = useState("");
   const [newPrice,    setNewPrice]    = useState("");
@@ -1554,10 +824,6 @@ function AdminMenu({ date, appState, update }) {
   const [toast,           setToast]           = useState({text:"",ok:true});
   const [editCustomAdmin, setEditCustomAdmin] = useState(null);
   const [editCustomAdminName, setEditCustomAdminName] = useState("");
-  // Import da WhatsApp
-  const [showImport, setShowImport] = useState(false);
-  const [importText, setImportText] = useState("");
-  const [importPreview, setImportPreview] = useState(null); // {parsed, changes}
   // Stato locale per aggiornare UI subito senza aspettare il polling
   const [localOrdersOpen, setLocalOrdersOpen] = useState(null);
   const showToast=(t,ok=true)=>{setToast({text:t,ok});setTimeout(()=>setToast({text:"",ok:true}),2400);};
@@ -1584,31 +850,6 @@ function AdminMenu({ date, appState, update }) {
       .filter(i=>!i.custom) // non duplicare piatti personalizzati di ieri
       .map(i=>({...i,id:Date.now().toString()+Math.random().toString(36).slice(2,5)}));
     saveItems(newItems); showToast("✓ Menù di ieri duplicato!");
-  };
-
-  // Import da WhatsApp: analizza il testo e prepara il preview
-  const analyzeImport = () => {
-    const text = importText.trim();
-    if (!text) return showToast("Incolla prima il messaggio", false);
-    const parsed = parseWhatsAppMenu(text);
-    const catsFound = Object.keys(parsed.categories).length;
-    if (catsFound===0) return showToast("Nessuna categoria riconosciuta nel testo", false);
-    const { newMenu, changes } = mergeParsedMenu(items, parsed);
-    setImportPreview({ parsed, newMenu, changes });
-  };
-  const applyImport = () => {
-    if (!importPreview) return;
-    saveItems(importPreview.newMenu);
-    setShowImport(false);
-    setImportText("");
-    setImportPreview(null);
-    const { added, removed, updated } = importPreview.changes;
-    showToast(`✓ Menù aggiornato: +${added.length} nuovi, ${updated.length} aggiornati, -${removed.length} rimossi`);
-  };
-  const closeImport = () => {
-    setShowImport(false);
-    setImportText("");
-    setImportPreview(null);
   };
 
   const publish   = ()=>{update({menuPub:{...appState.menuPub,[date]:true}});  showToast("✓ Menù pubblicato!");};
@@ -1818,13 +1059,7 @@ function AdminMenu({ date, appState, update }) {
         </div>
       </div>
       <div className="flex" style={{justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-        <div className="flex" style={{gap:7,flexWrap:"wrap"}}>
-          <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
-          <button className="btn btn-sm" onClick={()=>setShowImport(true)}
-            style={{background:"#25D366",color:"#fff",border:"1px solid #128C7E"}}>
-            📱 Importa da WhatsApp
-          </button>
-        </div>
+        <button className="btn btn-gold btn-sm" onClick={duplicatePrev}>📋 Duplica menù di ieri</button>
         <div className="flex" style={{gap:7,flexWrap:"wrap"}}>
           {published
             ?<button className="btn btn-ghost btn-sm" onClick={unpublish}>Nascondi</button>
@@ -1841,130 +1076,6 @@ function AdminMenu({ date, appState, update }) {
         </div>
       </div>
       {toast.text&&<div className={`toast ${!toast.ok?"toast-err":""}`}>{toast.text}</div>}
-
-      {/* ─── Modal Import da WhatsApp ─────────────────────────────────── */}
-      {showImport && (
-        <div style={{
-          position:"fixed", inset:0, zIndex:1000,
-          background:"rgba(0,0,0,.5)",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          padding:12
-        }} onClick={closeImport}>
-          <div onClick={e=>e.stopPropagation()} style={{
-            background:"var(--surface)", borderRadius:14, width:"100%", maxWidth:600,
-            maxHeight:"90vh", overflow:"auto", padding:18,
-            boxShadow:"0 20px 60px rgba(0,0,0,.35)"
-          }}>
-            <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div style={{fontWeight:700,fontSize:"1.05rem"}}>📱 Importa menù da WhatsApp</div>
-              <button className="btn btn-ghost btn-sm" onClick={closeImport}>✕</button>
-            </div>
-
-            {!importPreview ? (
-              <>
-                <div className="muted" style={{fontSize:".82rem",marginBottom:8}}>
-                  Incolla il messaggio del fornitore. Verranno riconosciute solo le categorie presenti — quelle non incluse resteranno intatte.
-                </div>
-                <textarea value={importText}
-                  onChange={e=>setImportText(e.target.value)}
-                  placeholder="Incolla qui il messaggio WhatsApp…"
-                  style={{
-                    width:"100%", minHeight:200, padding:10,
-                    border:"1px solid var(--border)", borderRadius:8,
-                    fontFamily:"inherit", fontSize:".88rem", resize:"vertical"
-                  }}/>
-                <div className="flex" style={{justifyContent:"flex-end",gap:8,marginTop:12}}>
-                  <button className="btn btn-ghost btn-sm" onClick={closeImport}>Annulla</button>
-                  <button className="btn btn-primary" onClick={analyzeImport} disabled={!importText.trim()}>
-                    🔍 Analizza
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Preview */}
-                {importPreview.parsed.date && importPreview.parsed.date !== date && (
-                  <div style={{
-                    background:"#fff8e1", border:"1px solid #ffc107",
-                    borderRadius:8, padding:10, marginBottom:12, fontSize:".85rem"
-                  }}>
-                    ⚠️ Il messaggio è per <b>{fmt(importPreview.parsed.date)}</b>, ma stai lavorando su <b>{fmt(date)}</b>.<br/>
-                    L'import verrà applicato al giorno selezionato ({fmtS(date)}).
-                  </div>
-                )}
-                <div style={{marginBottom:12,fontSize:".85rem"}}>
-                  <b>Categorie rilevate:</b>{" "}
-                  {Object.keys(importPreview.parsed.categories).map(c=>{
-                    const cat = CATEGORIE.find(x=>x.id===c);
-                    return cat ? cat.label : c;
-                  }).join(", ")}
-                </div>
-
-                {importPreview.changes.added.length>0 && (
-                  <div style={{marginBottom:10}}>
-                    <div style={{fontWeight:700,color:"var(--green)",fontSize:".82rem",marginBottom:4}}>
-                      + AGGIUNTI ({importPreview.changes.added.length})
-                    </div>
-                    {importPreview.changes.added.map((c,i)=>(
-                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
-                        <span style={{color:"var(--green)"}}>●</span> {c.name} {c.price!=null && `— €${c.price.toFixed(2).replace('.',',')}`}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {importPreview.changes.updated.length>0 && (
-                  <div style={{marginBottom:10}}>
-                    <div style={{fontWeight:700,color:"#b58900",fontSize:".82rem",marginBottom:4}}>
-                      ↻ PREZZO AGGIORNATO ({importPreview.changes.updated.length})
-                    </div>
-                    {importPreview.changes.updated.map((c,i)=>(
-                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
-                        <span style={{color:"#b58900"}}>●</span> {c.name} —{" "}
-                        <s style={{opacity:.6}}>€{(c.oldPrice||0).toFixed(2).replace('.',',')}</s>{" "}
-                        <b>€{(c.newPrice||0).toFixed(2).replace('.',',')}</b>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {importPreview.changes.removed.length>0 && (
-                  <div style={{marginBottom:10}}>
-                    <div style={{fontWeight:700,color:"var(--red)",fontSize:".82rem",marginBottom:4}}>
-                      − RIMOSSI ({importPreview.changes.removed.length})
-                    </div>
-                    {importPreview.changes.removed.map((c,i)=>(
-                      <div key={i} style={{fontSize:".82rem",padding:"2px 8px"}}>
-                        <span style={{color:"var(--red)"}}>●</span> {c.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {importPreview.changes.unchanged.length>0 && (
-                  <div className="muted" style={{fontSize:".78rem",marginBottom:10,fontStyle:"italic"}}>
-                    {importPreview.changes.unchanged.length} piatti invariati.
-                  </div>
-                )}
-
-                {importPreview.changes.added.length===0 &&
-                 importPreview.changes.updated.length===0 &&
-                 importPreview.changes.removed.length===0 && (
-                  <div className="empty">Nessuna modifica da applicare.</div>
-                )}
-
-                <div className="flex" style={{justifyContent:"space-between",gap:8,marginTop:14}}>
-                  <button className="btn btn-ghost btn-sm" onClick={()=>setImportPreview(null)}>← Indietro</button>
-                  <div className="flex" style={{gap:8}}>
-                    <button className="btn btn-ghost btn-sm" onClick={closeImport}>Annulla</button>
-                    <button className="btn btn-success" onClick={applyImport}>✓ Applica</button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -2489,8 +1600,6 @@ function AdminClients({ appState, update }) {
   const [newForm,    setNewForm]    = useState({name:"",id:"",password:""});
   const [creditEdit, setCreditEdit] = useState({});
   const [toast,      setToast]      = useState({text:"",err:false});
-  const [restorePreview, setRestorePreview] = useState(null); // {data, filename, exportedAt}
-  const [isBackupWorking, setIsBackupWorking] = useState(false);
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const clients  = appState.users.filter(u=>u.role==="client");
@@ -2632,161 +1741,10 @@ function AdminClients({ appState, update }) {
                 {cr>0&&<button className="btn btn-ghost btn-sm" style={{color:"var(--red)",borderColor:"#f0b9b4"}} onClick={()=>resetCr(u.id)}>Azzera</button>}
               </div>
             </div>
-            {/* Compleanno */}
-            <div style={{background:"var(--bg)",borderRadius:9,padding:"10px 12px",border:"1px solid var(--border)",marginTop:8}}>
-              <div className="muted" style={{fontSize:".7rem",marginBottom:7,fontWeight:700,textTransform:"uppercase",letterSpacing:".04em"}}>🎂 Compleanno</div>
-              <div className="flex" style={{flexWrap:"wrap",gap:7,alignItems:"center"}}>
-                <input type="date" value={u.birthDate||""}
-                  max={today()}
-                  style={{padding:"6px 8px",fontSize:".8rem"}}
-                  onChange={e=>{
-                    const newBirth = e.target.value;
-                    update({users:appState.users.map(x=>x.id===u.id?{...x,birthDate:newBirth||undefined}:x)});
-                    showToast(newBirth?"✓ Compleanno salvato":"✓ Compleanno rimosso");
-                  }}/>
-                {u.birthDate && (
-                  <span style={{fontSize:".78rem",color:"var(--muted)",fontStyle:"italic"}}>
-                    {new Date(u.birthDate+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"long"})}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
         );
       })}
-
-      {/* ─── Backup & Ripristino ─────────────────────────────────── */}
-      <div className="card" style={{marginTop:20,border:"1px dashed var(--border)",background:"var(--surface)"}}>
-        <div className="card-title" style={{marginBottom:6}}>🔒 Backup dati</div>
-        <div className="muted" style={{fontSize:".82rem",marginBottom:12,lineHeight:1.5}}>
-          Scarica una copia completa di tutti i dati (clienti, crediti, debiti, ordini storici, menù, notifiche).
-          Conserva il file in un posto sicuro (Google Drive, iCloud, email). Consigliato 1 volta a settimana.
-        </div>
-        <div className="flex" style={{gap:8,flexWrap:"wrap"}}>
-          <button className="btn btn-primary btn-sm" disabled={isBackupWorking}
-            onClick={async()=>{
-              setIsBackupWorking(true);
-              try {
-                const res = await fetch("/api/state-load");
-                if (!res.ok) throw new Error("Errore caricamento dati");
-                const rows = await res.json();
-                if (!rows || !rows.length) {
-                  showToast("Nessun dato da salvare",true);
-                  return;
-                }
-                const backup = {
-                  version: 1,
-                  app: "dolci-sapori",
-                  exportedAt: new Date().toISOString(),
-                  data: rows[0].data
-                };
-                const blob = new Blob([JSON.stringify(backup,null,2)], {type:"application/json"});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
-                const timeStr = new Date().toISOString().slice(11,16).replace(":","");
-                a.download = `dolci-sapori-backup-${dateStr}-${timeStr}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast("✓ Backup scaricato!");
-              } catch(err) {
-                console.error("Backup error:",err);
-                showToast("Errore durante il backup",true);
-              } finally {
-                setIsBackupWorking(false);
-              }
-            }}>
-            💾 Scarica backup
-          </button>
-          <label className="btn btn-ghost btn-sm" style={{cursor:"pointer",margin:0}}>
-            📤 Ripristina da file…
-            <input type="file" accept=".json,application/json"
-              style={{display:"none"}}
-              onChange={(e)=>{
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                  try {
-                    const parsed = JSON.parse(evt.target.result);
-                    if (!parsed || !parsed.data || !Array.isArray(parsed.data.users)) {
-                      return showToast("File non valido o corrotto",true);
-                    }
-                    setRestorePreview({
-                      data: parsed.data,
-                      filename: file.name,
-                      exportedAt: parsed.exportedAt || null
-                    });
-                  } catch(err) {
-                    showToast("Impossibile leggere il file JSON",true);
-                  }
-                };
-                reader.readAsText(file);
-                e.target.value = "";
-              }}/>
-          </label>
-        </div>
-      </div>
     </div>
-
-    {/* Modal conferma ripristino */}
-    {restorePreview && (
-      <div style={{
-        position:"fixed",inset:0,zIndex:1000,
-        background:"rgba(0,0,0,.55)",
-        display:"flex",alignItems:"center",justifyContent:"center",padding:12
-      }} onClick={()=>setRestorePreview(null)}>
-        <div onClick={e=>e.stopPropagation()} style={{
-          background:"var(--surface)",borderRadius:14,width:"100%",maxWidth:500,
-          padding:20,boxShadow:"0 20px 60px rgba(0,0,0,.4)"
-        }}>
-          <div style={{fontWeight:700,fontSize:"1.05rem",marginBottom:10}}>
-            ⚠️ Confermare ripristino?
-          </div>
-          <div style={{background:"#fff3cd",border:"1px solid #ffc107",borderRadius:8,padding:12,marginBottom:14,fontSize:".85rem",lineHeight:1.5}}>
-            <b>Attenzione!</b> Tutti i dati attuali (utenti, crediti, debiti, ordini, menù)
-            verranno <b>completamente sostituiti</b> con quelli del file.<br/><br/>
-            Questa operazione <b>non è reversibile</b>.
-          </div>
-          <div style={{fontSize:".85rem",marginBottom:6}}>
-            📁 <b>File:</b> {restorePreview.filename}
-          </div>
-          {restorePreview.exportedAt && (
-            <div style={{fontSize:".85rem",marginBottom:6}}>
-              🕒 <b>Data backup:</b> {new Date(restorePreview.exportedAt).toLocaleString("it-IT")}
-            </div>
-          )}
-          <div style={{fontSize:".85rem",marginBottom:14}}>
-            👥 <b>Utenti nel backup:</b> {restorePreview.data.users?.length||0} ·
-            📦 <b>Ordini:</b> {Object.keys(restorePreview.data.orders||{}).length}
-          </div>
-          <div className="flex" style={{justifyContent:"flex-end",gap:8}}>
-            <button className="btn btn-ghost btn-sm" onClick={()=>setRestorePreview(null)}>Annulla</button>
-            <button className="btn btn-danger" onClick={async()=>{
-              try {
-                const res = await fetch("/api/state-save",{
-                  method:"POST",
-                  headers:{"Content-Type":"application/json"},
-                  body:JSON.stringify({data:restorePreview.data})
-                });
-                if (!res.ok) throw new Error("Errore salvataggio");
-                setRestorePreview(null);
-                showToast("✓ Ripristino completato! Ricarico...");
-                setTimeout(()=>window.location.reload(),1500);
-              } catch(err) {
-                console.error("Restore error:",err);
-                showToast("Errore durante il ripristino",true);
-              }
-            }}>
-              ✓ Sì, ripristina
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     {toast.text&&<div className={`toast ${toast.err?"toast-err":""}`}>{toast.text}</div>}
   </>);
 }
@@ -2987,7 +1945,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
         </div>
         <div className="header-tabs">
-          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"]].map(([v,l])=>(
+          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"]].map(([v,l])=>(
             <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
               {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
             </button>
@@ -2995,7 +1953,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
-        {!["summary","clients","notif","top"].includes(tab)&&(
+        {!["summary","clients","notif"].includes(tab)&&(
           <div className="date-nav">
             <span style={{fontWeight:700,color:"var(--accent)"}}>📅</span>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:165}}/>
@@ -3009,10 +1967,6 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
-        {tab==="top"     &&<>
-          <Leaderboard appState={appState} period="month"/>
-          <Leaderboard appState={appState} period="year"/>
-        </>}
       </div>
     </div>
   );
@@ -3037,20 +1991,14 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const orderFormRef = useRef(null);
   const [accPwd,   setAccPwd]   = useState("");
   const [accPwd2,  setAccPwd2]  = useState("");
-  const [accBirthDate, setAccBirthDate] = useState(user.birthDate || "");
   const [accToast, setAccToast] = useState("");
   const saveAccount = () => {
     if(accName.trim().length<2) return setAccToast("Nome troppo corto");
     if(accPwd && accPwd.length<4) return setAccToast("Password troppo corta (min 4)");
     if(accPwd && accPwd!==accPwd2) return setAccToast("Le password non coincidono");
-    const updUsers = appState.users.map(u=>u.id===user.id?{
-      ...u,
-      name:accName.trim(),
-      ...(accPwd?{password:bcrypt.hashSync(accPwd,10)}:{}),
-      ...(accBirthDate?{birthDate:accBirthDate}:{})
-    }:u);
+    const updUsers = appState.users.map(u=>u.id===user.id?{...u,name:accName.trim(),...(accPwd?{password:bcrypt.hashSync(accPwd,10)}:{})}:u);
     update({users:updUsers});
-    handleLogin({...user,name:accName.trim(),...(accBirthDate?{birthDate:accBirthDate}:{})});
+    handleLogin({...user,name:accName.trim()});
     setAccPwd(""); setAccPwd2("");
     setAccToast("✓ Profilo aggiornato!");
     setTimeout(()=>setAccToast(""),3000);
@@ -3060,26 +2008,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [toast,      setToast]      = useState("");
   const [showIosBanner, setShowIosBanner] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
-  // Compleanno & Wrap dell'anno
-  const isBirthday = isBirthdayToday(user);
-  const todayISO = today();
-  const [showBdayPopup, setShowBdayPopup] = useState(() => {
-    if (!isBirthday) return false;
-    try { return localStorage.getItem('bday_shown_'+todayISO) !== '1'; } catch { return true; }
-  });
-  const holiday = getHolidayToday();
-  const wrapActive = isYearWrapActive();
-  const wrapYear = new Date().getFullYear() === new Date(todayISO).getFullYear()
-    ? (new Date().getMonth()===0 ? new Date().getFullYear()-1 : new Date().getFullYear())
-    : new Date(todayISO).getFullYear();
-  const [showWrapPopup, setShowWrapPopup] = useState(() => {
-    if (!wrapActive) return false;
-    try { return localStorage.getItem('wrap_shown_'+todayISO) !== '1'; } catch { return true; }
-  });
-  const yearStats = wrapActive
-    ? calculateYearWrap(user.id, appState.orders, wrapYear)
-    : null;
-  const [date, setDate] = useState(today());
+  const date=today();
   // Ricarica ogni 3 secondi per aggiornare stato ordini in tempo reale
   const [tick, setTick] = useState(0);
   useEffect(()=>{ const t=setInterval(()=>setTick(p=>p+1),2000); return()=>clearInterval(t); },[]);
@@ -3187,51 +2116,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const normalMenu=menu.filter(i=>!i.custom || (i.custom && i.price!=null));
   const myCustom =menu.filter(i=>i.custom&&i.price==null&&i.requestedBy===user.name);
 
-  // ─── Date navigation ────────────────────────────────────────────────
-  // Giorni con menu pubblicato (oggi + futuri) → determinano max date picker
-  const publishedDates = Object.keys(appState.menuPub||{})
-    .filter(d => appState.menuPub[d]===true && d>=today())
-    .sort();
-  const maxDate = publishedDates.length ? publishedDates[publishedDates.length-1] : today();
-
-  // Costruisci i prossimi 3 giorni (oggi, domani, dopodomani)
-  const nextThree = [0,1,2].map(offset=>{
-    const d = new Date(); d.setDate(d.getDate()+offset);
-    return d.toISOString().slice(0,10);
-  });
-  const tabLabels = ["Oggi","Domani","Dopodomani"];
-
-  // Cambio giorno → resetta gli input in corso per non trascinare
-  // ordinazioni da un giorno all'altro
-  const changeDate = (newDate) => {
-    if (newDate===date) return;
-    setDate(newDate);
-    setQuantities({});
-    setItemNotes({});
-    setOrderNote("");
-    setCustomDish("");
-  };
-
   return(
     <div className="app">
-      {/* Popup compleanno (una volta al giorno) */}
-      {showBdayPopup && (
-        <BirthdayPopup userName={user.name} onClose={()=>{
-          setShowBdayPopup(false);
-          try { localStorage.setItem('bday_shown_'+todayISO,'1'); } catch {}
-        }}/>
-      )}
-      {/* Popup wrap dell'anno (una volta al giorno nel range 15/12 - 01/01) */}
-      {showWrapPopup && yearStats && (
-        <YearWrapPopup stats={yearStats} userName={user.name} onClose={()=>{
-          setShowWrapPopup(false);
-          try { localStorage.setItem('wrap_shown_'+todayISO,'1'); } catch {}
-        }}/>
-      )}
-      {/* Banner compleanno (resta tutta la giornata) */}
-      {isBirthday && <BirthdayBanner userName={user.name}/>}
-      {/* Banner festività (se oggi è una festa italiana) */}
-      {holiday && !isBirthday && <HolidayBanner holiday={holiday}/>}
       {showNotifBanner && (
         <div style={{
           background:"linear-gradient(135deg,#1a3a2e,#0d2b1e)",
@@ -3295,13 +2181,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
             <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
             <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋</button>
-            <button className={`tab ${tab==="top"?"active":""}`} onClick={()=>setTab("top")}
-              style={tab!=="top" ? {
-                background:'linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.08))',
-                border:'1px solid rgba(212,175,55,.5)',
-                fontWeight:700,
-                color:'#8b6a15'
-              } : undefined}>🏆 Top</button>
             <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
@@ -3317,11 +2196,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
-
-        {tab==="top" && <>
-          <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
-          <Leaderboard appState={appState} currentUserId={user.id} period="year"/>
-        </>}
 
         {tab==="notifs"&&(
           <div className="card">
@@ -3353,14 +2227,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <div className="field" style={{marginBottom:14}}>
               <label>Conferma password</label>
               <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
-            </div>
-            <div className="field" style={{marginBottom:14}}>
-              <label>🎂 Data di nascita (opzionale)</label>
-              <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)}
-                max={today()} style={{width:'100%'}}/>
-              <div style={{fontSize:'.72rem',color:'var(--muted)',marginTop:4,fontStyle:'italic'}}>
-                Ti faremo gli auguri il giorno del tuo compleanno! 🎉
-              </div>
             </div>
             {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
             <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
@@ -3424,10 +2290,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
         })()}
 
         {tab==="order"&&(<>
-          {/* Card "Il tuo anno" (visibile 15/12 - 01/01, dopo aver chiuso il popup) */}
-          {wrapActive && !showWrapPopup && yearStats && yearStats.orderCount>0 && (
-            <YearWrapCard stats={yearStats} onOpen={()=>setShowWrapPopup(true)}/>
-          )}
           {/* Bottone sticky in basso con totale */}
           {ordersOpen && !myOrder && estRaw>0 && !atBottom && (
             <div style={{
@@ -3459,74 +2321,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
           {unpaid===0&&credit===0&&(
             <div className="banner banner-green" style={{padding:"10px 15px"}}>
               <span style={{fontWeight:700,color:"var(--green)"}}>✅ Sei in pari! Nessun importo da saldare.</span>
-            </div>
-          )}
-
-          {/* ─── Selettore giorno ─────────────────────────────────── */}
-          <div style={{
-            display:"flex", gap:6, marginBottom:12,
-            background:"var(--surface)", padding:6, borderRadius:12,
-            border:"1px solid var(--border-lt)"
-          }}>
-            {nextThree.map((d,i)=>{
-              const isActive = d===date;
-              const isPublished = appState.menuPub?.[d]===true;
-              return (
-                <button key={d}
-                  onClick={()=>isPublished && changeDate(d)}
-                  disabled={!isPublished}
-                  style={{
-                    flex:1, padding:"8px 4px",
-                    background: isActive ? "var(--accent)" : "transparent",
-                    color: isActive ? "#fff" : (isPublished ? "var(--text)" : "var(--muted)"),
-                    border:"none", borderRadius:8,
-                    cursor: isPublished ? "pointer" : "not-allowed",
-                    opacity: isPublished ? 1 : 0.45,
-                    fontWeight: isActive ? 700 : 500,
-                    transition:"all .15s",
-                    display:"flex", flexDirection:"column", alignItems:"center", gap:2
-                  }}>
-                  <span style={{fontSize:".82rem"}}>{tabLabels[i]}</span>
-                  <span style={{fontSize:".68rem", opacity:.85}}>{fmtS(d)}</span>
-                </button>
-              );
-            })}
-            <label style={{
-              display:"flex", alignItems:"center", justifyContent:"center",
-              padding:"0 12px", background:"transparent",
-              borderRadius:8, cursor:"pointer", position:"relative",
-              border: !nextThree.includes(date) ? "2px solid var(--accent)" : "none"
-            }}>
-              <span style={{fontSize:"1.2rem"}}>📅</span>
-              <input type="date"
-                value={date}
-                min={today()}
-                max={maxDate}
-                onChange={(e)=>{
-                  const v = e.target.value;
-                  if (!v) return;
-                  if (appState.menuPub?.[v]===true) changeDate(v);
-                  else showToast?.("Menù non disponibile per quel giorno", true);
-                }}
-                style={{
-                  position:"absolute", inset:0, opacity:0, cursor:"pointer",
-                  width:"100%", height:"100%"
-                }}
-              />
-            </label>
-          </div>
-          {/* Indicatore data se fuori dai 3 tab */}
-          {!nextThree.includes(date) && (
-            <div style={{
-              textAlign:"center", marginBottom:12, marginTop:-4,
-              fontSize:".82rem", color:"var(--accent)", fontWeight:600
-            }}>
-              📅 Stai vedendo il menù di <b>{fmt(date)}</b>
-              {" · "}
-              <span onClick={()=>changeDate(today())}
-                style={{textDecoration:"underline", cursor:"pointer"}}>
-                torna a oggi
-              </span>
             </div>
           )}
 
