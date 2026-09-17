@@ -574,6 +574,40 @@ async function saveState(s) {
 // ─── Utils ────────────────────────────────────────────────────────────────
 const today   = () => new Date().toISOString().slice(0,10);
 
+// Generatore di id univoco robusto (timestamp + 10 char random + counter)
+// Con 10 char in base36 = 3.6 quadrilioni di combinazioni → collisioni impossibili
+let __idCounter = 0;
+function newId(prefix='') {
+  __idCounter = (__idCounter + 1) % 100000;
+  const t = Date.now().toString(36);
+  const r = Math.random().toString(36).slice(2,12);
+  const c = __idCounter.toString(36);
+  return (prefix?prefix+'_':'') + t + r + c;
+}
+
+// Safety net: deduplica un array di items dando un nuovo id a chi ha id ripetuto
+// Non tocca i piatti già ordinati (sono in ordini precedenti che referenziano
+// gli id vecchi), ma se un menu ha per errore due piatti con lo stesso id,
+// li corregge automaticamente al caricamento.
+function dedupeMenuIds(items) {
+  if (!Array.isArray(items)) return items;
+  const seen = new Set();
+  let changed = false;
+  const fixed = items.map(item => {
+    if (!item || !item.id) {
+      changed = true;
+      return { ...item, id: newId() };
+    }
+    if (seen.has(item.id)) {
+      changed = true;
+      return { ...item, id: newId() };
+    }
+    seen.add(item.id);
+    return item;
+  });
+  return changed ? fixed : items;
+}
+
 function isOrdersOpen(date, appState) {
   const oo = appState?.ordersOpen || {};
   // Aperto SOLO se l'admin ha esplicitamente impostato true
@@ -1524,7 +1558,7 @@ function mergeParsedMenu(currentItems, parsed) {
         else changes.unchanged.push({ name: existing.name, cat });
       } else {
         const newItem = {
-          id: Date.now().toString() + Math.random().toString(36).slice(2,5),
+          id: newId(),
           name: parsedDish.name,
           price: parsedDish.price,
           custom: false,
@@ -1565,14 +1599,14 @@ function AdminMenu({ date, appState, update }) {
   const items     = appState.menus[date] || [];
   const published  = appState.menuPub[date] || false;
   const ordersOpen = isOrdersOpen(date, appState);
-  const saveItems = list => update({menus:{...appState.menus,[date]:list}});
+  const saveItems = list => update({menus:{...appState.menus,[date]:dedupeMenuIds(list)}});
 
   const add = () => {
     const name = newName.trim();
     const price = newPrice !== "" ? parseFloat(newPrice) : null;
     if (!name) return;
     setNewName(""); setNewPrice("");
-    const newItem = {id:Date.now().toString(),name,price,custom:false,categoria:newCategoria};
+    const newItem = {id:newId(),name,price,custom:false,categoria:newCategoria};
     update(prev => ({menus:{...prev.menus,[date]:[...(prev.menus[date]||[]),newItem]}}));
   };
   const updatePrice = (id,val) => saveItems(items.map(i=>i.id===id?{...i,price:val===""?null:parseFloat(val)}:i));
@@ -1582,7 +1616,7 @@ function AdminMenu({ date, appState, update }) {
     if (!prev||!prev.length){showToast("Nessun menù ieri da duplicare.",false);return;}
     const newItems = prev
       .filter(i=>!i.custom) // non duplicare piatti personalizzati di ieri
-      .map(i=>({...i,id:Date.now().toString()+Math.random().toString(36).slice(2,5)}));
+      .map(i=>({...i,id:newId()}));
     saveItems(newItems); showToast("✓ Menù di ieri duplicato!");
   };
 
@@ -2053,7 +2087,7 @@ function AdminOrders({ date, appState, update }) {
     });
     // Nuovo piatto custom
     if(editCustomName.trim()){
-      items.push({id:"custom_"+Date.now(),name:editCustomName.trim(),price:parseFloat(editCustomPrice)||0,qty:1,custom:true});
+      items.push({id:newId('custom'),name:editCustomName.trim(),price:parseFloat(editCustomPrice)||0,qty:1,custom:true});
     }
     if(!items.length) return showToast("Aggiungi almeno un piatto",true);
     const rawTotal=items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
@@ -2088,7 +2122,7 @@ function AdminOrders({ date, appState, update }) {
     // Piatto personalizzato
     if(addCustomName.trim()){
       items.push({
-        id:"custom_"+Date.now(),
+        id:newId('custom'),
         name:addCustomName.trim(),
         price:parseFloat(addCustomPrice)||0,
         qty:1, custom:true,
@@ -2142,7 +2176,7 @@ function AdminOrders({ date, appState, update }) {
     const menuItems=appState.menus[date]||[];
     const menuItem=menuItems.find(m=>m.id===itemId);
     if(menuItem&&menuItem.custom){
-      update({menus:{...appState.menus,[date]:menuItems.map(m=>m.id===itemId?{...m,price}:m)}});
+      update({menus:{...appState.menus,[date]:dedupeMenuIds(menuItems.map(m=>m.id===itemId?{...m,price}:m))}});
     }
   };
 
@@ -2431,9 +2465,9 @@ function AdminNotifications({ appState, update }) {
     const now = new Date().toISOString();
     for(const c of targets){
       const prev=newNotifs[c.id]||[];
-      newNotifs[c.id]=[{id:Date.now().toString()+c.id,text:message.trim(),date:now,read:false},...prev].slice(0,50);
+      newNotifs[c.id]=[{id:newId('n')+c.id,text:message.trim(),date:now,read:false},...prev].slice(0,50);
     }
-    const record={id:Date.now().toString(),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
+    const record={id:newId('r'),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
     // Invia anche push reale via OneSignal
@@ -3123,13 +3157,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // Add custom dish request to today's menu
   const addCustomDish=()=>{
     if(!customDish.trim()) return;
-    const newItem={id:Date.now().toString(),name:customDish.trim(),price:null,custom:true,requestedBy:user.name};
+    const newItem={id:newId('custom'),name:customDish.trim(),price:null,custom:true,requestedBy:user.name};
     const curMenu=appState.menus[date]||[];
     // Avoid duplicate custom requests from same user
     if(curMenu.find(i=>i.custom&&i.requestedBy===user.name&&i.name.toLowerCase()===customDish.trim().toLowerCase())){
       setToast("Piatto già aggiunto!"); setTimeout(()=>setToast(""),2000); return;
     }
-    update({menus:{...appState.menus,[date]:[...curMenu,newItem]}});
+    update({menus:{...appState.menus,[date]:dedupeMenuIds([...curMenu,newItem])}});
     setQuantities(prev=>({...prev,[newItem.id]:1}));
     setCustomDish("");
     setToast("✓ Richiesta inviata! Aggiunto al carrello."); setTimeout(()=>setToast(""),2500);
