@@ -50,7 +50,7 @@ if ('serviceWorker' in navigator) {
     }
   });
 } /* eslint-disable */
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import bcrypt from "bcryptjs";
 
 // ─── BRAND CONFIG (modifica qui per cambiare colori/logo/sfondo) ──────────
@@ -1226,6 +1226,137 @@ function YearWrapCard({ stats, onOpen }) {
         <div style={{fontSize:'.75rem',opacity:.85,marginTop:2}}>Tocca per rivedere il riepilogo</div>
       </div>
       <span style={{fontSize:'1.4rem',color:'#d4af37'}}>›</span>
+    </div>
+  );
+}
+
+// ─── Sezione Natale (placeholder "in lavorazione" + animazioni) ──────────
+// Immagine: prova /natale.png nella cartella public/, altrimenti usa il CDN.
+const NATALE_IMG_LOCAL = "/natale.png";
+const NATALE_IMG_CDN   = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_230524_4b8b457f-88d2-4d75-848d-60ee318a6523.png";
+
+function daysToChristmas() {
+  const now = new Date();
+  let xmas = new Date(now.getFullYear(), 11, 25);
+  if (now > new Date(now.getFullYear(), 11, 25, 23, 59, 59)) xmas = new Date(now.getFullYear()+1, 11, 25);
+  return Math.ceil((xmas - now) / 86400000);
+}
+
+function ChristmasSection({ isAdmin=false }) {
+  const [imgSrc, setImgSrc] = useState(NATALE_IMG_LOCAL);
+  const days = daysToChristmas();
+  // Fiocchi di neve (posizioni/durate fisse per non "saltare" ad ogni render)
+  const flakes = useMemo(() => Array.from({length:28}, (_,i)=>({
+    id:i, left:(i*37)%100, delay:(i*0.7)%6, dur:7+(i%5)*1.5, size:10+(i%4)*4, op:.5+(i%3)*.2
+  })), []);
+  const lights = ["#e63946","#f4d35e","#2a9d8f","#f4a261","#e63946","#a8dadc","#f4d35e","#2a9d8f","#e63946","#f4a261","#a8dadc","#f4d35e"];
+
+  return (
+    <div className="card" style={{position:"relative",overflow:"hidden",padding:0,border:"2px solid #c8942a",background:"linear-gradient(180deg,#1f3b2d 0%,#14281e 100%)"}}>
+      <style>{`
+        @keyframes xmasSnow { 0%{transform:translateY(-30px) translateX(0) rotate(0)} 50%{transform:translateY(50vh) translateX(14px) rotate(180deg)} 100%{transform:translateY(100vh) translateX(-8px) rotate(360deg)} }
+        @keyframes xmasBlink { 0%,100%{opacity:1;filter:drop-shadow(0 0 6px currentColor)} 50%{opacity:.25;filter:none} }
+        @keyframes xmasHammer { 0%,100%{transform:rotate(-35deg)} 50%{transform:rotate(15deg)} }
+        @keyframes xmasBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        @keyframes xmasWiggle { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.08)} }
+        @keyframes xmasPipe { 0%,100%{transform:translateX(-4px) rotate(-10deg)} 50%{transform:translateX(4px) rotate(10deg)} }
+        @keyframes xmasBelt { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+        @keyframes xmasDots { 0%,20%{opacity:0} 50%{opacity:1} 100%{opacity:0} }
+        @keyframes xmasGlow { 0%,100%{text-shadow:0 0 8px rgba(244,211,94,.4)} 50%{text-shadow:0 0 22px rgba(244,211,94,.95)} }
+        @keyframes xmasSparkle { 0%,100%{opacity:.2;transform:scale(.6)} 50%{opacity:1;transform:scale(1.2)} }
+        .xmas-flake{position:absolute;top:-30px;color:#fff;pointer-events:none;animation:xmasSnow linear infinite;z-index:3;user-select:none}
+        .xmas-light{width:12px;height:12px;border-radius:50% 50% 50% 50%/40% 40% 60% 60%;animation:xmasBlink 1.6s ease-in-out infinite}
+        .xmas-elf{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}
+        .xmas-elf .scene{font-size:2rem;line-height:1;display:flex;align-items:flex-end;gap:2px;height:44px}
+        .xmas-elf .lbl{font-size:.68rem;color:#f4d35e;letter-spacing:.06em;text-transform:uppercase;font-weight:700;text-align:center}
+        .xmas-dot{display:inline-block;animation:xmasDots 1.4s infinite}
+        .xmas-dot:nth-child(2){animation-delay:.2s}.xmas-dot:nth-child(3){animation-delay:.4s}
+      `}</style>
+
+      {/* Neve */}
+      {flakes.map(f=>(
+        <div key={f.id} className="xmas-flake" style={{left:`${f.left}%`,fontSize:f.size,opacity:f.op,animationDelay:`${f.delay}s`,animationDuration:`${f.dur}s`}}>❄</div>
+      ))}
+
+      {/* Filo di luci */}
+      <div style={{display:"flex",justifyContent:"space-between",padding:"10px 14px 0",position:"relative",zIndex:4}}>
+        {lights.map((c,i)=>(
+          <div key={i} className="xmas-light" style={{background:c,color:c,animationDelay:`${(i%4)*0.4}s`}}/>
+        ))}
+      </div>
+
+      {/* Immagine hero */}
+      <div style={{position:"relative",margin:"10px 12px 0",borderRadius:14,overflow:"hidden",boxShadow:"0 10px 30px rgba(0,0,0,.45)"}}>
+        <img src={imgSrc} alt="Natale al Forno Dolci Sapori — in lavorazione"
+          onError={()=>{ if(imgSrc!==NATALE_IMG_CDN) setImgSrc(NATALE_IMG_CDN); }}
+          style={{display:"block",width:"100%",height:"auto",aspectRatio:"16/9",objectFit:"cover",background:"#2b1810"}}/>
+        <div style={{position:"absolute",top:10,right:10,background:"rgba(139,26,26,.92)",color:"#fff",padding:"6px 12px",borderRadius:20,fontSize:".72rem",fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",border:"1px solid #f4d35e"}}>
+          🎄 Prossimamente
+        </div>
+        {[["8%","18%"],["88%","26%"],["14%","78%"],["78%","82%"],["50%","8%"]].map(([l,t],i)=>(
+          <span key={i} style={{position:"absolute",left:l,top:t,color:"#fff8d6",fontSize:14,animation:`xmasSparkle ${1.4+i*.3}s ease-in-out infinite`,animationDelay:`${i*.25}s`,pointerEvents:"none"}}>✦</span>
+        ))}
+      </div>
+
+      {/* Titolo */}
+      <div style={{textAlign:"center",padding:"16px 16px 4px",position:"relative",zIndex:4}}>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.55rem",fontWeight:700,color:"#f4d35e",animation:"xmasGlow 2.4s ease-in-out infinite",lineHeight:1.2}}>
+          Il Natale del Forno Dolci Sapori
+        </div>
+        <div style={{color:"#e8dccb",fontSize:".9rem",marginTop:8,lineHeight:1.5}}>
+          Gli elfi sono già al lavoro: panettoni, pandori, torroni e dolci delle feste
+          stanno prendendo forma. Questa sezione è
+          <b style={{color:"#fff"}}> in lavorazione<span className="xmas-dot">.</span><span className="xmas-dot">.</span><span className="xmas-dot">.</span></b>
+        </div>
+      </div>
+
+      {/* Elfi al lavoro */}
+      <div style={{display:"flex",justifyContent:"space-around",gap:6,padding:"14px 10px 6px",position:"relative",zIndex:4}}>
+        <div className="xmas-elf">
+          <div className="scene">
+            <span style={{animation:"xmasBob 1s ease-in-out infinite",display:"inline-block"}}>🧝</span>
+            <span style={{animation:"xmasHammer 0.5s ease-in-out infinite",display:"inline-block",transformOrigin:"bottom left",fontSize:"1.4rem"}}>🔨</span>
+          </div>
+          <div className="lbl">Costruisce</div>
+        </div>
+        <div className="xmas-elf">
+          <div className="scene">
+            <span style={{animation:"xmasBob 1.3s ease-in-out infinite",display:"inline-block"}}>🧝‍♀️</span>
+            <span style={{animation:"xmasWiggle 0.9s ease-in-out infinite",display:"inline-block",fontSize:"1.5rem"}}>🎁</span>
+          </div>
+          <div className="lbl">Impacchetta</div>
+        </div>
+        <div className="xmas-elf">
+          <div className="scene">
+            <span style={{animation:"xmasBob 1.1s ease-in-out infinite",display:"inline-block"}}>🧑‍🍳</span>
+            <span style={{animation:"xmasPipe 0.8s ease-in-out infinite",display:"inline-block",fontSize:"1.5rem"}}>🎂</span>
+          </div>
+          <div className="lbl">Decora</div>
+        </div>
+      </div>
+
+      {/* Nastro trasportatore di regali */}
+      <div style={{overflow:"hidden",whiteSpace:"nowrap",padding:"4px 0 10px",position:"relative",zIndex:4,borderTop:"1px dashed rgba(244,211,94,.35)",borderBottom:"1px dashed rgba(244,211,94,.35)",margin:"6px 12px 0"}}>
+        <div style={{display:"inline-block",animation:"xmasBelt 14s linear infinite",fontSize:"1.4rem",letterSpacing:"14px"}}>
+          🎁📦🍫🎁🧁📦🍪🎁🥐📦🎁🍰📦🎁🧁🍫🎁📦🍪🎁
+        </div>
+      </div>
+
+      {/* Countdown */}
+      <div style={{textAlign:"center",padding:"14px 16px 18px",position:"relative",zIndex:4}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:10,background:"rgba(139,26,26,.85)",border:"1px solid #f4d35e",borderRadius:14,padding:"10px 18px"}}>
+          <span style={{fontSize:"1.4rem"}}>🎅</span>
+          <div style={{textAlign:"left"}}>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.4rem",fontWeight:700,color:"#fff",lineHeight:1}}>{days} {days===1?"giorno":"giorni"}</div>
+            <div style={{fontSize:".7rem",color:"#f4d35e",letterSpacing:".12em",textTransform:"uppercase"}}>a Natale</div>
+          </div>
+        </div>
+        {isAdmin && (
+          <div style={{marginTop:14,fontSize:".78rem",color:"#e8dccb",fontStyle:"italic",opacity:.85}}>
+            Qui gestirai i prodotti natalizi. Per ora i clienti vedono questa anteprima.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -3092,7 +3223,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
         </div>
         <div className="header-tabs">
-          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"]].map(([v,l])=>(
+          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"],["natale","🎄 Natale"]].map(([v,l])=>(
             <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
               {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
             </button>
@@ -3100,7 +3231,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
-        {!["summary","clients","notif","top"].includes(tab)&&(
+        {!["summary","clients","notif","top","natale"].includes(tab)&&(
           <div className="date-nav">
             <span style={{fontWeight:700,color:"var(--accent)"}}>📅</span>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:165}}/>
@@ -3114,6 +3245,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
+        {tab==="natale"  &&<ChristmasSection isAdmin/>}
         {tab==="top"     &&<>
           <Leaderboard appState={appState} period="month"/>
           <Leaderboard appState={appState} period="year"/>
@@ -3473,6 +3605,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 fontWeight:700,
                 color:'#8b6a15'
               } : undefined}>🏆 Top</button>
+            <button className={`tab ${tab==="natale"?"active":""}`} onClick={()=>setTab("natale")}
+              style={tab!=="natale" ? {
+                background:'linear-gradient(135deg,rgba(230,57,70,.25),rgba(42,157,143,.25))',
+                border:'1px solid rgba(244,211,94,.7)',
+                fontWeight:700,
+                color:'#fff'
+              } : undefined}>🎄 Natale</button>
             <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
             <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
               🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
@@ -3488,6 +3627,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
+
+        {tab==="natale" && <ChristmasSection/>}
 
         {tab==="top" && <>
           <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
