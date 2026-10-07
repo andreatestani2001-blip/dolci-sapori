@@ -3131,6 +3131,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [quantities, setQuantities] = useState({});
   const [customDish, setCustomDish] = useState("");
   const [sendingOrder, setSendingOrder] = useState(false); // invio ordine in corso
+  const [showRequestReminder, setShowRequestReminder] = useState(false); // popup "ricordati di inviare"
   const [orderNote,  setOrderNote]  = useState("");
   const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
   const [editingCustomId, setEditingCustomId] = useState(null);
@@ -3238,7 +3239,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
     update({menus:{...appState.menus,[date]:dedupeMenuIds([...curMenu,newItem])}});
     setQuantities(prev=>({...prev,[newItem.id]:1}));
     setCustomDish("");
-    setToast("✓ Richiesta inviata! Aggiunto al carrello."); setTimeout(()=>setToast(""),2500);
+    setToast("✓ Piatto aggiunto al carrello."); setTimeout(()=>setToast(""),2500);
+    // La sola richiesta NON è un ordine: ricordalo chiaramente
+    setShowRequestReminder(true);
   };
 
   const sendOrder=()=>{
@@ -3305,6 +3308,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
   };
 
   const estRaw  =menu.reduce((s,i)=>s+(i.price||0)*(quantities[i.id]||0),0);
+  // Piatti nel carrello (anche richieste senza prezzo, che hanno totale 0)
+  const cartCount = menu.reduce((s,i)=>s+(quantities[i.id]||0),0);
+  const hasUnpricedInCart = menu.some(i=>(quantities[i.id]||0)>0 && i.price==null);
   const crUsable=credit>0?Math.min(credit,estRaw):0;
   const estNet  =Math.max(0,estRaw-crUsable);
 
@@ -3354,6 +3360,44 @@ function ClientPanel({ user, appState, update, onLogout }) {
           setShowWrapPopup(false);
           try { localStorage.setItem('wrap_shown_'+todayISO,'1'); } catch {}
         }}/>
+      )}
+      {/* Popup: la richiesta di un piatto NON è un ordine */}
+      {showRequestReminder && (
+        <div onClick={()=>setShowRequestReminder(false)} style={{
+          position:"fixed", inset:0, zIndex:9999,
+          background:"rgba(0,0,0,.6)",
+          display:"flex", alignItems:"center", justifyContent:"center", padding:20
+        }}>
+          <div onClick={e=>e.stopPropagation()} style={{
+            background:"var(--surface)", borderRadius:18, padding:"26px 22px",
+            maxWidth:360, width:"100%", textAlign:"center",
+            boxShadow:"0 20px 60px rgba(0,0,0,.4)", border:"2px solid var(--gold)"
+          }}>
+            <div style={{fontSize:"2.6rem",marginBottom:8}}>⚠️</div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.35rem",fontWeight:700,color:"var(--accent)",marginBottom:10,lineHeight:1.25}}>
+              Il piatto è nel carrello,<br/>ma l'ordine non è ancora partito
+            </div>
+            <div style={{fontSize:".92rem",color:"var(--text2)",lineHeight:1.55,marginBottom:18}}>
+              La sola richiesta <b>non basta</b>: per farci arrivare l'ordine devi premere
+              <b> 📨 Invia ordine</b>. Puoi prima aggiungere altri piatti, poi invia.
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {ordersOpen && !myOrder ? (
+                <button className="btn btn-primary" style={{padding:"13px"}}
+                  onClick={()=>{ setShowRequestReminder(false); sendOrder(); }}>
+                  📨 Invia ordine adesso
+                </button>
+              ) : (
+                <div style={{fontSize:".82rem",color:"var(--yellow)",fontWeight:700,padding:"6px 0"}}>
+                  🔒 Gli ordini sono al momento chiusi: invia appena riaprono.
+                </div>
+              )}
+              <button className="btn btn-ghost" onClick={()=>setShowRequestReminder(false)}>
+                {ordersOpen && !myOrder ? "Aggiungo altro, poi invio" : "Ho capito"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {/* Banner compleanno (resta tutta la giornata) */}
       {isBirthday && <BirthdayBanner userName={user.name}/>}
@@ -3556,7 +3600,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
             <YearWrapCard stats={yearStats} onOpen={()=>setShowWrapPopup(true)}/>
           )}
           {/* Bottone sticky in basso con totale */}
-          {ordersOpen && !myOrder && estRaw>0 && !atBottom && (
+          {ordersOpen && !myOrder && cartCount>0 && !atBottom && (
             <div style={{
               position:"fixed", bottom:0, left:0, right:0, zIndex:200,
               padding:"10px 16px 20px",
@@ -3566,7 +3610,15 @@ function ClientPanel({ user, appState, update, onLogout }) {
               <button className="btn btn-primary" onClick={sendOrder} disabled={sendingOrder}
                 style={{width:"100%",pointerEvents:"all",fontSize:"1rem",padding:"14px",
                   boxShadow:"0 4px 20px rgba(139,26,26,.3)",borderRadius:14,opacity:sendingOrder?.7:1}}>
-                {sendingOrder ? "⏳ Invio in corso…" : <>📨 Invia ordine — {crUsable>0?<><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>:eur(estRaw)}</>}
+                {sendingOrder
+                  ? "⏳ Invio in corso…"
+                  : <>📨 Invia ordine — {
+                      estRaw===0 && hasUnpricedInCart
+                        ? <span style={{fontSize:".85rem",opacity:.9}}>prezzo da definire</span>
+                        : crUsable>0
+                          ? <><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>
+                          : eur(estRaw)
+                    }{hasUnpricedInCart && estRaw>0 && <span style={{fontSize:".75rem",opacity:.85}}> + richieste</span>}</>}
               </button>
             </div>
           )}
