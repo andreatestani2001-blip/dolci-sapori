@@ -557,22 +557,93 @@ async function loadState() {
   return { ...DEFAULT_STATE };
 }
 
-async function saveState(s) {
-  try {
-    const res = await fetch("/api/state-save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: s }),
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      console.error("saveState failed:", t);
+// Calcola la differenza tra due stati a profondità 2.
+// Top-level: chiavi oggetto (orders, credits, menus, ...) → confronto figlio per
+// figlio; figlio rimosso → null (il server lo cancella). Chiavi non-oggetto
+// (users, sentNotifs) → sostituite intere se cambiate.
+function isPlainObj(v){ return v!==null && typeof v==="object" && !Array.isArray(v); }
+function diffState(prev, next) {
+  const patch = {};
+  const keys = new Set([...Object.keys(prev||{}), ...Object.keys(next||{})]);
+  for (const k of keys) {
+    const a = prev?.[k], b = next?.[k];
+    if (a === b) continue;
+    if (b === undefined) { patch[k] = null; continue; }
+    if (isPlainObj(a) && isPlainObj(b)) {
+      const child = {};
+      const ck = new Set([...Object.keys(a), ...Object.keys(b)]);
+      for (const k2 of ck) {
+        const a2 = a[k2], b2 = b[k2];
+        if (a2 === b2) continue;
+        if (b2 === undefined) { child[k2] = null; continue; }
+        if (JSON.stringify(a2) !== JSON.stringify(b2)) child[k2] = b2;
+      }
+      if (Object.keys(child).length) patch[k] = child;
+    } else if (JSON.stringify(a) !== JSON.stringify(b)) {
+      patch[k] = b;
     }
-  } catch(e) { console.error("saveState error", e); }
+  }
+  return patch;
+}
+
+// Salva SOLO la differenza (patch). Il server la fonde con lo stato attuale
+// nel DB, così due persone che salvano a pochi secondi di distanza non si
+// sovrascrivono più a vicenda. Lancia un errore se il salvataggio fallisce.
+// Ritorna lo stato fuso restituito dal server.
+async function saveState(patch) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    throw new Error("offline");
+  }
+  const res = await fetch("/api/state-save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ patch }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("saveState failed:", res.status, t);
+    throw new Error("save_failed_" + res.status);
+  }
+  const out = await res.json();
+  return out?.data || null;
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────
 const today   = () => new Date().toISOString().slice(0,10);
+
+// Generatore di id univoco robusto (timestamp + 10 char random + counter)
+// Con 10 char in base36 = 3.6 quadrilioni di combinazioni → collisioni impossibili
+let __idCounter = 0;
+function newId(prefix='') {
+  __idCounter = (__idCounter + 1) % 100000;
+  const t = Date.now().toString(36);
+  const r = Math.random().toString(36).slice(2,12);
+  const c = __idCounter.toString(36);
+  return (prefix?prefix+'_':'') + t + r + c;
+}
+
+// Safety net: deduplica un array di items dando un nuovo id a chi ha id ripetuto
+// Non tocca i piatti già ordinati (sono in ordini precedenti che referenziano
+// gli id vecchi), ma se un menu ha per errore due piatti con lo stesso id,
+// li corregge automaticamente al caricamento.
+function dedupeMenuIds(items) {
+  if (!Array.isArray(items)) return items;
+  const seen = new Set();
+  let changed = false;
+  const fixed = items.map(item => {
+    if (!item || !item.id) {
+      changed = true;
+      return { ...item, id: newId() };
+    }
+    if (seen.has(item.id)) {
+      changed = true;
+      return { ...item, id: newId() };
+    }
+    seen.add(item.id);
+    return item;
+  });
+  return changed ? fixed : items;
+}
 
 function isOrdersOpen(date, appState) {
   const oo = appState?.ordersOpen || {};
@@ -706,16 +777,25 @@ function calculateYearWrap(userId, orders, year) {
 
 // Logo component
 // ─── Classifica top clienti del mese ─────────────────────────────────────
-function Leaderboard({ appState, currentUserId }) {
+function Leaderboard({ appState, currentUserId, period='month' }) {
   const now = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthName = now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const isYear = period === 'year';
+  const prefix = isYear
+    ? `${now.getFullYear()}-`
+    : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const periodLabel = isYear
+    ? String(now.getFullYear())
+    : now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const title = isYear ? '🏆 Top dell\'anno' : '🏆 Top del mese';
+  const emptyMsg = isYear
+    ? "Nessun ordine quest'anno ancora."
+    : "Nessun ordine questo mese ancora.";
 
-  // Somma rawTotal degli ordini del mese corrente per ogni cliente
+  // Somma rawTotal degli ordini del periodo per ogni cliente
   const totals = {};
   Object.entries(appState.orders||{}).forEach(([key, order]) => {
     if (!order) return;
-    if (!key.startsWith(monthPrefix)) return; // key = "YYYY-MM-DD:userId"
+    if (!key.startsWith(prefix)) return; // key = "YYYY-MM-DD:userId"
     const uid = order.userId;
     totals[uid] = (totals[uid]||0) + (order.rawTotal || 0);
   });
@@ -732,16 +812,16 @@ function Leaderboard({ appState, currentUserId }) {
 
   if (ranking.length === 0) return (
     <div className="card">
-      <div className="card-title">🏆 Top del mese</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
-      <div className="empty">Nessun ordine questo mese ancora.<br/>Ordina per entrare in classifica! 🚀</div>
+      <div className="card-title">{title}</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
+      <div className="empty">{emptyMsg}<br/>Ordina per entrare in classifica! 🚀</div>
     </div>
   );
 
   return (
     <div className="card">
-      <div className="card-title">🏆 Top del mese</div>
-      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{monthName}</div>
+      <div className="card-title">{title}</div>
+      <div className="muted" style={{fontSize:'.82rem',marginBottom:12,textTransform:'capitalize'}}>{periodLabel}</div>
 
       {/* Banner posizione utente se fuori dai primi 3 */}
       {currentUserId && myRank >= 3 && (
@@ -761,7 +841,7 @@ function Leaderboard({ appState, currentUserId }) {
           borderRadius:10, padding:'10px 14px', marginBottom:14, fontSize:'.85rem',
           color:'var(--muted)', textAlign:'center'
         }}>
-          Non sei ancora in classifica questo mese.
+          Non sei ancora in classifica {isYear ? "quest'anno" : "questo mese"}.
         </div>
       )}
 
@@ -1231,18 +1311,44 @@ export default function App() {
 
 
 
-  const isSaving = useRef(false);
+  // Contatore dei salvataggi in corso (non un booleano: più update
+  // ravvicinati non devono "sbloccare" il polling troppo presto)
+  const savingCount = useRef(0);
+  const isSaving = { get current(){ return savingCount.current > 0; } };
+  const [saveError, setSaveError] = useState("");
 
-  const update = useCallback(patch => {
+  // Applica la modifica localmente, calcola la differenza e manda SOLO quella
+  // al server. Ritorna una Promise: risolve con lo stato fuso dal server,
+  // rigetta se il salvataggio fallisce (rete, server, troppi conflitti).
+  const update = useCallback(patch => new Promise((resolve, reject) => {
     setAppState(prev => {
       const next = typeof patch === 'function'
         ? {...prev,...patch(prev)}
         : {...prev,...patch};
-      isSaving.current = true;
-      saveState(next).finally(() => { isSaving.current = false; });
+      const diff = diffState(prev, next);
+      if (Object.keys(diff).length === 0) { resolve(next); return prev; }
+      savingCount.current++;
+      saveState(diff)
+        .then(merged => {
+          // Allinea subito lo stato locale a quello del server (se non ci
+          // sono altri salvataggi in volo che lo renderebbero obsoleto)
+          if (merged && savingCount.current === 1) {
+            setAppState(cur => JSON.stringify(cur) === JSON.stringify(merged) ? cur : {...DEFAULT_STATE, ...merged});
+          }
+          resolve(merged || next);
+        })
+        .catch(err => {
+          console.error("update → saveState error:", err);
+          setSaveError(err?.message === "offline"
+            ? "📵 Sei offline: la modifica NON è stata salvata."
+            : "⚠️ Salvataggio fallito: la modifica NON è stata salvata. Riprova.");
+          setTimeout(() => setSaveError(""), 5000);
+          reject(err);
+        })
+        .finally(() => { savingCount.current = Math.max(0, savingCount.current - 1); });
       return next;
     });
-  }, []);
+  }), []);
 
   if (!appState) return (
     <><style>{STYLE}</style>
@@ -1256,6 +1362,14 @@ export default function App() {
       try { sessionStorage.setItem('ds_splash_shown','1'); } catch {}
     }}/>}
     <div className="app-bg" style={{backgroundImage:`url(${BRAND.bgImage})`}}/>
+    {saveError && (
+      <div style={{
+        position:"fixed", top:0, left:0, right:0, zIndex:10000,
+        background:"#b01818", color:"#fff", padding:"12px 16px",
+        fontSize:".9rem", fontWeight:700, textAlign:"center",
+        boxShadow:"0 4px 20px rgba(0,0,0,.3)"
+      }}>{saveError}</div>
+    )}
     {!user
       ? <AuthScreen appState={appState} update={update} onLogin={handleLogin}/>
       : user.role==="admin"
@@ -1515,7 +1629,7 @@ function mergeParsedMenu(currentItems, parsed) {
         else changes.unchanged.push({ name: existing.name, cat });
       } else {
         const newItem = {
-          id: Date.now().toString() + Math.random().toString(36).slice(2,5),
+          id: newId(),
           name: parsedDish.name,
           price: parsedDish.price,
           custom: false,
@@ -1556,14 +1670,14 @@ function AdminMenu({ date, appState, update }) {
   const items     = appState.menus[date] || [];
   const published  = appState.menuPub[date] || false;
   const ordersOpen = isOrdersOpen(date, appState);
-  const saveItems = list => update({menus:{...appState.menus,[date]:list}});
+  const saveItems = list => update({menus:{...appState.menus,[date]:dedupeMenuIds(list)}});
 
   const add = () => {
     const name = newName.trim();
     const price = newPrice !== "" ? parseFloat(newPrice) : null;
     if (!name) return;
     setNewName(""); setNewPrice("");
-    const newItem = {id:Date.now().toString(),name,price,custom:false,categoria:newCategoria};
+    const newItem = {id:newId(),name,price,custom:false,categoria:newCategoria};
     update(prev => ({menus:{...prev.menus,[date]:[...(prev.menus[date]||[]),newItem]}}));
   };
   const updatePrice = (id,val) => saveItems(items.map(i=>i.id===id?{...i,price:val===""?null:parseFloat(val)}:i));
@@ -1573,7 +1687,7 @@ function AdminMenu({ date, appState, update }) {
     if (!prev||!prev.length){showToast("Nessun menù ieri da duplicare.",false);return;}
     const newItems = prev
       .filter(i=>!i.custom) // non duplicare piatti personalizzati di ieri
-      .map(i=>({...i,id:Date.now().toString()+Math.random().toString(36).slice(2,5)}));
+      .map(i=>({...i,id:newId()}));
     saveItems(newItems); showToast("✓ Menù di ieri duplicato!");
   };
 
@@ -2044,7 +2158,7 @@ function AdminOrders({ date, appState, update }) {
     });
     // Nuovo piatto custom
     if(editCustomName.trim()){
-      items.push({id:"custom_"+Date.now(),name:editCustomName.trim(),price:parseFloat(editCustomPrice)||0,qty:1,custom:true});
+      items.push({id:newId('custom'),name:editCustomName.trim(),price:parseFloat(editCustomPrice)||0,qty:1,custom:true});
     }
     if(!items.length) return showToast("Aggiungi almeno un piatto",true);
     const rawTotal=items.reduce((s,i)=>s+(i.price||0)*i.qty,0);
@@ -2079,7 +2193,7 @@ function AdminOrders({ date, appState, update }) {
     // Piatto personalizzato
     if(addCustomName.trim()){
       items.push({
-        id:"custom_"+Date.now(),
+        id:newId('custom'),
         name:addCustomName.trim(),
         price:parseFloat(addCustomPrice)||0,
         qty:1, custom:true,
@@ -2133,7 +2247,7 @@ function AdminOrders({ date, appState, update }) {
     const menuItems=appState.menus[date]||[];
     const menuItem=menuItems.find(m=>m.id===itemId);
     if(menuItem&&menuItem.custom){
-      update({menus:{...appState.menus,[date]:menuItems.map(m=>m.id===itemId?{...m,price}:m)}});
+      update({menus:{...appState.menus,[date]:dedupeMenuIds(menuItems.map(m=>m.id===itemId?{...m,price}:m))}});
     }
   };
 
@@ -2422,9 +2536,9 @@ function AdminNotifications({ appState, update }) {
     const now = new Date().toISOString();
     for(const c of targets){
       const prev=newNotifs[c.id]||[];
-      newNotifs[c.id]=[{id:Date.now().toString()+c.id,text:message.trim(),date:now,read:false},...prev].slice(0,50);
+      newNotifs[c.id]=[{id:newId('n')+c.id,text:message.trim(),date:now,read:false},...prev].slice(0,50);
     }
-    const record={id:Date.now().toString(),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
+    const record={id:newId('r'),text:message.trim(),to:target==="all"?"Tutti":targets[0].name,date:now};
     const patch={notifications:newNotifs,sentNotifs:[record,...(appState.sentNotifs||[])].slice(0,30)};
     update(patch);
     // Invia anche push reale via OneSignal
@@ -3000,7 +3114,10 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
-        {tab==="top"     &&<Leaderboard              appState={appState}/>}
+        {tab==="top"     &&<>
+          <Leaderboard appState={appState} period="month"/>
+          <Leaderboard appState={appState} period="year"/>
+        </>}
       </div>
     </div>
   );
@@ -3013,6 +3130,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [tab,        setTab]        = useState("order");
   const [quantities, setQuantities] = useState({});
   const [customDish, setCustomDish] = useState("");
+  const [sendingOrder, setSendingOrder] = useState(false); // invio ordine in corso
   const [orderNote,  setOrderNote]  = useState("");
   const [itemNotes,  setItemNotes]  = useState({}); // {itemId: "nota"}
   const [editingCustomId, setEditingCustomId] = useState(null);
@@ -3111,13 +3229,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // Add custom dish request to today's menu
   const addCustomDish=()=>{
     if(!customDish.trim()) return;
-    const newItem={id:Date.now().toString(),name:customDish.trim(),price:null,custom:true,requestedBy:user.name};
+    const newItem={id:newId('custom'),name:customDish.trim(),price:null,custom:true,requestedBy:user.name};
     const curMenu=appState.menus[date]||[];
     // Avoid duplicate custom requests from same user
     if(curMenu.find(i=>i.custom&&i.requestedBy===user.name&&i.name.toLowerCase()===customDish.trim().toLowerCase())){
       setToast("Piatto già aggiunto!"); setTimeout(()=>setToast(""),2000); return;
     }
-    update({menus:{...appState.menus,[date]:[...curMenu,newItem]}});
+    update({menus:{...appState.menus,[date]:dedupeMenuIds([...curMenu,newItem])}});
     setQuantities(prev=>({...prev,[newItem.id]:1}));
     setCustomDish("");
     setToast("✓ Richiesta inviata! Aggiunto al carrello."); setTimeout(()=>setToast(""),2500);
@@ -3137,12 +3255,33 @@ function ClientPanel({ user, appState, update, onLogout }) {
     // MA solo se non ci sono piatti custom senza prezzo (che verranno prezzati dopo)
     const hasUnpricedItems = items.some(i=>i.price==null||i.price===0);
     if(netTotal===0 && creditUsed>0 && !hasUnpricedItems) order.paid = true;
-    const patchOrder={orders:{...appState.orders,[`${date}:${user.id}`]:order},credits:newCredits};
-    update(patchOrder);
-    setQuantities({});
-    setOrderNote("");
-    setItemNotes({});
-    setToast(netTotal===0?"✓ Ordine pagato con credito!":"✓ Ordine inviato!"); setTimeout(()=>setToast(""),3000);
+    const orderKey=`${date}:${user.id}`;
+    const patchOrder={orders:{...appState.orders,[orderKey]:order},credits:newCredits};
+
+    // Blocca doppi invii e mostra lo stato di attesa
+    if(sendingOrder) return;
+    setSendingOrder(true);
+    setToast("⏳ Invio in corso…");
+
+    update(patchOrder)
+      .then(merged=>{
+        // Verifica definitiva: l'ordine deve esistere nello stato tornato dal server
+        const confirmed = merged && merged.orders && merged.orders[orderKey];
+        if(!confirmed) throw new Error("not_confirmed");
+        setQuantities({});
+        setOrderNote("");
+        setItemNotes({});
+        setToast(netTotal===0?"✓ Ordine pagato con credito!":"✓ Ordine inviato!");
+        setTimeout(()=>setToast(""),3000);
+      })
+      .catch(err=>{
+        console.error("sendOrder failed:", err);
+        // Il carrello resta pieno: il cliente può riprovare
+        setToast("❌ Ordine NON inviato. Controlla la connessione e riprova.");
+        setTimeout(()=>setToast(""),6000);
+        // Lo stato locale verrà riallineato col server dal polling (ogni 3s)
+      })
+      .finally(()=>setSendingOrder(false));
   };
 
   const cancelOrder=()=>{
@@ -3306,7 +3445,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
       </div>
       <div className="main">
 
-        {tab==="top" && <Leaderboard appState={appState} currentUserId={user.id}/>}
+        {tab==="top" && <>
+          <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
+          <Leaderboard appState={appState} currentUserId={user.id} period="year"/>
+        </>}
 
         {tab==="notifs"&&(
           <div className="card">
@@ -3421,10 +3563,10 @@ function ClientPanel({ user, appState, update, onLogout }) {
               background:"linear-gradient(transparent, rgba(253,246,238,0.98) 30%)",
               pointerEvents:"none"
             }}>
-              <button className="btn btn-primary" onClick={sendOrder}
+              <button className="btn btn-primary" onClick={sendOrder} disabled={sendingOrder}
                 style={{width:"100%",pointerEvents:"all",fontSize:"1rem",padding:"14px",
-                  boxShadow:"0 4px 20px rgba(139,26,26,.3)",borderRadius:14}}>
-                📨 Invia ordine — {crUsable>0?<><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>:eur(estRaw)}
+                  boxShadow:"0 4px 20px rgba(139,26,26,.3)",borderRadius:14,opacity:sendingOrder?.7:1}}>
+                {sendingOrder ? "⏳ Invio in corso…" : <>📨 Invia ordine — {crUsable>0?<><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>:eur(estRaw)}</>}
               </button>
             </div>
           )}
@@ -3694,7 +3836,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
                   <div style={{display:"flex",justifyContent:"flex-end"}}>
                     {ordersOpen
-                      ? <button className="btn btn-primary" onClick={sendOrder}>📨 Invia ordine</button>
+                      ? <button className="btn btn-primary" onClick={sendOrder} disabled={sendingOrder}>{sendingOrder?"⏳ Invio in corso…":"📨 Invia ordine"}</button>
                       : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
                     }
                   </div>
