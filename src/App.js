@@ -1232,8 +1232,12 @@ function YearWrapCard({ stats, onOpen }) {
 
 // ─── Sezione Natale (placeholder "in lavorazione" + animazioni) ──────────
 // Immagine: prova /natale.png nella cartella public/, altrimenti usa il CDN.
-const NATALE_IMG_LOCAL = "/natale.png";
-const NATALE_IMG_CDN   = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_230524_4b8b457f-88d2-4d75-848d-60ee318a6523.png";
+const NATALE_IMG_LOCAL   = "/natale.png";
+const NATALE_IMG_CDN     = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_230524_4b8b457f-88d2-4d75-848d-60ee318a6523.png";
+// Video: prova /natale.mp4 in public/, altrimenti il CDN; se nessuno dei due
+// è disponibile resta l'immagine (poster).
+const NATALE_VIDEO_LOCAL = "/natale.mp4";
+const NATALE_VIDEO_CDN   = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_231327_ebab638f-268f-4df3-b53b-522451303fe5.mp4";
 
 function daysToChristmas() {
   const now = new Date();
@@ -1244,6 +1248,8 @@ function daysToChristmas() {
 
 function ChristmasSection({ isAdmin=false }) {
   const [imgSrc, setImgSrc] = useState(NATALE_IMG_LOCAL);
+  const [videoSrc, setVideoSrc] = useState(NATALE_VIDEO_LOCAL);
+  const [videoFailed, setVideoFailed] = useState(false);
   const days = daysToChristmas();
   // Fiocchi di neve (posizioni/durate fisse per non "saltare" ad ogni render)
   const flakes = useMemo(() => Array.from({length:28}, (_,i)=>({
@@ -1260,7 +1266,7 @@ function ChristmasSection({ isAdmin=false }) {
         @keyframes xmasBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
         @keyframes xmasWiggle { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.08)} }
         @keyframes xmasPipe { 0%,100%{transform:translateX(-4px) rotate(-10deg)} 50%{transform:translateX(4px) rotate(10deg)} }
-        @keyframes xmasBelt { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+        @keyframes xmasMarquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
         @keyframes xmasDots { 0%,20%{opacity:0} 50%{opacity:1} 100%{opacity:0} }
         @keyframes xmasGlow { 0%,100%{text-shadow:0 0 8px rgba(244,211,94,.4)} 50%{text-shadow:0 0 22px rgba(244,211,94,.95)} }
         @keyframes xmasSparkle { 0%,100%{opacity:.2;transform:scale(.6)} 50%{opacity:1;transform:scale(1.2)} }
@@ -1285,17 +1291,35 @@ function ChristmasSection({ isAdmin=false }) {
         ))}
       </div>
 
-      {/* Immagine hero */}
-      <div style={{position:"relative",margin:"10px 12px 0",borderRadius:14,overflow:"hidden",boxShadow:"0 10px 30px rgba(0,0,0,.45)"}}>
+      {/* Video hero (loop, muto). Poster = immagine, mostrata finché il video carica
+          o se il video non è disponibile. */}
+      <div style={{position:"relative",margin:"10px 12px 0",borderRadius:14,overflow:"hidden",boxShadow:"0 10px 30px rgba(0,0,0,.45)",background:"#2b1810",aspectRatio:"16/9"}}>
         <img src={imgSrc} alt="Natale al Forno Dolci Sapori — in lavorazione"
           onError={()=>{ if(imgSrc!==NATALE_IMG_CDN) setImgSrc(NATALE_IMG_CDN); }}
-          style={{display:"block",width:"100%",height:"auto",aspectRatio:"16/9",objectFit:"cover",background:"#2b1810"}}/>
+          style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+        {!videoFailed && (
+          <video
+            key={videoSrc}
+            src={videoSrc}
+            autoPlay muted loop playsInline preload="auto"
+            onError={()=>{ if(videoSrc!==NATALE_VIDEO_CDN) setVideoSrc(NATALE_VIDEO_CDN); else setVideoFailed(true); }}
+            style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+          />
+        )}
         <div style={{position:"absolute",top:10,right:10,background:"rgba(139,26,26,.92)",color:"#fff",padding:"6px 12px",borderRadius:20,fontSize:".72rem",fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",border:"1px solid #f4d35e"}}>
           🎄 Prossimamente
         </div>
-        {[["8%","18%"],["88%","26%"],["14%","78%"],["78%","82%"],["50%","8%"]].map(([l,t],i)=>(
-          <span key={i} style={{position:"absolute",left:l,top:t,color:"#fff8d6",fontSize:14,animation:`xmasSparkle ${1.4+i*.3}s ease-in-out infinite`,animationDelay:`${i*.25}s`,pointerEvents:"none"}}>✦</span>
-        ))}
+      </div>
+
+      {/* Banner emoji natalizie scorrevole (due copie → scorrimento continuo) */}
+      <div style={{overflow:"hidden",whiteSpace:"nowrap",margin:"10px 12px 0",padding:"9px 0",borderRadius:12,background:"linear-gradient(90deg,#8b1a1a,#a31818 50%,#8b1a1a)",border:"1px solid #f4d35e",position:"relative",zIndex:4}}>
+        <div style={{display:"inline-flex",animation:"xmasMarquee 22s linear infinite",fontSize:"1.45rem",lineHeight:1}}>
+          {[0,1].map(copy=>(
+            <span key={copy} style={{display:"inline-block",paddingRight:18,letterSpacing:"14px"}}>
+              🎄🎅🤶🧝🎁⛄❄️🔔⭐🕯️🍪🥐🎂🍫🧁🍬🦌🛷🎀🍾✨🎄🎅🎁⛄❄️🔔⭐🍪🧁
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Titolo */}
@@ -1307,38 +1331,6 @@ function ChristmasSection({ isAdmin=false }) {
           Gli elfi sono già al lavoro: panettoni, pandori, torroni e dolci delle feste
           stanno prendendo forma. Questa sezione è
           <b style={{color:"#fff"}}> in lavorazione<span className="xmas-dot">.</span><span className="xmas-dot">.</span><span className="xmas-dot">.</span></b>
-        </div>
-      </div>
-
-      {/* Elfi al lavoro */}
-      <div style={{display:"flex",justifyContent:"space-around",gap:6,padding:"14px 10px 6px",position:"relative",zIndex:4}}>
-        <div className="xmas-elf">
-          <div className="scene">
-            <span style={{animation:"xmasBob 1s ease-in-out infinite",display:"inline-block"}}>🧝</span>
-            <span style={{animation:"xmasHammer 0.5s ease-in-out infinite",display:"inline-block",transformOrigin:"bottom left",fontSize:"1.4rem"}}>🔨</span>
-          </div>
-          <div className="lbl">Costruisce</div>
-        </div>
-        <div className="xmas-elf">
-          <div className="scene">
-            <span style={{animation:"xmasBob 1.3s ease-in-out infinite",display:"inline-block"}}>🧝‍♀️</span>
-            <span style={{animation:"xmasWiggle 0.9s ease-in-out infinite",display:"inline-block",fontSize:"1.5rem"}}>🎁</span>
-          </div>
-          <div className="lbl">Impacchetta</div>
-        </div>
-        <div className="xmas-elf">
-          <div className="scene">
-            <span style={{animation:"xmasBob 1.1s ease-in-out infinite",display:"inline-block"}}>🧑‍🍳</span>
-            <span style={{animation:"xmasPipe 0.8s ease-in-out infinite",display:"inline-block",fontSize:"1.5rem"}}>🎂</span>
-          </div>
-          <div className="lbl">Decora</div>
-        </div>
-      </div>
-
-      {/* Nastro trasportatore di regali */}
-      <div style={{overflow:"hidden",whiteSpace:"nowrap",padding:"4px 0 10px",position:"relative",zIndex:4,borderTop:"1px dashed rgba(244,211,94,.35)",borderBottom:"1px dashed rgba(244,211,94,.35)",margin:"6px 12px 0"}}>
-        <div style={{display:"inline-block",animation:"xmasBelt 14s linear infinite",fontSize:"1.4rem",letterSpacing:"14px"}}>
-          🎁📦🍫🎁🧁📦🍪🎁🥐📦🎁🍰📦🎁🧁🍫🎁📦🍪🎁
         </div>
       </div>
 
