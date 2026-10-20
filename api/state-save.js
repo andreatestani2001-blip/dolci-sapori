@@ -18,6 +18,30 @@
 //   { users: [...] }                            → chiave non-oggetto: sostituita
 
 const MAX_RETRIES = 8;
+const NOTIF_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // notifiche più vecchie di 7 giorni
+const NOTIF_MAX_PER_USER = 50;
+
+// Pulizia lato server: senza questa, le notifiche vecchie non venivano mai
+// rimosse dal DB (il client le filtra solo in memoria) e la riga cresceva.
+function pruneState(state) {
+  if (!state || typeof state !== "object") return state;
+  const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
+  const ts = n => new Date(n?.date || n?.ts || 0).getTime();
+  const out = { ...state };
+  if (isPlainObject(out.notifications)) {
+    const n = {};
+    for (const uid of Object.keys(out.notifications)) {
+      const list = Array.isArray(out.notifications[uid]) ? out.notifications[uid] : [];
+      const kept = list.filter(x => ts(x) > cutoff).slice(0, NOTIF_MAX_PER_USER);
+      if (kept.length) n[uid] = kept;
+    }
+    out.notifications = n;
+  }
+  if (Array.isArray(out.sentNotifs)) {
+    out.sentNotifs = out.sentNotifs.filter(x => ts(x) > cutoff).slice(0, 30);
+  }
+  return out;
+}
 
 function isPlainObject(v) {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -83,7 +107,8 @@ export default async function handler(req, res) {
       if (!r.ok) return res.status(r.status).send(text || "{}");
       let saved = null;
       try { saved = JSON.parse(text); } catch {}
-      return res.status(200).json({ ok: true, data: Array.isArray(saved) ? saved[0]?.data : body.data });
+      const row = Array.isArray(saved) ? saved[0] : null;
+      return res.status(200).json({ ok: true, data: row?.data ?? body.data, updated_at: row?.updated_at ?? null });
     } catch (e) {
       console.error("state-save (full) error:", e);
       return res.status(500).json({ error: "Internal error" });
@@ -110,18 +135,22 @@ export default async function handler(req, res) {
 
       // Riga inesistente → crea
       if (!current) {
-        const merged = applyPatch({}, patch);
+        const merged = pruneState(applyPatch({}, patch));
         const ins = await fetch(`${url}/rest/v1/appstate`, {
           method: "POST",
           headers: { ...headers, Prefer: "resolution=merge-duplicates,return=representation" },
           body: JSON.stringify({ id: "main", data: merged, updated_at: newTs }),
         });
-        if (ins.ok) return res.status(200).json({ ok: true, data: merged });
+        if (ins.ok) {
+          let row = null;
+          try { const j = await ins.json(); row = Array.isArray(j) ? j[0] : null; } catch {}
+          return res.status(200).json({ ok: true, data: merged, updated_at: row?.updated_at ?? newTs });
+        }
         continue; // qualcun altro l'ha creata nel frattempo → riprova
       }
 
-      // 2. Fondi la patch sullo stato corrente
-      const merged = applyPatch(current.data || {}, patch);
+      // 2. Fondi la patch sullo stato corrente (+ pulizia notifiche vecchie)
+      const merged = pruneState(applyPatch(current.data || {}, patch));
 
       // 3. Scrivi SOLO se updated_at è ancora quello letto (lock ottimistico)
       const versionFilter = current.updated_at == null
@@ -140,7 +169,7 @@ export default async function handler(req, res) {
       const out = await upd.json();
       if (Array.isArray(out) && out.length === 1) {
         // Scritto con successo
-        return res.status(200).json({ ok: true, data: out[0].data, attempt });
+        return res.status(200).json({ ok: true, data: out[0].data, updated_at: out[0].updated_at ?? newTs, attempt });
       }
       // 0 righe aggiornate → qualcun altro ha scritto tra lettura e scrittura.
       // Piccola attesa casuale e riprova dalla lettura.

@@ -529,32 +529,46 @@ async function sendPush(title, message, tokens) {
   } catch(e) { console.error("Push error:", e); }
 }
 
-async function loadState() {
+// Normalizza lo state ricevuto dal server (default + pulizia notifiche vecchie)
+function normalizeState(data) {
+  const state = { ...DEFAULT_STATE, ...(data || {}) };
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  if (state.notifications) {
+    Object.keys(state.notifications).forEach(uid => {
+      state.notifications[uid] = (state.notifications[uid]||[])
+        .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
+    });
+  }
+  if (state.sentNotifs) {
+    state.sentNotifs = state.sentNotifs
+      .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
+  }
+  return state;
+}
+
+// Lettura condizionale: passando `since` (l'ultima versione conosciuta) il
+// server risponde { unchanged:true } senza inviare i ~700 KB se non è cambiato
+// nulla. Ritorna:
+//   null                        → errore di rete/server: IGNORARE (mai
+//                                 sostituire lo stato locale con uno vuoto)
+//   { unchanged:true }          → nessuna novità
+//   { state, updated_at }       → nuovo stato
+async function loadState(since) {
   try {
-    const res = await fetch("/api/state-load");
+    const qs = since ? `?since=${encodeURIComponent(since)}` : "?v=2";
+    const res = await fetch("/api/state-load" + qs, { cache: "no-store" });
     if (!res.ok) {
       console.error("loadState failed:", res.status);
-      return { ...DEFAULT_STATE };
+      return null;
     }
-    const rows = await res.json();
-    if (rows && rows.length > 0) {
-      const state = { ...DEFAULT_STATE, ...rows[0].data };
-      // Pulisci notifiche più vecchie di 7 giorni
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      if (state.notifications) {
-        Object.keys(state.notifications).forEach(uid => {
-          state.notifications[uid] = (state.notifications[uid]||[])
-            .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
-        });
-      }
-      if (state.sentNotifs) {
-        state.sentNotifs = state.sentNotifs
-          .filter(n => new Date(n.date||n.ts||0).getTime() > cutoff);
-      }
-      return state;
-    }
-  } catch(e) { console.error("loadState error", e); }
-  return { ...DEFAULT_STATE };
+    const out = await res.json();
+    if (!out || typeof out !== "object") return null;
+    if (out.unchanged) return { unchanged: true, updated_at: out.updated_at };
+    return { unchanged: false, updated_at: out.updated_at || null, state: normalizeState(out.data) };
+  } catch(e) {
+    console.error("loadState error", e);
+    return null;
+  }
 }
 
 // Calcola la differenza tra due stati a profondità 2.
@@ -605,7 +619,7 @@ async function saveState(patch) {
     throw new Error("save_failed_" + res.status);
   }
   const out = await res.json();
-  return out?.data || null;
+  return out && typeof out === "object" ? out : null; // { ok, data, updated_at }
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────
@@ -1418,21 +1432,50 @@ export default function App() {
     try { localStorage.removeItem("ds_logged_user"); } catch {}
   };
 
+  // Ultima versione (updated_at) dello state conosciuta da questo client.
+  // Viene inviata al server ad ogni polling: se non è cambiata, il server
+  // risponde "unchanged" in pochi byte invece di rispedire tutto.
+  const lastUpdatedAt = useRef(null);
+  const pollInFlight  = useRef(false);
+
   useEffect(() => {
-    loadState().then(s => setAppState(s));
-    // Ricarica dal database ogni 5 secondi per sincronizzare tra dispositivi
-    const poll = setInterval(() => {
-      if (isSaving.current) return; // non sovrascrivere durante salvataggio
-      loadState().then(s => setAppState(prev => {
-        if (isSaving.current) return prev; // check di nuovo
-        if (JSON.stringify(prev) !== JSON.stringify(s)) return s;
-        return prev;
-      }));
-    }, 3000);
-    return () => clearInterval(poll);
+    let cancelled = false;
+
+    const applyLoaded = (r) => {
+      if (cancelled || !r) return;           // null = errore: ignora, tieni lo stato attuale
+      if (r.unchanged) { if (r.updated_at) lastUpdatedAt.current = r.updated_at; return; }
+      setAppState(prev => {
+        if (isSaving.current) return prev;   // un salvataggio è in volo: non sovrascrivere
+        lastUpdatedAt.current = r.updated_at;
+        if (prev === null) return r.state;
+        return JSON.stringify(prev) !== JSON.stringify(r.state) ? r.state : prev;
+      });
+    };
+
+    const poll = async () => {
+      if (pollInFlight.current) return;
+      if (isSaving.current) return;
+      if (typeof document !== "undefined" && document.hidden) return; // app in background: niente traffico
+      pollInFlight.current = true;
+      try { applyLoaded(await loadState(lastUpdatedAt.current)); }
+      finally { pollInFlight.current = false; }
+    };
+
+    // Primo caricamento (sempre completo)
+    loadState(null).then(applyLoaded);
+    // Polling: economico perché condizionale (vedi loadState)
+    const timer = setInterval(poll, 4000);
+    // Tornando in primo piano, aggiorna subito
+    const onVis = () => { if (!document.hidden) poll(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", onVis);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", onVis);
+    };
   }, []);
-
-
 
   // Contatore dei salvataggi in corso (non un booleano: più update
   // ravvicinati non devono "sbloccare" il polling troppo presto)
@@ -1452,11 +1495,15 @@ export default function App() {
       if (Object.keys(diff).length === 0) { resolve(next); return prev; }
       savingCount.current++;
       saveState(diff)
-        .then(merged => {
+        .then(out => {
+          const merged = out?.data || null;
+          // Ricorda la versione appena scritta: il prossimo polling riceverà
+          // "unchanged" invece di riscaricare tutto
+          if (out?.updated_at) lastUpdatedAt.current = out.updated_at;
           // Allinea subito lo stato locale a quello del server (se non ci
           // sono altri salvataggi in volo che lo renderebbero obsoleto)
           if (merged && savingCount.current === 1) {
-            setAppState(cur => JSON.stringify(cur) === JSON.stringify(merged) ? cur : {...DEFAULT_STATE, ...merged});
+            setAppState(cur => JSON.stringify(cur) === JSON.stringify(merged) ? cur : normalizeState(merged));
           }
           resolve(merged || next);
         })
