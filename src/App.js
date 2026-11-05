@@ -499,6 +499,7 @@ const CATEGORIE = [
   { id:"insalate_classiche",label:"🥗 Insalate Classiche" },
   { id:"insalate_speciali", label:"🥗 Insalate Speciali" },
   { id:"fresh_collection",  label:"☀️❄️ Fresh Collection" },
+  { id:"novita",            label:"⭐ Novità della settimana" },
   { id:"richieste",         label:"⭐ Richieste da Voi" },
   { id:"frutta",            label:"🍎 Frutta" },
 ];
@@ -513,7 +514,44 @@ const DEFAULT_STATE = {
   notifications: {},
   sentNotifs:    [],
   fcmTokens:     {}, // { userId: fcmToken }
+  // Novità della settimana: { id: { title, text, from, to, active, items:[{id,name,price,photo}] } }
+  // Le foto stanno in public/novita/<file> e `photo` è il nome del file.
+  weeklySpecials: {},
 };
+
+// Novità attive oggi (active + dentro l'intervallo from/to, estremi inclusi)
+function getActiveSpecials(appState, dateISO) {
+  const all = appState?.weeklySpecials || {};
+  return Object.values(all)
+    .filter(s => s && s.active)
+    .filter(s => (!s.from || s.from <= dateISO) && (!s.to || s.to >= dateISO))
+    .sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+}
+// Trasforma i piatti delle novità in voci ordinabili (stesso formato dei piatti menù)
+function specialsToMenuItems(specials) {
+  const out = [];
+  for (const s of specials) {
+    for (const it of (s.items||[])) {
+      if (!it || !it.name) continue;
+      out.push({
+        id: `special_${s.id}_${it.id}`,
+        name: it.name,
+        price: it.price==null || it.price==="" ? null : Number(it.price),
+        custom: false,
+        special: true,
+        specialId: s.id,
+        categoria: "novita",
+        photo: it.photo || null,
+      });
+    }
+  }
+  return out;
+}
+// Menù usato dall'admin per creare/modificare ordini: piatti del giorno + novità attive
+function adminMenuFor(appState, dateISO) {
+  return [ ...(appState.menus[dateISO]||[]), ...specialsToMenuItems(getActiveSpecials(appState, dateISO)) ];
+}
+const photoUrl = (file) => file ? (file.startsWith("http") || file.startsWith("/") ? file : `/novita/${file}`) : null;
 
 // ─── Firebase Push ────────────────────────────────────────────────────────
 async function sendPush(title, message, tokens) {
@@ -2314,7 +2352,7 @@ function AdminOrders({ date, appState, update }) {
   };
 
   const saveEditedOrder=()=>{
-    const menu = appState.menus[date]||[];
+    const menu = adminMenuFor(appState, date);
     const items = menu.filter(i=>!i.custom&&(editQty[i.id]||0)>0).map(i=>({
       ...i,
       qty:editQty[i.id],
@@ -2322,8 +2360,8 @@ function AdminOrders({ date, appState, update }) {
       supplemento:parseFloat(editItemSuppl[i.id])||0,
       price:(i.price||0)+(parseFloat(editItemSuppl[i.id])||0),
     }));
-    // Mantieni i piatti custom originali che non sono nel menù
-    editingOrder.items.filter(i=>i.custom).forEach(i=>{
+    // Mantieni i piatti custom (e le novità non più attive) che non sono nel menù
+    editingOrder.items.filter(i=>i.custom || (i.special && !menu.find(m=>m.id===i.id))).forEach(i=>{
       if((editQty[i.id]||0)>0) items.push({...i,qty:editQty[i.id]});
     });
     // Nuovo piatto custom
@@ -2350,7 +2388,7 @@ function AdminOrders({ date, appState, update }) {
 
   const addManualOrder=()=>{
     if(!addOrderUser) return showToast("Seleziona un cliente",true);
-    const menu = appState.menus[date]||[];
+    const menu = adminMenuFor(appState, date);
     // Piatti standard con note e supplementi
     const items = menu.filter(i=>!i.custom&&(addOrderItems[i.id]||0)>0)
       .map(i=>({
@@ -2437,7 +2475,7 @@ function AdminOrders({ date, appState, update }) {
       <div className="card-title">🧾 Ordini — {fmt(date)} <span className="badge" style={{background:"var(--accent)"}}>{orders.length}</span></div>
       {/* Modal modifica ordine */}
       {editingOrder&&(()=>{
-        const menu=(appState.menus[date]||[]).filter(i=>!i.custom);
+        const menu=adminMenuFor(appState, date).filter(i=>!i.custom);
         const customOriginals=editingOrder.items.filter(i=>i.custom);
         return(
           <div className="card" style={{marginBottom:14,border:"2px solid var(--accent)",background:"rgba(139,26,26,.03)"}}>
@@ -2523,7 +2561,7 @@ function AdminOrders({ date, appState, update }) {
       </div>
 
       {showAddOrder&&(()=>{
-        const menu = (appState.menus[date]||[]).filter(i=>!i.custom);
+        const menu = adminMenuFor(appState, date).filter(i=>!i.custom);
         const clients = appState.users.filter(u=>u.role!=="admin"&&u.approved);
         return(
           <div className="card" style={{marginBottom:14,background:"var(--gold-lt)",border:"1px solid #f5d78e"}}>
@@ -3242,6 +3280,166 @@ function AdminSummary({ appState }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN ROOT
 // ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+// ADMIN – NOVITÀ DELLA SETTIMANA
+// ════════════════════════════════════════════════════════════════════════════
+const SPECIAL_TEMPLATE = () => {
+  const d = new Date();
+  const dow = (d.getDay()+6)%7;               // 0 = lunedì
+  const mon = new Date(d); mon.setDate(d.getDate()-dow);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const iso = x => x.toISOString().slice(0,10);
+  return {
+    id: newId("sp"),
+    title: "🍕 NOVITÀ DELLA SETTIMANA! 🤩",
+    text: "Arriva LA PIZZADINA: tutto il gusto della pizza, con la praticità di una piadina! 😋\nUn impasto di pizza fragrante, ripiegato e farcito con ingredienti freschi e gustosi!",
+    from: iso(mon), to: iso(sun),
+    active: false,
+    items: [],
+    createdAt: new Date().toISOString(),
+  };
+};
+
+function AdminSpecials({ appState, update }) {
+  const [editing, setEditing] = useState(null);   // oggetto novità in modifica (copia)
+  const [toast, setToast]     = useState({text:"",err:false});
+  const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
+  const all = Object.values(appState.weeklySpecials||{}).sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+  const todayISO = today();
+
+  const saveSpecial = () => {
+    if(!editing) return;
+    if(!editing.title.trim()) return showToast("Metti un titolo",true);
+    if(editing.from && editing.to && editing.from > editing.to) return showToast("La data 'dal' è dopo la data 'al'",true);
+    const items = (editing.items||[])
+      .filter(i=>i.name && i.name.trim())
+      .map(i=>({ id:i.id||newId("it"), name:i.name.trim(), price:(i.price===""||i.price==null)?null:Number(i.price), photo:(i.photo||"").trim()||null }));
+    const sp = { ...editing, title:editing.title.trim(), text:(editing.text||"").trim(), items };
+    update({weeklySpecials:{...(appState.weeklySpecials||{}),[sp.id]:sp}})
+      .then(()=>{ showToast("✓ Novità salvata"); setEditing(null); })
+      .catch(()=>showToast("Errore di salvataggio",true));
+  };
+  const toggleActive = (sp) => {
+    update({weeklySpecials:{...(appState.weeklySpecials||{}),[sp.id]:{...sp,active:!sp.active}}})
+      .then(()=>showToast(sp.active?"Novità disattivata":"✓ Novità attiva per i clienti"))
+      .catch(()=>showToast("Errore di salvataggio",true));
+  };
+  const removeSpecial = (sp) => {
+    if(!window.confirm(`Eliminare "${sp.title}"?`)) return;
+    const next = {...(appState.weeklySpecials||{})}; delete next[sp.id];
+    update({weeklySpecials:next}).then(()=>showToast("Novità eliminata")).catch(()=>showToast("Errore",true));
+  };
+  const setItem = (idx, patch) => setEditing(e=>({...e, items:e.items.map((it,i)=>i===idx?{...it,...patch}:it)}));
+  const isLive = sp => sp.active && (!sp.from || sp.from<=todayISO) && (!sp.to || sp.to>=todayISO);
+
+  return (<>
+    {!editing && (
+      <div className="card">
+        <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+          <div className="card-title" style={{marginBottom:0}}>⭐ Novità della settimana</div>
+          <button className="btn btn-primary btn-sm" onClick={()=>setEditing(SPECIAL_TEMPLATE())}>+ Nuova novità</button>
+        </div>
+        <div className="muted" style={{fontSize:".8rem",marginBottom:12,lineHeight:1.5}}>
+          Le novità attive compaiono ai clienti in cima al tab Ordina, con foto, e si ordinano insieme al menù del giorno.
+          Le foto vanno nella cartella <code>public/novita/</code> del progetto (es. <code>pizzadina.jpg</code>).
+        </div>
+        {all.length===0 && <div className="empty">Nessuna novità ancora. Crea la prima!</div>}
+        {all.map(sp=>(
+          <div key={sp.id} style={{border:"1px solid var(--border)",borderRadius:12,padding:"10px 12px",marginBottom:10,
+            background:isLive(sp)?"linear-gradient(135deg,#fff9ec,#fff)":"var(--surface)"}}>
+            <div className="flex" style={{justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+              <div style={{flex:1,minWidth:200}}>
+                <div style={{fontWeight:700}}>{sp.title}</div>
+                <div className="muted" style={{fontSize:".75rem",marginTop:2}}>
+                  {sp.from?fmtS(sp.from):"—"} → {sp.to?fmtS(sp.to):"—"} · {(sp.items||[]).length} piatti
+                  {" · "}
+                  {isLive(sp)
+                    ? <span style={{color:"var(--green)",fontWeight:700}}>● visibile ai clienti</span>
+                    : sp.active ? <span style={{color:"var(--yellow)",fontWeight:700}}>● attiva ma fuori date</span>
+                                : <span style={{color:"var(--muted)"}}>○ spenta</span>}
+                </div>
+              </div>
+              <div className="flex" style={{gap:6,flexWrap:"wrap"}}>
+                <button className={`btn btn-sm ${sp.active?"btn-ghost":"btn-success"}`} onClick={()=>toggleActive(sp)}>{sp.active?"Spegni":"Attiva"}</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setEditing({...sp, items:(sp.items||[]).map(i=>({...i, price:i.price==null?"":i.price}))})}>✏️ Modifica</button>
+                <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}} onClick={()=>removeSpecial(sp)}>✕</button>
+              </div>
+            </div>
+            {(sp.items||[]).length>0 && (
+              <div className="flex" style={{gap:6,marginTop:8,flexWrap:"wrap"}}>
+                {sp.items.map(it=>(
+                  <div key={it.id} className="flex" style={{gap:6,alignItems:"center",background:"#fff",border:"1px solid var(--border-lt)",borderRadius:8,padding:"3px 8px 3px 3px",fontSize:".78rem"}}>
+                    {photoUrl(it.photo)
+                      ? <img src={photoUrl(it.photo)} alt="" style={{width:28,height:28,objectFit:"cover",borderRadius:6}} onError={e=>{e.currentTarget.style.visibility="hidden";}}/>
+                      : <span style={{width:28,height:28,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>🍕</span>}
+                    <span>{it.name}</span><b style={{color:"var(--accent)"}}>{it.price!=null?eur(it.price):"—"}</b>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {editing && (
+      <div className="card">
+        <div className="card-title">{appState.weeklySpecials?.[editing.id] ? "✏️ Modifica novità" : "⭐ Nuova novità"}</div>
+        <div className="field" style={{marginBottom:10}}>
+          <label>Titolo</label>
+          <input value={editing.title} onChange={e=>setEditing(s=>({...s,title:e.target.value}))} placeholder="🍕 NOVITÀ DELLA SETTIMANA!"/>
+        </div>
+        <div className="field" style={{marginBottom:10}}>
+          <label>Testo di presentazione</label>
+          <textarea value={editing.text||""} onChange={e=>setEditing(s=>({...s,text:e.target.value}))} rows={4}
+            style={{width:"100%",padding:10,border:"1px solid var(--border)",borderRadius:8,fontFamily:"inherit",fontSize:".9rem",resize:"vertical"}}/>
+        </div>
+        <div className="flex" style={{gap:10,flexWrap:"wrap",marginBottom:10}}>
+          <div className="field" style={{flex:1,minWidth:140}}><label>Visibile dal</label>
+            <input type="date" value={editing.from||""} onChange={e=>setEditing(s=>({...s,from:e.target.value}))}/></div>
+          <div className="field" style={{flex:1,minWidth:140}}><label>al (incluso)</label>
+            <input type="date" value={editing.to||""} onChange={e=>setEditing(s=>({...s,to:e.target.value}))}/></div>
+          <label className="flex" style={{alignItems:"center",gap:8,alignSelf:"flex-end",paddingBottom:8,cursor:"pointer",fontWeight:700}}>
+            <input type="checkbox" checked={!!editing.active} onChange={e=>setEditing(s=>({...s,active:e.target.checked}))}/> Attiva
+          </label>
+        </div>
+
+        <div style={{fontSize:".75rem",fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:".04em",margin:"14px 0 6px",borderBottom:"1px solid var(--border-lt)",paddingBottom:4}}>Piatti</div>
+        {(editing.items||[]).map((it,idx)=>{
+          const src = photoUrl(it.photo);
+          return (
+            <div key={it.id||idx} style={{display:"grid",gridTemplateColumns:"56px 1fr",gap:10,alignItems:"start",marginBottom:10,padding:"8px",border:"1px solid var(--border-lt)",borderRadius:10,background:"#fff"}}>
+              <div style={{width:56,height:56,borderRadius:8,overflow:"hidden",background:"#f3e9da",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.4rem"}}>
+                {src ? <img key={src} src={src} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}
+                         onError={e=>{e.currentTarget.replaceWith(Object.assign(document.createElement("span"),{textContent:"❓",title:"File non trovato in public/novita/"}));}}/> : "🍕"}
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <div className="flex" style={{gap:6}}>
+                  <input placeholder="Nome piatto" value={it.name||""} onChange={e=>setItem(idx,{name:e.target.value})} style={{flex:1}}/>
+                  <input placeholder="€" type="number" step="0.50" min="0" value={it.price??""} onChange={e=>setItem(idx,{price:e.target.value})} style={{width:80,textAlign:"right"}}/>
+                </div>
+                <div className="flex" style={{gap:6}}>
+                  <input placeholder="foto: nome file in public/novita/ (es. pizzadina.jpg)" value={it.photo||""} onChange={e=>setItem(idx,{photo:e.target.value})} style={{flex:1,fontSize:".8rem"}}/>
+                  <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}}
+                    onClick={()=>setEditing(s=>({...s,items:s.items.filter((_,i)=>i!==idx)}))}>✕</button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(s=>({...s,items:[...(s.items||[]),{id:newId("it"),name:"",price:"",photo:""}]}))}>+ Aggiungi piatto</button>
+
+        <hr className="divider"/>
+        <div className="flex" style={{justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(null)}>Annulla</button>
+          <button className="btn btn-primary" onClick={saveSpecial}>💾 Salva novità</button>
+        </div>
+      </div>
+    )}
+    {toast.text&&<div className={`toast ${toast.err?"toast-err":""}`}>{toast.text}</div>}
+  </>);
+}
+
 function AdminPanel({ user, appState, update, onLogout }) {
   const [tab, setTab]   = useState("menu");
   const [date,setDate]  = useState(today());
@@ -3262,7 +3460,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           </div>
         </div>
         <div className="header-tabs">
-          {[["menu","📋 Menù"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"],["natale","🎄 Natale"]].map(([v,l])=>(
+          {[["menu","📋 Menù"],["novita","⭐ Novità"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"],["natale","🎄 Natale"]].map(([v,l])=>(
             <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
               {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
             </button>
@@ -3270,7 +3468,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         </div>
       </div>
       <div className="main">
-        {!["summary","clients","notif","top","natale"].includes(tab)&&(
+        {!["summary","clients","notif","top","natale","novita"].includes(tab)&&(
           <div className="date-nav">
             <span style={{fontWeight:700,color:"var(--accent)"}}>📅</span>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:165}}/>
@@ -3285,6 +3483,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
         {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
         {tab==="summary" &&<AdminSummary             appState={appState}/>}
         {tab==="natale"  &&<ChristmasSection isAdmin/>}
+        {tab==="novita"  &&<AdminSpecials appState={appState} update={update}/>}
         {tab==="top"     &&<>
           <Leaderboard appState={appState} period="month"/>
           <Leaderboard appState={appState} period="year"/>
@@ -3387,7 +3586,12 @@ function ClientPanel({ user, appState, update, onLogout }) {
     }
   }, []);
 
-  const menu        = appState.menus[date]||[];
+  // Novità della settimana attive per il giorno selezionato: entrano nel
+  // "menu" ordinabile (stesso carrello, stesso invio), ma vengono mostrate
+  // in una card dedicata con le foto, non nella lista per categorie.
+  const activeSpecials = getActiveSpecials(appState, date);
+  const specialItems   = specialsToMenuItems(activeSpecials);
+  const menu        = [ ...(appState.menus[date]||[]), ...specialItems ];
   const published   = appState.menuPub[date]||false;
   const ordersOpen  = (tick >= 0) && isOrdersOpen(date, appState); // tick forza ricalcolo ogni 3s
   const myOrder   = appState.orders[`${date}:${user.id}`]||null;
@@ -3488,7 +3692,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // Separate normal and custom menu items
   // Piatti custom con prezzo → visibili a tutti nella categoria richieste
   // Piatti custom senza prezzo → visibili solo al richiedente
-  const normalMenu=menu.filter(i=>!i.custom || (i.custom && i.price!=null));
+  const normalMenu=menu.filter(i=>!i.special && (!i.custom || (i.custom && i.price!=null)));
   const myCustom =menu.filter(i=>i.custom&&i.price==null&&i.requestedBy===user.name);
 
   // ─── Date navigation ────────────────────────────────────────────────
@@ -3888,6 +4092,64 @@ function ClientPanel({ user, appState, update, onLogout }) {
               </span>
             </div>
           )}
+
+          {/* ─── Novità della settimana (con foto) ───────────────────── */}
+          {activeSpecials.map(sp=>{
+            const items = specialItems.filter(i=>i.specialId===sp.id);
+            if(!items.length && !sp.text) return null;
+            return (
+              <div key={sp.id} className="card" style={{
+                border:"2px solid var(--gold)", position:"relative", overflow:"hidden",
+                background:"linear-gradient(180deg,#fff9ec 0%,var(--card) 60%)"
+              }}>
+                <style>{`
+                  @keyframes newPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+                  .special-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+                  @media(min-width:560px){.special-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+                  .special-item{background:#fff;border:1px solid var(--border-lt);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+                  .special-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#f3e9da}
+                  .special-item .noimg{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:2rem;background:#f3e9da}
+                  .special-body{padding:8px 9px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
+                  .special-name{font-weight:700;font-size:.86rem;line-height:1.2}
+                  .special-price{color:var(--accent);font-weight:700;font-size:.9rem}
+                  .special-ctl{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+                `}</style>
+                <div style={{position:"absolute",top:10,right:10,background:"var(--accent)",color:"#fff",
+                  fontSize:".68rem",fontWeight:800,letterSpacing:".1em",padding:"4px 10px",borderRadius:20,
+                  animation:"newPulse 1.6s ease-in-out infinite",boxShadow:"0 2px 10px rgba(139,26,26,.35)"}}>NEW</div>
+                <div className="card-title" style={{marginBottom:4,paddingRight:60}}>{sp.title||"⭐ Novità della settimana"}</div>
+                {sp.text && <div style={{fontSize:".88rem",color:"var(--text2)",lineHeight:1.5,marginBottom:12,whiteSpace:"pre-line"}}>{sp.text}</div>}
+                {items.length>0 && (
+                  <div className="special-grid">
+                    {items.map(item=>{
+                      const q = quantities[item.id]||0;
+                      const src = photoUrl(item.photo);
+                      return (
+                        <div key={item.id} className="special-item" style={q>0?{borderColor:"var(--accent)",boxShadow:"0 0 0 2px rgba(139,26,26,.15)"}:undefined}>
+                          {src ? <img src={src} alt={item.name} loading="lazy"
+                                   onError={e=>{e.currentTarget.style.display="none"; e.currentTarget.nextSibling && (e.currentTarget.nextSibling.style.display="flex");}}/> : null}
+                          <div className="noimg" style={{display:src?"none":"flex"}}>🍕</div>
+                          <div className="special-body">
+                            <div className="special-name">{item.name}</div>
+                            <div className="special-ctl">
+                              <span className="special-price">{item.price!=null?eur(item.price):<span className="muted" style={{fontSize:".75rem"}}>prezzo da definire</span>}</span>
+                              {!myOrder && (
+                                <div className="flex" style={{gap:4}}>
+                                  <button className="qty-btn" onClick={()=>setQty(item.id,-1)} disabled={q===0} style={q===0?{opacity:.4}:undefined}>−</button>
+                                  <span className="qty-num">{q}</span>
+                                  <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {myOrder?(
             <div className="card">

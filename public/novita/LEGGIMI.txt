@@ -1,0 +1,4 @@
+Foto delle "Novità della settimana".
+Metti qui i file immagine (jpg/png/webp, consigliato max ~300 KB, formato 4:3 o quadrato)
+e scrivi il nome del file nel pannello Admin → ⭐ Novità → campo "foto".
+Esempio: pizzadina-margherita.jpg  →  nel campo foto scrivi  pizzadina-margherita.jpg
