@@ -1284,7 +1284,7 @@ function YearWrapCard({ stats, onOpen }) {
 
 // ─── Sezione Natale (placeholder "in lavorazione" + animazioni) ──────────
 // Immagine: prova /natale.png nella cartella public/, altrimenti usa il CDN.
-const NATALE_IMG_LOCAL   = "/natale.png";
+const NATALE_IMG_LOCAL   = "/natale.jpg";
 const NATALE_IMG_CDN     = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_230524_4b8b457f-88d2-4d75-848d-60ee318a6523.png";
 // Video: prova /natale.mp4 in public/, altrimenti il CDN; se nessuno dei due
 // è disponibile resta l'immagine (poster).
