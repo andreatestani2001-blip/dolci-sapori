@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proposta A · Liquid Glass — Dolci Sapori</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ═══ A · Liquid Glass ══════════════════════════════════════════════════ */
+.A{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,"Helvetica Neue",sans-serif;color:var(--ink);letter-spacing:-.01em}
+.A .bgblobs{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--crema)}
+.A .bgblobs::before,.A .bgblobs::after{content:"";position:absolute;border-radius:50%;filter:blur(60px);opacity:.55}
+.A .bgblobs::before{width:360px;height:360px;background:var(--oro-2);top:-120px;right:-100px}
+.A .bgblobs::after{width:420px;height:420px;background:var(--rosa);bottom:-160px;left:-140px}
+.A .glass{background:rgba(255,255,255,.55);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(255,255,255,.75);box-shadow:0 10px 30px -12px rgba(43,24,16,.22),inset 0 1px 0 rgba(255,255,255,.9)}
+.A .content{position:relative;z-index:1;height:100%;overflow:hidden}
+
+/* mobile */
+.A .m-scroll{padding:64px 18px 150px;height:100%;overflow:hidden}
+.A .ltitle{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.A .lsub{font-size:15px;color:var(--ink-3);margin-top:4px}
+.A .top-actions{position:absolute;top:58px;right:18px;display:flex;gap:8px;z-index:5}
+.A .icbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:19px;color:var(--rosso);position:relative}
+.A .icbtn .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--rosso);border:2px solid #fff}
+.A .seg{display:flex;padding:4px;border-radius:14px;margin:18px 0 14px;gap:2px}
+.A .seg b{flex:1;text-align:center;font-size:13px;font-weight:600;padding:9px 4px;border-radius:11px;color:var(--ink-2)}
+.A .seg b.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(43,24,16,.14)}
+.A .seg b small{display:block;font-size:11px;font-weight:500;color:var(--ink-3);margin-top:1px}
+.A .seg .cal{flex:0 0 44px;display:grid;place-items:center;font-size:18px;color:var(--rosso)}
+.A .open-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ok);background:var(--ok-bg);padding:6px 11px;border-radius:999px;margin-bottom:16px}
+.A .open-pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(30,107,63,.18)}
+.A .sect{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin:18px 2px 10px;display:flex;justify-content:space-between}
+.A .sect span{letter-spacing:0;text-transform:none;font-weight:500}
+.A .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.A .tile{border-radius:18px;padding:12px 12px 10px;display:flex;flex-direction:column;gap:8px;min-height:96px}
+.A .tile.in{outline:2px solid var(--rosso);outline-offset:-1px;background:rgba(255,255,255,.82)}
+.A .tile .n{font-size:14.5px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.A .tile .r{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.A .tile .p{font-size:15px;font-weight:700;color:var(--rosso)}
+.A .step{display:inline-flex;align-items:center;gap:2px;background:rgba(43,24,16,.06);border-radius:999px;padding:2px}
+.A .step b{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:16px;color:var(--rosso);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.A .step b.dim{color:var(--ink-3);background:transparent;box-shadow:none}
+.A .step span{min-width:18px;text-align:center;font-size:14px;font-weight:700}
+.A .add{width:34px;height:34px;border-radius:50%;background:var(--rosso);color:#fff;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 10px rgba(139,26,26,.3)}
+.A .nov{display:flex;gap:10px;overflow:hidden;margin:0 -18px;padding:0 18px}
+.A .ncard{flex:0 0 200px;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 24px -12px rgba(43,24,16,.3)}
+.A .ncard img{width:100%;height:118px;object-fit:cover}
+.A .ncard .b{padding:10px 12px 11px}
+.A .ncard .n{font-size:14px;font-weight:600;line-height:1.2}
+.A .ncard .r{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.A .new{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#fff;background:var(--rosso);padding:3px 8px;border-radius:999px;position:absolute;margin:10px}
+.A .cartpill{position:absolute;left:18px;right:18px;bottom:104px;border-radius:22px;padding:12px 12px 12px 18px;display:flex;align-items:center;justify-content:space-between;z-index:6;background:rgba(43,24,16,.9);color:#fff;backdrop-filter:blur(18px);box-shadow:0 16px 34px -10px rgba(43,24,16,.5)}
+.A .cartpill .l small{display:block;font-size:12px;opacity:.75}
+.A .cartpill .l b{font-size:17px;font-weight:700}
+.A .cartpill .send{background:var(--oro-2);color:var(--bruno);font-weight:700;font-size:14px;padding:11px 16px;border-radius:14px;display:inline-flex;gap:8px;align-items:center}
+.A .tabbar{position:absolute;left:16px;right:16px;bottom:26px;height:66px;border-radius:33px;display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:7;background:rgba(255,255,255,.62);backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6);border:1px solid rgba(255,255,255,.85);box-shadow:0 14px 34px -12px rgba(43,24,16,.35),inset 0 1px 0 #fff}
+.A .tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--ink-3);width:64px;padding:6px 0;border-radius:20px}
+.A .tabbar a svg{font-size:23px}
+.A .tabbar a.on{color:var(--rosso);background:rgba(139,26,26,.10)}
+
+/* storico */
+.A .sum{border-radius:22px;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 6px}
+.A .sum .k{font-size:12px;color:var(--ink-3);font-weight:600}
+.A .sum .v{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.A .sum .v.red{color:var(--rosso)}.A .sum .v.ok{color:var(--ok)}
+.A .month{font-size:13px;font-weight:600;color:var(--ink-3);margin:18px 2px 8px;text-transform:uppercase;letter-spacing:.04em}
+.A .olist{border-radius:20px;overflow:hidden}
+.A .orow{display:grid;grid-template-columns:46px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(43,24,16,.08)}
+.A .orow:last-child{border-bottom:0}
+.A .date{width:46px;height:46px;border-radius:14px;background:rgba(139,26,26,.08);display:grid;place-items:center;text-align:center;line-height:1}
+.A .date b{font-size:17px;font-weight:700;color:var(--rosso)}.A .date small{font-size:10px;text-transform:uppercase;font-weight:600;color:var(--ink-3)}
+.A .orow .t{font-size:14px;font-weight:600;line-height:1.25}
+.A .orow .d{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.A .orow .amt{font-size:15px;font-weight:700;text-align:right}
+.A .orow .st{font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;display:inline-block;margin-top:4px}
+.A .st.paid{background:var(--ok-bg);color:var(--ok)}.A .st.due{background:rgba(139,26,26,.10);color:var(--rosso)}
+
+/* account */
+.A .me{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
+.A .av{width:64px;height:64px;border-radius:50%;background:linear-gradient(145deg,var(--rosso),var(--rosso-2));color:#fff;display:grid;place-items:center;font-size:24px;font-weight:700;box-shadow:0 8px 20px -8px rgba(139,26,26,.6)}
+.A .me .n{font-size:20px;font-weight:700}.A .me .u{font-size:13.5px;color:var(--ink-3)}
+.A .glist{border-radius:20px;overflow:hidden;margin-bottom:14px}
+.A .grow{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid rgba(43,24,16,.08);font-size:15px}
+.A .grow:last-child{border-bottom:0}
+.A .grow .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:16px;background:var(--rosso)}
+.A .grow .ic.gold{background:var(--oro)}.A .grow .ic.ink{background:var(--bruno)}
+.A .grow .lbl{flex:1}
+.A .grow .val{color:var(--ink-3);font-size:14px}
+.A .grow .chev{color:var(--ink-3);font-size:16px}
+.A .grow.danger{color:var(--rosso);justify-content:center;font-weight:600}
+.A .tog{width:46px;height:28px;border-radius:14px;background:var(--ok);position:relative}
+.A .tog::after{content:"";position:absolute;top:2px;right:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.A .stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.A .stat{border-radius:18px;padding:14px}
+.A .stat .k{font-size:12px;font-weight:600;color:var(--ink-3)}.A .stat .v{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:3px}
+
+/* desktop */
+.A .dgrid{position:relative;z-index:1;display:grid;grid-template-columns:240px 1fr 340px;gap:22px;height:100%;padding:22px}
+.A .side{border-radius:26px;padding:22px 16px;display:flex;flex-direction:column;gap:6px}
+.A .brand{display:flex;align-items:center;gap:11px;padding:4px 8px 20px}
+.A .brand .lg{width:40px;height:40px;border-radius:13px;background:var(--rosso);color:#fff;display:grid;place-items:center;font-size:22px}
+.A .brand b{font-size:16px;font-weight:700;display:block;letter-spacing:-.01em}.A .brand small{font-size:12px;color:var(--ink-3)}
+.A .nav a{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;font-size:15px;font-weight:600;color:var(--ink-2)}
+.A .nav a svg{font-size:20px}
+.A .nav a.on{background:rgba(139,26,26,.10);color:var(--rosso)}
+.A .nav .cnt{margin-left:auto;font-size:11px;font-weight:700;background:var(--rosso);color:#fff;border-radius:999px;padding:2px 7px}
+.A .side .user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;background:rgba(255,255,255,.6)}
+.A .side .user .av{width:38px;height:38px;font-size:15px;box-shadow:none}
+.A .side .user b{font-size:14px;display:block}.A .side .user small{font-size:12px;color:var(--ink-3)}
+.A .main{overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.A .dhead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.A .dhead h1{font-size:32px;font-weight:700;letter-spacing:-.03em}
+.A .dhead .seg{margin:0;width:420px}
+.A .tiles.d3{grid-template-columns:repeat(3,1fr);gap:12px}
+.A .tiles.d3 .tile{min-height:104px}
+.A .nov.d{margin:0;padding:0;overflow:visible;display:grid;grid-template-columns:repeat(3,1fr)}
+.A .nov.d .ncard{flex:1}
+.A .cart{border-radius:26px;padding:20px;display:flex;flex-direction:column}
+.A .cart h3{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.A .cart .sub{font-size:13px;color:var(--ink-3);margin:2px 0 14px}
+.A .crow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(43,24,16,.08);font-size:14px}
+.A .crow .q{width:24px;height:24px;border-radius:7px;background:rgba(139,26,26,.10);color:var(--rosso);font-weight:700;font-size:12.5px;display:grid;place-items:center;margin-right:10px}
+.A .crow .nm{flex:1;font-weight:500}
+.A .tot{margin-top:auto;padding-top:12px}
+.A .tot .l{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;color:var(--ink-2)}
+.A .tot .l.big{font-size:20px;font-weight:700;color:var(--ink);padding-top:10px}
+.A .tot .credit{color:var(--ok);font-weight:600}
+.A .bigbtn{margin-top:14px;width:100%;padding:15px;border-radius:16px;background:var(--rosso);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 24px -10px rgba(139,26,26,.6)}
+.A .note{margin-top:10px;font-size:12.5px;color:var(--ink-3);text-align:center}
+.A .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.A .detail{border-radius:22px;padding:20px}
+.A .detail h3{font-size:18px;font-weight:700}
+.A .detail .d{font-size:13px;color:var(--ink-3);margin-bottom:14px}
+.A .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.A .field label{font-size:13px;font-weight:600;color:var(--ink-2)}
+.A .field .inp{height:46px;border-radius:13px;background:rgba(255,255,255,.85);border:1px solid rgba(43,24,16,.12);padding:0 14px;display:flex;align-items:center;font-size:15px}
+.A .field .inp.ph{color:var(--ink-3)}
+</style>
+</head>
+<body class="gallery">
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-fork" viewBox="0 0 24 24"><path d="M7 3v7a3 3 0 0 0 6 0V3M10 13v8M17 3c-1.7 1.3-2.5 3.6-2.5 6.5 0 1.6.8 2.5 2.5 2.5v9"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v6a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8M9 18h6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15L6 17ZM10 21h4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4 18-7Z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-cake" viewBox="0 0 24 24"><path d="M4 20h16M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6M5 15c2 1.5 4-1.5 6 0s4 1.5 6 0M8 12V9M12 12V8M16 12V9M12 4v2"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="16" cy="13" r="1.3"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8c-2-3-5-3-5-1s3 1 5 1Zm0 0c2-3 5-3 5-1s-3 1-5 1Z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8L12 3Z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16v4ZM12 8l4 4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 3 7 10h3l-4 6h4l-2 4h8l-2-4h4l-4-6h3l-5-7Z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3ZM9 8h6M9 12h6M9 16h4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14ZM5 19l7-7"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 1-3s1 2 2 2c0-3-1-5 1-8Z"/></symbol>
+  <symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c3-4 7-6 11-6 3 0 5 2 7 6-2 4-4 6-7 6-4 0-8-2-11-6Zm0 0-3-4M3 12l-3 4"/><circle cx="15" cy="11" r="1"/></symbol>
+  <symbol id="i-wheat" viewBox="0 0 24 24"><path d="M12 21V9M12 9c-3 0-4-2-4-5 3 0 4 2 4 5Zm0 0c3 0 4-2 4-5-3 0-4 2-4 5Zm0 5c-3 0-4-2-4-5 3 0 4 2 4 5Zm0 0c3 0 4-2 4-5-3 0-4 2-4 5Z"/></symbol>
+  <symbol id="i-pizza" viewBox="0 0 24 24"><path d="M3 20 12 3l9 17H3Z"/><path d="M6 15c4-2 8-2 12 0"/><circle cx="12" cy="11" r="1"/><circle cx="9.5" cy="17" r="1"/><circle cx="14.5" cy="17" r="1"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="M4 14c0-4 3.6-7 8-7s8 3 8 7-3.6 6-8 6-8-2-8-6Z"/><path d="M8 13c1.5-1 2.5-1 4 0s2.5 1 4 0M12 7V4M10 5h4"/></symbol>
+</svg>
+
+
+<header class="prop-head">
+  <div class="kicker"><b>A</b> Proposta · Liquid Glass</div>
+  <h1>Vetro, luce e pollice: navigazione iOS con barra fluttuante</h1>
+  <p>Superfici traslucide sopra la crema del brand, con due aloni colorati (oro e rosa) che fanno "respirare" il vetro. Su mobile la barra di navigazione galleggia in basso e il carrello è una pillola scura sempre a portata di pollice. Su desktop il vetro diventa una barra laterale e un pannello carrello fisso a destra: si ordina senza mai scorrere per cercare il tasto Invia.</p>
+  <div class="tags"><span>Font di sistema (SF Pro su Apple)</span><span>Griglia piatti 2 col. mobile / 3 col. desktop</span><span>Carrello sempre visibile</span><span>Notifiche come campanella</span></div>
+</header>
+
+<!-- ═══════════════════ ORDINA ═══════════════════ -->
+<section class="screen">
+  <h2>Ordina — menù del giorno</h2>
+  <p class="note">Tab giorno a segmenti, novità con foto in scorrimento orizzontale, piatti in griglia. Il carrello compare appena c'è un piatto: totale, credito scalato e tasto Invia.</p>
+  <div class="row">
+    <div>
+      <div class="vp-label">Mobile · 390 px</div>
+      <div class="phone"><div class="scr A">
+        <div class="bgblobs"></div><div class="island"></div>
+        <div class="status"><span>9:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="top-actions"><button class="icbtn glass"><svg class="i"><use href="#i-bell"/></svg><i class="dot"></i></button></div>
+        <div class="content"><div class="m-scroll">
+          <div class="ltitle">Ordina</div>
+          <div class="lsub">Ciao Marco · martedì 10 novembre</div>
+          <div class="seg glass"><b class="on">Oggi<small>mar 10</small></b><b>Domani<small>mer 11</small></b><b>Dopodom.<small>gio 12</small></b><b class="cal"><svg class="i"><use href="#i-cal"/></svg></b></div>
+          <div class="open-pill"><i></i>Ordini aperti · chiusura alle 10:30</div>
+
+          <div class="sect">Novità della settimana <span>3 piatti</span></div>
+          <div class="nov">
+            <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/golosa.jpg" alt=""><div class="b"><div class="n">Pizzadina La Golosa</div><div class="r"><b class="tnum" style="color:var(--rosso)">€ 7,00</b><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div></div>
+            <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/rustica.jpg" alt=""><div class="b"><div class="n">Pizzadina La Rustica</div><div class="r"><b class="tnum" style="color:var(--rosso)">€ 7,00</b><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div></div>
+            <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/pistacchiosa.jpg" alt=""><div class="b"><div class="n">La Pistacchiosa</div></div></div>
+          </div>
+
+          <div class="sect">Primi piatti <span>pasta fresca</span></div>
+          <div class="tiles">
+            <div class="tile glass in"><div class="n">Lasagna al ragù</div><div class="r"><span class="p tnum">€ 6,50</span><span class="step"><b class="dim"><svg class="i"><use href="#i-minus"/></svg></b><span>1</span><b><svg class="i"><use href="#i-plus"/></svg></b></span></div></div>
+            <div class="tile glass"><div class="n">Tonnarelli alla carbonara</div><div class="r"><span class="p tnum">€ 7,00</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            <div class="tile glass"><div class="n">Mezze maniche pomodoro e basilico</div><div class="r"><span class="p tnum">€ 5,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            <div class="tile glass"><div class="n">Gnocchi al ragù</div><div class="r"><span class="p tnum">€ 6,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+          </div>
+
+          <div class="sect">Secondi</div>
+          <div class="tiles">
+            <div class="tile glass"><div class="n">Pollo Campese arrosto · mezzo</div><div class="r"><span class="p tnum">€ 7,00</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            <div class="tile glass"><div class="n">Polpo e patate</div><div class="r"><span class="p tnum">€ 7,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+          </div>
+        </div></div>
+
+        <div class="cartpill"><div class="l"><small>2 piatti · credito −€ 4,00</small><b class="tnum">€ 6,00</b></div><button class="send">Invia ordine <svg class="i"><use href="#i-send"/></svg></button></div>
+        <nav class="tabbar">
+          <a class="on"><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+          <a><svg class="i"><use href="#i-clock"/></svg>Storico</a>
+          <a><svg class="i"><use href="#i-trophy"/></svg>Top</a>
+          <a><svg class="i"><use href="#i-user"/></svg>Account</a>
+        </nav>
+        <div class="homebar"></div>
+      </div></div>
+    </div>
+
+    <div>
+      <div class="vp-label">Desktop · 1280 px</div>
+      <div class="desk"><div class="bar"><i></i><i></i><i></i><span>dolci-sapori.vercel.app</span></div><div class="cvs A">
+        <div class="bgblobs"></div>
+        <div class="dgrid">
+          <aside class="side glass">
+            <div class="brand"><div class="lg"><svg class="i"><use href="#i-logo"/></svg></div><div><b>Dolci Sapori</b><small>Forno · Pastificio</small></div></div>
+            <div class="nav">
+              <a class="on"><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+              <a><svg class="i"><use href="#i-clock"/></svg>Storico ordini</a>
+              <a><svg class="i"><use href="#i-trophy"/></svg>Classifica</a>
+              <a><svg class="i"><use href="#i-bell"/></svg>Notifiche <span class="cnt">2</span></a>
+              <a><svg class="i"><use href="#i-tree"/></svg>Natale</a>
+              <a><svg class="i"><use href="#i-user"/></svg>Account</a>
+            </div>
+            <div class="user"><div class="av">MC</div><div><b>Marco Ciavatta</b><small>Da saldare € 23,50</small></div></div>
+          </aside>
+
+          <main class="main">
+            <div class="dhead"><div><h1>Menù di oggi</h1><div class="open-pill" style="margin:8px 0 0"><i></i>Martedì 10 novembre · ordini aperti fino alle 10:30</div></div>
+              <div class="seg glass"><b class="on">Oggi<small>mar 10</small></b><b>Domani<small>mer 11</small></b><b>Dopodomani<small>gio 12</small></b><b class="cal"><svg class="i"><use href="#i-cal"/></svg></b></div></div>
+
+            <div class="sect" style="margin-top:4px">Novità della settimana</div>
+            <div class="nov d">
+              <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/golosa.jpg" alt=""><div class="b"><div class="n">Pizzadina La Golosa</div><div class="r"><b class="tnum" style="color:var(--rosso)">€ 7,00</b><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div></div>
+              <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/rustica.jpg" alt=""><div class="b"><div class="n">Pizzadina La Rustica</div><div class="r"><b class="tnum" style="color:var(--rosso)">€ 7,00</b><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div></div>
+              <div class="ncard" style="position:relative"><span class="new">NEW</span><img src="../public/novita/pistacchiosa.jpg" alt=""><div class="b"><div class="n">Pizzadina La Pistacchiosa</div><div class="r"><b class="tnum" style="color:var(--rosso)">€ 7,00</b><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div></div>
+            </div>
+
+            <div class="sect">Primi piatti <span>pasta fresca di nostra produzione</span></div>
+            <div class="tiles d3">
+              <div class="tile glass in"><div class="n">Lasagna al ragù</div><div class="r"><span class="p tnum">€ 6,50</span><span class="step"><b class="dim"><svg class="i"><use href="#i-minus"/></svg></b><span>1</span><b><svg class="i"><use href="#i-plus"/></svg></b></span></div></div>
+              <div class="tile glass"><div class="n">Tonnarelli alla carbonara</div><div class="r"><span class="p tnum">€ 7,00</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+              <div class="tile glass"><div class="n">Mezze maniche al pomodoro fresco e basilico</div><div class="r"><span class="p tnum">€ 5,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            </div>
+            <div class="sect">Secondi</div>
+            <div class="tiles d3">
+              <div class="tile glass"><div class="n">Pollo Campese arrosto · mezzo</div><div class="r"><span class="p tnum">€ 7,00</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+              <div class="tile glass"><div class="n">Polpo e patate</div><div class="r"><span class="p tnum">€ 7,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+              <div class="tile glass"><div class="n">Petto di pollo panato</div><div class="r"><span class="p tnum">€ 6,00</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            </div>
+            <div class="sect">Contorni <span>tutti € 3,50</span></div>
+            <div class="tiles d3">
+              <div class="tile glass in"><div class="n">Patate al forno</div><div class="r"><span class="p tnum">€ 3,50</span><span class="step"><b class="dim"><svg class="i"><use href="#i-minus"/></svg></b><span>1</span><b><svg class="i"><use href="#i-plus"/></svg></b></span></div></div>
+              <div class="tile glass"><div class="n">Cicoria ripassata</div><div class="r"><span class="p tnum">€ 3,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+              <div class="tile glass"><div class="n">Zucchine grigliate</div><div class="r"><span class="p tnum">€ 3,50</span><button class="add"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+            </div>
+          </main>
+
+          <aside class="cart glass">
+            <h3>Il tuo ordine</h3><div class="sub">Martedì 10 novembre · ritiro in forno</div>
+            <div class="crow"><span class="q">1</span><span class="nm">Lasagna al ragù</span><b class="tnum">€ 6,50</b></div>
+            <div class="crow"><span class="q">1</span><span class="nm">Patate al forno</span><b class="tnum">€ 3,50</b></div>
+            <div class="field" style="margin-top:14px"><label>Nota per la cucina</label><div class="inp ph">es. senza cipolla, ritiro alle 13:15</div></div>
+            <div class="tot">
+              <div class="l"><span>Totale piatti</span><b class="tnum">€ 10,00</b></div>
+              <div class="l"><span>Credito usato</span><b class="tnum credit">− € 4,00</b></div>
+              <div class="l big"><span>Da pagare</span><b class="tnum">€ 6,00</b></div>
+            </div>
+            <button class="bigbtn"><svg class="i"><use href="#i-send"/></svg>Invia ordine</button>
+            <div class="note">Puoi modificare l'ordine fino alle 10:30</div>
+          </aside>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ STORICO ═══════════════════ -->
+<section class="screen">
+  <h2>Storico ordini</h2>
+  <p class="note">Riepilogo di saldo e spesa in alto; ordini raggruppati per mese con data a calendario e stato pagamento. Su desktop la lista a sinistra e il dettaglio dell'ordine a destra.</p>
+  <div class="row">
+    <div>
+      <div class="vp-label">Mobile · 390 px</div>
+      <div class="phone"><div class="scr A">
+        <div class="bgblobs"></div><div class="island"></div>
+        <div class="status"><span>9:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="content"><div class="m-scroll">
+          <div class="ltitle">Storico</div>
+          <div class="lsub">Ultimi 30 giorni · 14 ordini</div>
+          <div class="sum glass">
+            <div><div class="k">Da saldare</div><div class="v red tnum">€ 23,50</div></div>
+            <div><div class="k">Credito</div><div class="v ok tnum">€ 4,00</div></div>
+            <div><div class="k">Speso a novembre</div><div class="v tnum">€ 47,50</div></div>
+            <div><div class="k">Piatto preferito</div><div class="v" style="font-size:15px;line-height:1.3">Lasagna al ragù</div></div>
+          </div>
+          <div class="seg glass" style="margin-top:14px"><b class="on">Tutti</b><b>Da pagare</b><b>Pagati</b></div>
+          <div class="month">Novembre</div>
+          <div class="olist glass">
+            <div class="orow"><div class="date"><b>9</b><small>lun</small></div><div><div class="t">Pizzadina La Golosa, Cicoria</div><div class="d">2 piatti · ritirato</div></div><div><div class="amt tnum">€ 10,50</div><span class="st due">Da pagare</span></div></div>
+            <div class="orow"><div class="date"><b>6</b><small>gio</small></div><div><div class="t">Tonnarelli carbonara, Patate</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,50</div><span class="st due">Da pagare</span></div></div>
+            <div class="orow"><div class="date"><b>5</b><small>mer</small></div><div><div class="t">Lasagna al ragù</div><div class="d">1 piatto · nota: ritiro 13:15</div></div><div><div class="amt tnum">€ 6,50</div><span class="st paid">Pagato</span></div></div>
+            <div class="orow"><div class="date"><b>4</b><small>mar</small></div><div><div class="t">Polpo e patate, Insalatona tonno</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 14,00</div><span class="st paid">Pagato</span></div></div>
+            <div class="orow"><div class="date"><b>3</b><small>lun</small></div><div><div class="t">Gnocchi al ragù, Zucchine</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,00</div><span class="st paid">Pagato</span></div></div>
+          </div>
+          <div class="month">Ottobre</div>
+          <div class="olist glass">
+            <div class="orow"><div class="date"><b>31</b><small>ven</small></div><div><div class="t">Lasagna al ragù, Patate</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,00</div><span class="st paid">Pagato</span></div></div>
+          </div>
+        </div></div>
+        <nav class="tabbar">
+          <a><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+          <a class="on"><svg class="i"><use href="#i-clock"/></svg>Storico</a>
+          <a><svg class="i"><use href="#i-trophy"/></svg>Top</a>
+          <a><svg class="i"><use href="#i-user"/></svg>Account</a>
+        </nav>
+        <div class="homebar"></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="vp-label">Desktop · 1280 px</div>
+      <div class="desk"><div class="bar"><i></i><i></i><i></i><span>dolci-sapori.vercel.app</span></div><div class="cvs A">
+        <div class="bgblobs"></div>
+        <div class="dgrid" style="grid-template-columns:240px 1fr">
+          <aside class="side glass">
+            <div class="brand"><div class="lg"><svg class="i"><use href="#i-logo"/></svg></div><div><b>Dolci Sapori</b><small>Forno · Pastificio</small></div></div>
+            <div class="nav">
+              <a><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+              <a class="on"><svg class="i"><use href="#i-clock"/></svg>Storico ordini</a>
+              <a><svg class="i"><use href="#i-trophy"/></svg>Classifica</a>
+              <a><svg class="i"><use href="#i-bell"/></svg>Notifiche <span class="cnt">2</span></a>
+              <a><svg class="i"><use href="#i-tree"/></svg>Natale</a>
+              <a><svg class="i"><use href="#i-user"/></svg>Account</a>
+            </div>
+            <div class="user"><div class="av">MC</div><div><b>Marco Ciavatta</b><small>Da saldare € 23,50</small></div></div>
+          </aside>
+          <main class="main">
+            <div class="dhead"><h1>Storico ordini</h1><div class="seg glass" style="width:320px"><b class="on">Tutti</b><b>Da pagare</b><b>Pagati</b></div></div>
+            <div class="sum glass" style="grid-template-columns:repeat(4,1fr);margin:0 0 18px">
+              <div><div class="k">Da saldare</div><div class="v red tnum">€ 23,50</div></div>
+              <div><div class="k">Credito disponibile</div><div class="v ok tnum">€ 4,00</div></div>
+              <div><div class="k">Speso a novembre</div><div class="v tnum">€ 47,50</div></div>
+              <div><div class="k">Ordini nel 2026</div><div class="v tnum">52</div></div>
+            </div>
+            <div class="two">
+              <div>
+                <div class="month" style="margin-top:0">Novembre</div>
+                <div class="olist glass">
+                  <div class="orow" style="background:rgba(139,26,26,.08)"><div class="date"><b>9</b><small>lun</small></div><div><div class="t">Pizzadina La Golosa, Cicoria ripassata</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,50</div><span class="st due">Da pagare</span></div></div>
+                  <div class="orow"><div class="date"><b>6</b><small>gio</small></div><div><div class="t">Tonnarelli carbonara, Patate al forno</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,50</div><span class="st due">Da pagare</span></div></div>
+                  <div class="orow"><div class="date"><b>5</b><small>mer</small></div><div><div class="t">Lasagna al ragù</div><div class="d">1 piatto</div></div><div><div class="amt tnum">€ 6,50</div><span class="st paid">Pagato</span></div></div>
+                  <div class="orow"><div class="date"><b>4</b><small>mar</small></div><div><div class="t">Polpo e patate, Insalatona tonno</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 14,00</div><span class="st paid">Pagato</span></div></div>
+                  <div class="orow"><div class="date"><b>3</b><small>lun</small></div><div><div class="t">Gnocchi al ragù, Zucchine grigliate</div><div class="d">2 piatti</div></div><div><div class="amt tnum">€ 10,00</div><span class="st paid">Pagato</span></div></div>
+                </div>
+              </div>
+              <div class="detail glass">
+                <h3>Ordine di lunedì 9 novembre</h3><div class="d">Inviato alle 9:12 · ritirato alle 13:05</div>
+                <div class="crow"><span class="q">1</span><span class="nm">Pizzadina La Golosa</span><b class="tnum">€ 7,00</b></div>
+                <div class="crow"><span class="q">1</span><span class="nm">Cicoria ripassata</span><b class="tnum">€ 3,50</b></div>
+                <div class="tot"><div class="l"><span>Totale</span><b class="tnum">€ 10,50</b></div><div class="l"><span>Pagamento</span><b style="color:var(--rosso)">Da saldare in forno</b></div></div>
+                <div class="field" style="margin-top:16px"><label>Nota inviata</label><div class="inp">Ritiro alle 13</div></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ACCOUNT ═══════════════════ -->
+<section class="screen">
+  <h2>Account</h2>
+  <p class="note">Profilo, dati personali, notifiche e statistiche personali in liste raggruppate stile iOS. "Esci" è l'ultima riga, in rosso, dentro Account.</p>
+  <div class="row">
+    <div>
+      <div class="vp-label">Mobile · 390 px</div>
+      <div class="phone"><div class="scr A">
+        <div class="bgblobs"></div><div class="island"></div>
+        <div class="status"><span>9:41</span><span>●●● ᯤ ▮</span></div>
+        <div class="content"><div class="m-scroll">
+          <div class="ltitle">Account</div>
+          <div class="me"><div class="av">MC</div><div><div class="n">Marco Ciavatta</div><div class="u">@marco · cliente dal 2026</div></div></div>
+          <div class="stats2">
+            <div class="stat glass"><div class="k">Da saldare</div><div class="v tnum" style="color:var(--rosso)">€ 23,50</div></div>
+            <div class="stat glass"><div class="k">Credito</div><div class="v tnum" style="color:var(--ok)">€ 4,00</div></div>
+          </div>
+          <div class="sect" style="margin-top:4px">Profilo</div>
+          <div class="glist glass">
+            <div class="grow"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><span class="lbl">Nome visualizzato</span><span class="val">Marco Ciavatta</span><svg class="i chev"><use href="#i-chev-r"/></svg></div>
+            <div class="grow"><span class="ic ink"><svg class="i"><use href="#i-lock"/></svg></span><span class="lbl">Cambia password</span><svg class="i chev"><use href="#i-chev-r"/></svg></div>
+            <div class="grow"><span class="ic gold"><svg class="i"><use href="#i-cake"/></svg></span><span class="lbl">Compleanno</span><span class="val">14 marzo</span><svg class="i chev"><use href="#i-chev-r"/></svg></div>
+          </div>
+          <div class="sect">Preferenze</div>
+          <div class="glist glass">
+            <div class="grow"><span class="ic"><svg class="i"><use href="#i-bell"/></svg></span><span class="lbl">Notifiche push</span><span class="tog"></span></div>
+            <div class="grow"><span class="ic ink"><svg class="i"><use href="#i-note"/></svg></span><span class="lbl">Nota fissa sugli ordini</span><span class="val">Nessuna</span><svg class="i chev"><use href="#i-chev-r"/></svg></div>
+          </div>
+          <div class="sect">Il mio mese</div>
+          <div class="stats2">
+            <div class="stat glass"><div class="k">Ordini a novembre</div><div class="v tnum">12</div></div>
+            <div class="stat glass"><div class="k">Posizione in classifica</div><div class="v tnum">5°</div></div>
+          </div>
+          <div class="glist glass"><div class="grow danger"><svg class="i"><use href="#i-out"/></svg>Esci</div></div>
+        </div></div>
+        <nav class="tabbar">
+          <a><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+          <a><svg class="i"><use href="#i-clock"/></svg>Storico</a>
+          <a><svg class="i"><use href="#i-trophy"/></svg>Top</a>
+          <a class="on"><svg class="i"><use href="#i-user"/></svg>Account</a>
+        </nav>
+        <div class="homebar"></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="vp-label">Desktop · 1280 px</div>
+      <div class="desk"><div class="bar"><i></i><i></i><i></i><span>dolci-sapori.vercel.app</span></div><div class="cvs A">
+        <div class="bgblobs"></div>
+        <div class="dgrid" style="grid-template-columns:240px 1fr">
+          <aside class="side glass">
+            <div class="brand"><div class="lg"><svg class="i"><use href="#i-logo"/></svg></div><div><b>Dolci Sapori</b><small>Forno · Pastificio</small></div></div>
+            <div class="nav">
+              <a><svg class="i"><use href="#i-fork"/></svg>Ordina</a>
+              <a><svg class="i"><use href="#i-clock"/></svg>Storico ordini</a>
+              <a><svg class="i"><use href="#i-trophy"/></svg>Classifica</a>
+              <a><svg class="i"><use href="#i-bell"/></svg>Notifiche <span class="cnt">2</span></a>
+              <a><svg class="i"><use href="#i-tree"/></svg>Natale</a>
+              <a class="on"><svg class="i"><use href="#i-user"/></svg>Account</a>
+            </div>
+            <div class="user"><div class="av">MC</div><div><b>Marco Ciavatta</b><small>Da saldare € 23,50</small></div></div>
+          </aside>
+          <main class="main">
+            <div class="dhead"><div class="me" style="margin:0"><div class="av">MC</div><div><div class="n">Marco Ciavatta</div><div class="u">@marco · cliente dal 2026</div></div></div>
+              <button class="bigbtn" style="width:auto;margin:0;background:rgba(139,26,26,.10);color:var(--rosso);box-shadow:none;padding:12px 18px"><svg class="i"><use href="#i-out"/></svg>Esci</button></div>
+            <div class="two">
+              <div class="detail glass">
+                <h3>Profilo</h3><div class="d">Dati visibili al forno quando ordini</div>
+                <div class="field"><label>Nome visualizzato</label><div class="inp">Marco Ciavatta</div></div>
+                <div class="field"><label>Compleanno</label><div class="inp">14 marzo 1991</div></div>
+                <div class="field"><label>Nuova password</label><div class="inp ph">Minimo 4 caratteri</div></div>
+                <div class="field"><label>Conferma password</label><div class="inp ph">Ripeti la password</div></div>
+                <button class="bigbtn" style="margin-top:4px"><svg class="i"><use href="#i-check"/></svg>Salva modifiche</button>
+              </div>
+              <div>
+                <div class="detail glass" style="margin-bottom:18px">
+                  <h3>Preferenze</h3><div class="d">Come vuoi essere avvisato</div>
+                  <div class="grow" style="padding:12px 0"><span class="ic"><svg class="i"><use href="#i-bell"/></svg></span><span class="lbl">Notifiche push</span><span class="tog"></span></div>
+                  <div class="grow" style="padding:12px 0;border:0"><span class="ic ink"><svg class="i"><use href="#i-note"/></svg></span><span class="lbl">Nota fissa sugli ordini</span><span class="val">Nessuna</span></div>
+                </div>
+                <div class="detail glass">
+                  <h3>Il mio 2026</h3><div class="d">Aggiornato a oggi</div>
+                  <div class="stats2" style="grid-template-columns:1fr 1fr 1fr;margin:0">
+                    <div class="stat" style="background:rgba(255,255,255,.6)"><div class="k">Ordini</div><div class="v tnum">52</div></div>
+                    <div class="stat" style="background:rgba(255,255,255,.6)"><div class="k">Speso</div><div class="v tnum">€ 412</div></div>
+                    <div class="stat" style="background:rgba(255,255,255,.6)"><div class="k">Preferito</div><div class="v" style="font-size:15px;line-height:1.3">Lasagna al ragù</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){function fit(){document.querySelectorAll('.desk').forEach(function(d){var c=d.querySelector('.cvs');if(!c)return;
+var w=d.clientWidth-20;c.style.zoom=(w/1280).toFixed(4);});}
+fit();addEventListener('resize',fit);})();
+</script>
+</body>
+</html>

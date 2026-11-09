@@ -1,0 +1,60 @@
+/* ─── Dolci Sapori · mockup — base comune ──────────────────────────────
+   Palette: la stessa dell'app, organizzata in variabili. Nessun colore nuovo. */
+:root{
+  --rosso:#8b1a1a; --rosso-2:#a31818;
+  --oro:#d4af37;   --oro-2:#f4d35e;
+  --crema:#fdf6ee; --crema-2:#faf7f3;
+  --bruno:#2b1810;
+  --rosa:#f0b9b4;
+  --bianco:#fff;
+  /* derivati (trasparenze della stessa palette) */
+  --rosso-10:rgba(139,26,26,.10); --rosso-18:rgba(139,26,26,.18);
+  --oro-15:rgba(212,175,55,.15);  --oro-20:rgba(212,175,55,.20); --oro-35:rgba(212,175,55,.35);
+  --rosa-30:rgba(240,185,180,.30);
+  --bruno-60:rgba(43,24,16,.60);  --bruno-40:rgba(43,24,16,.40); --bruno-12:rgba(43,24,16,.12); --bruno-06:rgba(43,24,16,.06);
+  --ink:var(--bruno); --ink-2:rgba(43,24,16,.72); --ink-3:rgba(43,24,16,.55);
+  --ok:#1e6b3f; --ok-bg:#eaf5ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.gallery{background:#efe9df;color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 24px 80px}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* intestazione proposta */
+.prop-head{max-width:1500px;margin:0 auto 28px}
+.prop-head .kicker{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.prop-head .kicker b{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--rosso);color:#fff;font-size:17px;letter-spacing:0}
+.prop-head h1{font-size:34px;line-height:1.1;margin:12px 0 10px;letter-spacing:-.02em}
+.prop-head p{font-size:16px;line-height:1.55;color:var(--ink-2);max-width:72ch}
+.prop-head .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.prop-head .tags span{font-size:12.5px;padding:6px 11px;border-radius:999px;background:#fff;border:1px solid var(--bruno-12);color:var(--ink-2)}
+
+/* una schermata = riga con telefono + desktop */
+.screen{max-width:1500px;margin:0 auto 56px}
+.screen>h2{font-size:20px;margin:0 0 4px;letter-spacing:-.01em}
+.screen>p.note{font-size:14px;color:var(--ink-3);margin-bottom:18px}
+.row{display:grid;grid-template-columns:390px 1fr;gap:28px;align-items:start}
+@media(max-width:1180px){.row{grid-template-columns:1fr}}
+.vp-label{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:10px}
+
+/* cornice telefono 390×820 */
+.phone{width:390px;height:820px;border-radius:48px;background:#111;padding:12px;box-shadow:0 30px 60px -20px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.6);position:relative;flex:none}
+.phone .scr{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;background:var(--crema);isolation:isolate}
+.phone .island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:50}
+.phone .status{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:space-between;padding:0 30px;font-size:14px;font-weight:600;z-index:40;color:var(--ink)}
+.phone .status.light{color:#fff}
+.phone .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--ink);opacity:.9;z-index:60}
+.phone .homebar.light{background:#fff}
+
+/* cornice desktop: canvas 1280×800 ridotto con zoom */
+.desk{width:100%;overflow:hidden;border-radius:16px;background:#1b1b1b;padding:10px 10px 0;box-shadow:0 30px 60px -20px rgba(0,0,0,.4),0 0 0 1px rgba(0,0,0,.6)}
+.desk .bar{display:flex;align-items:center;gap:8px;padding:2px 6px 10px}
+.desk .bar i{width:11px;height:11px;border-radius:50%;background:#444;display:block}
+.desk .bar i:nth-child(1){background:#ff5f57}.desk .bar i:nth-child(2){background:#febc2e}.desk .bar i:nth-child(3){background:#28c840}
+.desk .bar span{margin-left:auto;margin-right:auto;font-size:11px;color:#999;background:#2a2a2a;padding:3px 60px;border-radius:6px}
+.desk .cvs{width:1280px;height:800px;zoom:.62;overflow:hidden;background:var(--crema);position:relative;border-radius:10px 10px 0 0}
+@media(max-width:1180px){.desk .cvs{zoom:.52}}
+@media(max-width:760px){.desk .cvs{zoom:.28}.row{gap:20px}}
