@@ -533,6 +533,7 @@ function specialsToMenuItems(specials) {
   for (const s of specials) {
     for (const it of (s.items||[])) {
       if (!it || !it.name) continue;
+      if (it.enabled === false) continue; // piatto spento dall'admin
       out.push({
         id: `special_${s.id}_${it.id}`,
         name: it.name,
@@ -3313,7 +3314,7 @@ function AdminSpecials({ appState, update }) {
     if(editing.from && editing.to && editing.from > editing.to) return showToast("La data 'dal' è dopo la data 'al'",true);
     const items = (editing.items||[])
       .filter(i=>i.name && i.name.trim())
-      .map(i=>({ id:i.id||newId("it"), name:i.name.trim(), price:(i.price===""||i.price==null)?null:Number(i.price), photo:(i.photo||"").trim()||null }));
+      .map(i=>({ id:i.id||newId("it"), name:i.name.trim(), price:(i.price===""||i.price==null)?null:Number(i.price), photo:(i.photo||"").trim()||null, enabled:i.enabled!==false }));
     const sp = { ...editing, title:editing.title.trim(), text:(editing.text||"").trim(), items };
     update({weeklySpecials:{...(appState.weeklySpecials||{}),[sp.id]:sp}})
       .then(()=>{ showToast("✓ Novità salvata"); setEditing(null); })
@@ -3330,6 +3331,13 @@ function AdminSpecials({ appState, update }) {
     update({weeklySpecials:next}).then(()=>showToast("Novità eliminata")).catch(()=>showToast("Errore",true));
   };
   const setItem = (idx, patch) => setEditing(e=>({...e, items:e.items.map((it,i)=>i===idx?{...it,...patch}:it)}));
+  const toggleItem = (sp, itemId) => {
+    const items = (sp.items||[]).map(i=>i.id===itemId?{...i, enabled:!(i.enabled!==false)}:i);
+    const it = items.find(i=>i.id===itemId);
+    update({weeklySpecials:{...(appState.weeklySpecials||{}),[sp.id]:{...sp, items}}})
+      .then(()=>showToast(it.enabled!==false?`✓ ${it.name} di nuovo visibile`:`${it.name} nascosto ai clienti`))
+      .catch(()=>showToast("Errore di salvataggio",true));
+  };
   const isLive = sp => sp.active && (!sp.from || sp.from<=todayISO) && (!sp.to || sp.to>=todayISO);
 
   return (<>
@@ -3351,7 +3359,7 @@ function AdminSpecials({ appState, update }) {
               <div style={{flex:1,minWidth:200}}>
                 <div style={{fontWeight:700}}>{sp.title}</div>
                 <div className="muted" style={{fontSize:".75rem",marginTop:2}}>
-                  {sp.from?fmtS(sp.from):"—"} → {sp.to?fmtS(sp.to):"—"} · {(sp.items||[]).length} piatti
+                  {sp.from?fmtS(sp.from):"—"} → {sp.to?fmtS(sp.to):"—"} · {(sp.items||[]).filter(i=>i.enabled!==false).length}/{(sp.items||[]).length} piatti visibili
                   {" · "}
                   {isLive(sp)
                     ? <span style={{color:"var(--green)",fontWeight:700}}>● visibile ai clienti</span>
@@ -3367,14 +3375,23 @@ function AdminSpecials({ appState, update }) {
             </div>
             {(sp.items||[]).length>0 && (
               <div className="flex" style={{gap:6,marginTop:8,flexWrap:"wrap"}}>
-                {sp.items.map(it=>(
-                  <div key={it.id} className="flex" style={{gap:6,alignItems:"center",background:"#fff",border:"1px solid var(--border-lt)",borderRadius:8,padding:"3px 8px 3px 3px",fontSize:".78rem"}}>
+                {sp.items.map(it=>{
+                  const on = it.enabled!==false;
+                  return (
+                  <button key={it.id} type="button" onClick={()=>toggleItem(sp,it.id)}
+                    title={on?"Clicca per nascondere ai clienti":"Clicca per rendere di nuovo visibile"}
+                    className="flex" style={{gap:6,alignItems:"center",cursor:"pointer",fontFamily:"inherit",
+                      background:on?"#fff":"#f3f0ea",border:`1px solid ${on?"var(--green)":"var(--border)"}`,borderRadius:8,padding:"3px 8px 3px 3px",fontSize:".78rem",
+                      opacity:on?1:.6}}>
                     {photoUrl(it.photo)
-                      ? <img src={photoUrl(it.photo)} alt="" style={{width:28,height:28,objectFit:"cover",borderRadius:6}} onError={e=>{e.currentTarget.style.visibility="hidden";}}/>
+                      ? <img src={photoUrl(it.photo)} alt="" style={{width:28,height:28,objectFit:"cover",borderRadius:6,filter:on?"none":"grayscale(1)"}} onError={e=>{e.currentTarget.style.visibility="hidden";}}/>
                       : <span style={{width:28,height:28,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>🍕</span>}
-                    <span>{it.name}</span><b style={{color:"var(--accent)"}}>{it.price!=null?eur(it.price):"—"}</b>
-                  </div>
-                ))}
+                    <span style={{textDecoration:on?"none":"line-through"}}>{it.name}</span>
+                    <b style={{color:"var(--accent)"}}>{it.price!=null?eur(it.price):"—"}</b>
+                    <span style={{fontSize:".7rem",fontWeight:700,color:on?"var(--green)":"var(--muted)",marginLeft:2}}>{on?"● on":"○ off"}</span>
+                  </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -3420,6 +3437,9 @@ function AdminSpecials({ appState, update }) {
                 </div>
                 <div className="flex" style={{gap:6}}>
                   <input placeholder="foto: nome file in public/novita/ (es. pizzadina.jpg)" value={it.photo||""} onChange={e=>setItem(idx,{photo:e.target.value})} style={{flex:1,fontSize:".8rem"}}/>
+                  <label className="flex" style={{alignItems:"center",gap:4,fontSize:".75rem",fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",color:it.enabled!==false?"var(--green)":"var(--muted)"}}>
+                    <input type="checkbox" checked={it.enabled!==false} onChange={e=>setItem(idx,{enabled:e.target.checked})}/> visibile
+                  </label>
                   <button className="btn btn-sm" style={{background:"#fdf0ee",color:"var(--red)",border:"1px solid #f0b9b4"}}
                     onClick={()=>setEditing(s=>({...s,items:s.items.filter((_,i)=>i!==idx)}))}>✕</button>
                 </div>
