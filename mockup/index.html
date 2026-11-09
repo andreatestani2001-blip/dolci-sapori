@@ -27,6 +27,12 @@ body.gallery{padding:0 0 80px}
 .prop .head a{font-size:13.5px;font-weight:600;color:var(--rosso);text-decoration:none;border:1px solid var(--rosso);padding:9px 14px;border-radius:999px}
 .prop iframe{width:100%;height:3400px;border:0;border-radius:20px;background:#efe9df;box-shadow:0 1px 2px rgba(43,24,16,.06),0 30px 60px -40px rgba(43,24,16,.4)}
 @media (max-width:1100px){.toc{grid-template-columns:1fr 1fr}}
+.demo{max-width:1500px;margin:24px auto 0;padding:0 24px}
+.demo a{display:flex;align-items:center;gap:18px;background:var(--bruno);color:#fff;border-radius:22px;padding:20px 24px;text-decoration:none;box-shadow:0 20px 40px -24px rgba(43,24,16,.6)}
+.demo a b{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:var(--rosso);font-size:24px;flex:none}
+.demo strong{display:block;font-size:18px;margin-bottom:4px}.demo small{font-size:13.5px;opacity:.8;line-height:1.45}
+.demo .cta{margin-left:auto;background:var(--oro-2);color:var(--bruno);font-weight:700;font-size:14px;padding:12px 18px;border-radius:999px;white-space:nowrap}
+@media (max-width:700px){.demo a{flex-wrap:wrap}.demo .cta{margin-left:0}}
 </style>
 </head>
 <body class="gallery">
@@ -36,6 +42,7 @@ body.gallery{padding:0 0 80px}
   <p>Ogni proposta mostra tre schermate del pannello cliente — <b>Ordina</b>, <b>Storico ordini</b>, <b>Account</b> — affiancando mobile (390&nbsp;px) e desktop (1280&nbsp;px) con dati di prova realistici. Cambiano stile, tipografia e navigazione; non cambiano i colori, i testi o la logica dell'app. Le foto sono quelle già presenti in <code>public/novita/</code>.</p>
   <div class="pal"><span><i style="background:#8b1a1a"></i>Rosso</span><span><i style="background:#a31818"></i>Rosso 2</span><span><i style="background:#d4af37"></i>Oro</span><span><i style="background:#f4d35e"></i>Oro 2</span><span><i style="background:#fdf6ee"></i>Crema</span><span><i style="background:#faf7f3"></i>Crema 2</span><span><i style="background:#2b1810"></i>Marrone scuro</span><span><i style="background:#f0b9b4"></i>Rosa</span></div>
 </div>
+<div class="demo"><a href="demo.html"><b>▶</b><span><strong>Prototipo interattivo</strong><small>Si apre con il layout reale del tuo dispositivo (telefono o computer). Navighi tra Ordina, Storico, Top, Account e Natale, aggiungi piatti, invii l'ordine; in alto scegli lo stile A/B/C/D. Le foto compaiono solo nelle Novità: gli altri piatti sono righe compatte, senza card.</small></span><span class="cta">Apri il prototipo →</span></a></div>
 <nav class="toc">
   <a href="#a"><b>A</b><span><strong>Liquid Glass</strong><small>Barra flottante traslucida su mobile, sidebar in vetro su desktop. Stile iOS.</small></span></a>
   <a href="#b"><b>B</b><span><strong>Card con foto</strong><small>Vetrina di card grandi con immagini, tab in basso su mobile, menù orizzontale pulito su desktop.</small></span></a>
