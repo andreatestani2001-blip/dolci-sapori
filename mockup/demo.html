@@ -537,11 +537,12 @@ function renderDays(){$("#days").innerHTML=DAYS.map(d=>`<button role="tab" data-
  const D=DAYS.find(x=>x.k===day);$("#state").className="state"+(D.open?"":" closed");$("#state span").textContent=D.open?(day==="d0"?"Ordini aperti fino alle 10:30":"Puoi già ordinare per "+D.long.toLowerCase()):"Ordini chiusi";
  $("#cart-sub-d").textContent=$("#cart-sub-m").textContent=D.long+" · ritiro in forno";}
 function renderMenu(){
- $("#mode").textContent=compact?"☷ Esteso":"☰ Compatto";
+ $("#mode").textContent=compact?"☷ Esteso":"☰ Compatto";$("#mode").style.visibility=sentOrder?"hidden":"visible";
+ if(sentOrder){const it=allItems();$("#menu").innerHTML=`<div class="sent"><h3 class="h">🍽 Il tuo ordine · ${DAYS.find(x=>x.k===day).lab.toLowerCase()} <span class="badge">⏳ In attesa</span></h3>`+
+   Object.keys(sentOrder.cart).map(id=>{const x=it[id]||{n:"Piatto",p:0};return `<div class="crow"><div class="nm">${x.custom?"⭐ ":""}${esc(x.n)}<small>× ${sentOrder.cart[id]}${sentOrder.notes[id]?` · 📝 ${esc(sentOrder.notes[id])}`:""}</small></div><span class="p tnum">${x.p?eur(x.p*sentOrder.cart[id]):"prezzo da definire"}</span></div>`;}).join("")+
+   `<div class="tot">${sentOrder.credit?`<div class="l"><span>Totale lordo</span><span class="tnum" style="text-decoration:line-through">${eur(sentOrder.raw)}</span></div><div class="l"><span>💳 Credito</span><span class="tnum cr">− ${eur(sentOrder.credit)}</span></div>`:""}<div class="l big"><span>Da pagare</span><b class="tnum">${eur(sentOrder.total)}</b></div></div><div class="acts"><button data-act="edit">✏️ Modifica</button><button class="danger" data-act="cancel">🗑 Annulla</button></div></div>
+   <p class="empty" style="padding:14px 0 0">Vuoi aggiungere o cambiare qualcosa? Premi <b>Modifica</b>: il menù riappare con i tuoi piatti già selezionati.</p>`;return;}
  let h=`<div class="sec"><h2 class="h">Novità della settimana</h2><span>fino al 15 nov</span></div><div class="nov">`+NOV.map(x=>`<article class="ncard"><div class="im"><img src="${x.img}" alt="${x.n}" loading="lazy"><span class="tag">Novità</span></div><div class="body"><div class="n">${x.n}</div><div class="d">${x.d}</div><div class="b"><span class="p tnum">${eur(x.p)}</span>${ctl(x.id)}</div></div></article>`).join("")+`</div>`;
- if(sentOrder){const it=allItems();h+=`<div class="sent"><h3 class="h">Il tuo ordine — ${DAYS.find(x=>x.k===day).lab.toLowerCase()} <span class="badge">In attesa di pagamento</span></h3>`+
-   Object.keys(sentOrder.cart).map(id=>{const x=it[id]||{n:"Piatto",p:0};return `<div class="crow"><div class="nm">${x.custom?"⭐ ":""}${x.n}<small>× ${sentOrder.cart[id]}${sentOrder.notes[id]?` · 📝 ${esc(sentOrder.notes[id])}`:""}</small></div><span class="p tnum">${x.p?eur(x.p*sentOrder.cart[id]):"prezzo da definire"}</span></div>`;}).join("")+
-   `<div class="tot"><div class="l big"><span>Da pagare</span><b class="tnum">${eur(sentOrder.total)}</b></div></div><div class="acts"><button data-act="edit">✏️ Modifica</button><button class="danger" data-act="cancel">🗑 Annulla</button></div></div>`;}
  MENU[day].forEach(g=>{const open=!compact||openCats[g.c];const q=g.items.reduce((a,[id])=>a+(cart[id]||0),0);
   h+=`<div class="sec ${open?"":"closed"}"><button class="cat h" data-cat="${g.c}" ${compact?"":"disabled"}><h2 class="h" style="font-size:17px">${g.c}</h2>${q?`<span class="cnt">${q}</span>`:""}${compact?`<svg class="i chev"><use href="#i-chev-r"/></svg>`:""}</button><span>${g.items.length} piatti</span></div>`;
   if(open)h+=`<div class="list">`+g.items.map(([id,n,d,p])=>`<div class="rowi ${cart[id]?"in":""}"><div class="n">${n}${d?`<small>${d}</small>`:""}</div><span class="p tnum">${eur(p)}</span>${ctl(id)}${noteIn(id)}</div>`).join("")+`</div>`;});
@@ -572,7 +573,7 @@ function sheet(on){$("#sheet").classList.toggle("show",on);$("#scrim").classList
 function modal(o){$("#modal-box").className="box"+(o.info?" info":"");$("#modal-ic").innerHTML=o.icon||ico("check");$("#modal-h").textContent=o.title;$("#modal-p").innerHTML=o.text;
  $("#modal-acts").innerHTML=(o.acts||[["Perfetto","close"]]).map((a,i)=>`<button class="${i?"ghost":"bigbtn"}" style="margin-top:0;height:48px" data-m="${a[1]}">${a[0]}</button>`).join("");$("#modal").classList.add("show");}
 function send(){const n=cnt();if(!n)return;sheet(false);const it=allItems();let sum=0;Object.keys(cart).forEach(id=>{if(it[id]&&it[id].p)sum+=it[id].p*cart[id];});
- sentOrder={cart:{...cart},notes:{...notes},total:Math.max(0,sum-CREDIT)};cart={};notes={};
+ const credit=Math.min(CREDIT,sum);sentOrder={cart:{...cart},notes:{...notes},raw:sum,credit,total:sum-credit};cart={};notes={};
  modal({title:"Ordine inviato",text:`Grazie Marco! ${n} ${n===1?"piatto":"piatti"} per ${DAYS.find(x=>x.k===day).long.toLowerCase()}. Puoi modificarlo o annullarlo finché gli ordini restano aperti.`});renderMenu();renderCart();}
 function addCustom(){const v=$("#cust-in").value.trim();if(!v)return;const id="c"+Date.now();custom.push({id,n:v,p:null});cart[id]=1;renderMenu();renderCart();
  modal({info:true,icon:ico("info"),title:"Richiesta inviata al cuoco",text:`<b>${esc(v)}</b> è stato aggiunto al carrello, ma la richiesta da sola <b>non è un ordine</b>: per confermare premi <b>Invia ordine</b>. Puoi prima aggiungere altri piatti.`,acts:[["📨 Invia ordine adesso","send"],["Aggiungo altro","close"]]});}
@@ -584,10 +585,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
  if(b.dataset.cat){openCats[b.dataset.cat]=!openCats[b.dataset.cat];renderMenu();return;}
  if(b.id==="mode"){compact=!compact;renderMenu();return;}
  if(b.id==="cust-go"){addCustom();return;}
- if(b.dataset.editc){const c=custom.find(x=>x.id===b.dataset.editc);const v=prompt("Modifica il piatto richiesto",c.n);if(v&&v.trim()){c.n=v.trim();renderMenu();renderCart();}return;}
+ if(b.dataset.editc){const c=custom.find(x=>x.id===b.dataset.editc);modal({info:true,icon:"✏️",title:"Modifica richiesta",text:`<input id="edit-in" class="note" style="height:46px;font-size:15px;margin-top:6px" value="${esc(c.n)}">`,acts:[["Salva","savec"],["Annulla","close"]]});$("#modal").dataset.editc=c.id;setTimeout(()=>$("#edit-in")&&$("#edit-in").focus(),50);return;}
+ if(b.dataset.m==="savec"){const c=custom.find(x=>x.id===$("#modal").dataset.editc);const v=$("#edit-in").value.trim();if(c&&v){c.n=v;renderMenu();renderCart();}$("#modal").classList.remove("show");return;}
  if(b.dataset.act==="edit"){cart={...sentOrder.cart};notes={...sentOrder.notes};sentOrder=null;renderMenu();renderCart();toast("Modifica l'ordine e premi di nuovo Invia");return;}
- if(b.dataset.act==="cancel"){if(confirm("Annullare l'ordine?")){sentOrder=null;renderMenu();toast("Ordine annullato");}return;}
- if(b.dataset.m){$("#modal").classList.remove("show");if(b.dataset.m==="send")send();return;}
+ if(b.dataset.act==="cancel"){modal({info:true,icon:ico("info"),title:"Annullare l'ordine?",text:"L'ordine di oggi verrà eliminato e il menù tornerà disponibile.",acts:[["🗑 Sì, annulla","cancel"],["No, lo tengo","close"]]});return;}
+ if(b.dataset.m){$("#modal").classList.remove("show");if(b.dataset.m==="send")send();if(b.dataset.m==="cancel"){sentOrder=null;renderMenu();renderCart();toast("Ordine annullato");}return;}
  if(b.dataset.go){go(b.dataset.go);return;}
  if(b.dataset.f){filter=b.dataset.f;$$("#filters .chip").forEach(c=>c.classList.toggle("on",c===b));renderOrders();return;}
  if(b.dataset.t&&b.closest("#topf")){topT=b.dataset.t;$$("#topf .chip").forEach(c=>c.classList.toggle("on",c===b));renderTop();return;}
