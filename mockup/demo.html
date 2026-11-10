@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it" data-t="b">
+<html lang="it" data-t="a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -43,6 +43,13 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .screen{display:none}.screen.on{display:block;animation:in .28s ease}
 @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+/* banner saldo (come nell'app: da saldare / credito / in pari) */
+.bal{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:var(--r);margin:0 0 10px;box-shadow:var(--shadow);background:var(--surface)}
+.bal b{display:block;font-size:14.5px}.bal small{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
+.bal .amt{font-family:var(--font-h);font-size:24px;font-weight:700;white-space:nowrap}
+.bal.red{border-left:4px solid var(--rosso)}.bal.red b,.bal.red .amt{color:var(--rosso)}
+.bal.green{border-left:4px solid var(--ok)}.bal.green b,.bal.green .amt{color:var(--ok)}
+[data-t=c] .bal{border-radius:0;box-shadow:none;border:0;border-bottom:1px solid var(--line);padding:12px 0}
 /* giorno */
 .seg{display:grid;grid-template-columns:1fr 1fr 1fr 46px;gap:4px;background:var(--surface);padding:4px;border-radius:16px;box-shadow:var(--shadow);margin-top:6px}
 .seg button{height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--ink-2);line-height:1;transition:background .2s,color .2s}
@@ -91,7 +98,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .rowi .note:focus{outline:2px solid var(--oro);border-color:transparent}
 .sec button.cat{display:flex;align-items:center;gap:8px;font:inherit;color:inherit}
 .sec .cnt{background:var(--rosso);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 7px}
-.sec .chev{color:var(--ink-3);font-size:16px;transition:transform .2s}.sec.closed .chev{transform:rotate(-90deg)}
+.sec .chev{color:var(--ink-3);font-size:16px;transition:transform .2s;transform:rotate(-90deg)}.sec.closed .chev{transform:rotate(90deg)}
 .modebtn{height:34px;padding:0 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:12.5px;font-weight:600;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
 .custom{margin-top:18px;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;border:1px dashed var(--oro)}
 .custom .lbl{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a5a12;margin-bottom:8px;display:flex;align-items:center;gap:6px}
@@ -380,7 +387,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
   <symbol id="i-logo" viewBox="0 0 24 24"><path d="M4 14c0-4 3.6-7 8-7s8 3 8 7-3.6 6-8 6-8-2-8-6Z"/><path d="M8 13c1.5-1 2.5-1 4 0s2.5 1 4 0M12 7V4M10 5h4"/></symbol>
 </svg>
 
-<div class="switch" role="group" aria-label="Stile del prototipo"><span class="lab">Stile</span><button data-th="a">A</button><button data-th="b" class="on">B</button><button data-th="c">C</button><button data-th="d">D</button></div>
+<div class="switch" role="group" aria-label="Stile del prototipo"><span class="lab">Stile</span><button data-th="a" class="on">A</button><button data-th="b">B</button><button data-th="c">C</button><button data-th="d">D</button></div>
 
 <div class="app" id="app">
   <aside class="side" aria-label="Navigazione">
@@ -402,6 +409,8 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
     <main>
       <!-- ORDINA -->
       <section class="screen on" id="s-ordina">
+        <button class="bal red" data-go="storico"><div><b>💳 Importo da saldare</b><small>Totale ordini non ancora pagati · tocca per i dettagli</small></div><span class="amt tnum">€ 23,50</span></button>
+        <button class="bal green" data-go="storico"><div><b>💳 Hai un credito disponibile</b><small>Verrà scalato automaticamente al prossimo ordine</small></div><span class="amt tnum">€ 4,00</span></button>
         <div class="seg" id="days" role="tablist"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px"><div class="state" id="state" style="margin:0"><i></i><span>Ordini aperti fino alle 10:30</span></div><button class="modebtn" id="mode">☰ Compatto</button></div>
         <button class="xmas" data-go="natale"><svg class="i"><use href="#i-tree"/></svg><span><b>Natale</b> · menù in lavorazione</span><span class="cd" id="xcd"></span><svg class="i chev"><use href="#i-chev-r"/></svg></button>
@@ -514,7 +523,7 @@ const TOP={m:[["Giulia R.",18,"€ 128"],["Andrea T.",16,"€ 119"],["Luca M.",1
            y:[["Andrea T.",162,"€ 1 240"],["Giulia R.",150,"€ 1 102"],["Marco C.",52,"€ 412"],["Luca M.",49,"€ 390"],["Sara P.",40,"€ 311"],["Elena B.",31,"€ 240"]]};
 const CREDIT=4;
 /* ───────── stato ───────── */
-let day="d0", cart={}, notes={}, custom=[], sentOrder=null, compact=false, openCats={}, filter="all", topT="m";
+let day="d0", cart={}, notes={}, custom=[], sentOrder=null, compact=true, openCats={}, filter="all", topT="m";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const eur=n=>"€ "+n.toFixed(2).replace(".",",");
 const ico=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
