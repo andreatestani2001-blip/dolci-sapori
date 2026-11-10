@@ -434,7 +434,6 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
       <!-- ORDINA -->
       <section class="screen on" id="s-ordina">
         <button class="bal red" data-go="storico"><div><b>💳 Importo da saldare</b><small>Totale ordini non ancora pagati · tocca per i dettagli</small></div><span class="amt tnum">€ 23,50</span></button>
-        <button class="bal green" data-go="storico"><div><b>💳 Hai un credito disponibile</b><small>Verrà scalato automaticamente al prossimo ordine</small></div><span class="amt tnum">€ 4,00</span></button>
         <div class="seg" id="days" role="tablist"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px"><div class="state" id="state" style="margin:0"><i></i><span>Ordini aperti fino alle 10:30</span></div><button class="modebtn" id="mode">☰ Compatto</button></div>
         <button class="xmas" data-go="natale"><svg class="i"><use href="#i-tree"/></svg><span class="tx"><b>Natale a Dolci Sapori</b><small>Menù delle feste in lavorazione</small></span><span class="cd" id="xcd"></span><svg class="i chev"><use href="#i-chev-r"/></svg></button>
@@ -442,7 +441,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
       </section>
       <!-- STORICO -->
       <section class="screen" id="s-storico">
-        <div class="kpis"><div class="kpi dark"><div class="k">Da saldare</div><div class="v tnum">€ 23,50</div></div><div class="kpi"><div class="k">Credito</div><div class="v tnum" style="color:var(--ok)">€ 4,00</div></div><div class="kpi"><div class="k">Novembre</div><div class="v tnum">€ 47,50</div></div><div class="kpi"><div class="k">Ordini 2026</div><div class="v tnum">52</div></div></div>
+        <div class="kpis"><div class="kpi dark"><div class="k">Da saldare</div><div class="v tnum">€ 23,50</div></div><div class="kpi"><div class="k">Ordini a novembre</div><div class="v tnum">9</div></div><div class="kpi"><div class="k">Novembre</div><div class="v tnum">€ 47,50</div></div><div class="kpi"><div class="k">Ordini 2026</div><div class="v tnum">52</div></div></div>
         <div class="chips" id="filters"><button class="chip on" data-f="all">Tutti</button><button class="chip" data-f="due">Da pagare</button><button class="chip" data-f="paid">Pagati</button></div>
         <div id="orders"></div>
       </section>
@@ -483,7 +482,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
         <div class="two">
           <div>
             <div class="me"><div class="av">MC</div><div><div class="n">Marco Ciavatta</div><div class="u">@marco · cliente dal 2026</div></div></div>
-            <div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><div class="k">Da saldare</div><div class="v tnum" style="color:var(--rosso)">€ 23,50</div></div><div class="kpi"><div class="k">Credito</div><div class="v tnum" style="color:var(--ok)">€ 4,00</div></div></div>
+            <div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><div class="k">Da saldare</div><div class="v tnum" style="color:var(--rosso)">€ 23,50</div></div><div class="kpi"><div class="k">Ordini 2026</div><div class="v tnum">52</div></div></div>
           </div>
           <div>
             <div class="grp"><div class="lbl">Profilo</div>
@@ -552,7 +551,7 @@ const ORDERS=[{m:"Novembre",d:"9",w:"lun",t:"Pizzadina La Golosa, Cicoria ripass
  {m:"Ottobre",d:"29",w:"mer",t:"Gnocchi al ragù",s:"1 piatto",a:6.5,st:"paid",lines:[["Gnocchi al ragù",6.5]]}];
 const TOP={m:[["Giulia R.",18,"€ 128"],["Andrea T.",16,"€ 119"],["Luca M.",14,"€ 97"],["Sara P.",12,"€ 88"],["Marco C.",9,"€ 47,50"],["Elena B.",8,"€ 41"]],
            y:[["Andrea T.",162,"€ 1 240"],["Giulia R.",150,"€ 1 102"],["Marco C.",52,"€ 412"],["Luca M.",49,"€ 390"],["Sara P.",40,"€ 311"],["Elena B.",31,"€ 240"]]};
-const CREDIT=4;
+const CREDIT=0; // il cliente di prova ha da saldare → nessun credito mostrato
 /* ───────── stato ───────── */
 let day="d0", cart={}, notes={}, custom=[], sentOrder=null, compact=true, openCats={}, filter="all", topT="m";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
