@@ -68,7 +68,7 @@ const BRAND = {
 };
 
 const STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=Great+Vibes&family=Mountains+of+Christmas:wght@700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -484,6 +484,285 @@ const STYLE = `
   /* ─── Animations ──────────────────────────── */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .card, .menu-order-item, .order-block { animation: fadeIn .3s ease both; }
+
+  /* ════════════════════════════════════════════════════════════════════
+     PANNELLO CLIENTE — stile A "Liquid Glass" (solo grafica; logica invariata)
+     Tutto è scopato sotto .cl per non toccare l'admin.
+     ════════════════════════════════════════════════════════════════════ */
+  .cl{
+    --cl-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+    --cl-ink:#2b1810; --cl-ink2:rgba(43,24,16,.72); --cl-ink3:rgba(43,24,16,.58);
+    --cl-line:rgba(43,24,16,.12); --cl-line-soft:rgba(43,24,16,.07);
+    --cl-glass:rgba(255,255,255,.62); --cl-glass2:rgba(255,255,255,.5);
+    --cl-r:22px; --cl-rs:14px;
+    --cl-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 10px 30px -18px rgba(43,24,16,.35);
+    --cl-nav-h:84px; --cl-cartbar-h:76px;
+    font-family:var(--cl-font); color:var(--cl-ink);
+    background:#fdf6ee; min-height:100dvh;
+    display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr;
+    position:relative; overflow:visible;
+  }
+  body:has(.cl) .app-bg{display:none}
+  body:has(.cl){background:#fdf6ee}
+  .cl>*{min-width:0}
+  .cl::before,.cl::after{content:"";position:fixed;border-radius:50%;filter:blur(60px);z-index:0;pointer-events:none}
+  .cl::before{width:360px;height:360px;background:#d4af37;opacity:.35;top:-120px;right:-120px}
+  .cl::after{width:320px;height:320px;background:#f0b9b4;opacity:.45;bottom:10%;left:-140px}
+  .cl .cl-col{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}
+  .cl button{font-family:inherit}
+  .cl input,.cl textarea,.cl select{font-size:16px;border-radius:12px;padding:11px 13px;min-height:46px;background:#fff}
+  .cl label{font-size:.72rem;letter-spacing:.06em}
+  .cl .cl-ico{display:inline-grid;place-items:center;width:1em;height:1em;font-size:22px;flex:none}
+  .cl .cl-ico svg{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .cl .cl-ico.chev{font-size:16px;color:var(--cl-ink3)}
+  .cl :focus-visible{outline:2px solid #d4af37;outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){.cl *{animation:none!important;transition:none!important}}
+
+  /* vetro */
+  .cl .glass,.cl .cl-card,.cl .cl-list,.cl .cl-ncard,.cl .cl-kpi,.cl .cl-ord,.cl .cl-seg,.cl .cl-iconbtn,.cl .cl-state,.cl .cl-mode,.cl .cl-bal,.cl .cl-cat.bar,.cl .cl-custom,.cl .cl-sent,.cl .cl-tabbar .in,.cl .cl-cartp,.cl .cl-specials,.cl .card{
+    background:var(--cl-glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid rgba(255,255,255,.7);box-shadow:var(--cl-shadow);border-radius:var(--cl-r)
+  }
+  .cl .card{padding:18px 16px;margin-bottom:12px;overflow:visible}
+  .cl .card::before{display:none}
+  .cl .card-title{font-family:var(--cl-font);font-size:1.05rem;font-weight:700;color:var(--cl-ink);letter-spacing:-.01em}
+
+  /* barra laterale (desktop) + intestazione */
+  .cl .cl-side{display:none}
+  .cl .cl-head{padding:calc(env(safe-area-inset-top) + 14px) 16px 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .cl .cl-head-l{display:flex;align-items:center;gap:12px;min-width:0}
+  .cl .cl-mlogo{width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:var(--cl-shadow)}
+  .cl .cl-mlogo img,.cl .cl-logo img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important}
+  .cl .cl-hi{font-size:13px;color:var(--cl-ink3)}
+  .cl .cl-h1{font-size:23px;line-height:1.1;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cl-ink)}
+  .cl .cl-iconbtn{width:42px;height:42px;border-radius:14px!important;display:grid;place-items:center;position:relative;color:var(--cl-ink2);cursor:pointer;border:0}
+  .cl .cl-dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#8b1a1a;color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid #fdf6ee}
+  .cl .cl-main{padding:0 16px calc(var(--cl-nav-h) + 16px);max-width:720px;width:100%;margin:0 auto;flex:1}
+  .cl.cart-on .cl-main{padding-bottom:calc(var(--cl-nav-h) + var(--cl-cartbar-h) + 16px)}
+
+  /* banner di sistema (notifiche / iOS) */
+  .cl .cl-sysbanner{color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.84rem;line-height:1.4}
+  .cl .cl-sysbanner.green{background:linear-gradient(135deg,#1a3a2e,#0d2b1e)}
+  .cl .cl-sysbanner.dark{background:linear-gradient(135deg,#1a1a2e,#16213e)}
+  .cl .cl-sys-ok{background:#2ec864;border:0;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.85rem;font-weight:700}
+  .cl .cl-sys-x{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;flex-shrink:0}
+
+  /* saldo */
+  .cl .cl-bal{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin:0 0 10px;cursor:pointer;color:var(--cl-ink)}
+  .cl .cl-bal b{display:block;font-size:14.5px}.cl .cl-bal small{display:block;font-size:12px;color:var(--cl-ink3);margin-top:2px}
+  .cl .cl-bal .amt{font-size:24px;font-weight:700;white-space:nowrap}
+  .cl .cl-bal.red{border-left:4px solid #8b1a1a}.cl .cl-bal.red b,.cl .cl-bal.red .amt{color:#8b1a1a}
+  .cl .cl-bal.green{border-left:4px solid #1e6b3f}.cl .cl-bal.green b,.cl .cl-bal.green .amt{color:#1e6b3f}
+  .cl .cl-bal.slim{padding:10px 14px;cursor:default}
+
+  /* giorno */
+  .cl .cl-seg{display:grid;grid-template-columns:1fr 1fr 1fr 46px;gap:4px;padding:4px;margin-top:4px}
+  .cl .cl-seg button{height:44px;border-radius:12px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:var(--cl-ink2);line-height:1;cursor:pointer;transition:background .2s,color .2s}
+  .cl .cl-seg button small{font-size:11px;font-weight:500;color:var(--cl-ink3);margin-top:3px}
+  .cl .cl-seg button.on{background:#fff;color:var(--cl-ink);box-shadow:0 2px 8px rgba(0,0,0,.12)}.cl .cl-seg button.on small{color:#8b1a1a}
+  .cl .cl-seg button.off{opacity:.4;cursor:not-allowed}
+  .cl .cl-cal{display:grid;place-items:center;color:#8b1a1a;position:relative;border-radius:12px;cursor:pointer;margin:0}
+  .cl .cl-cal.on{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .cl .cl-cal .cl-ico{font-size:20px}
+  .cl .cl-cal input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;min-height:0;padding:0}
+  .cl .cl-datehint{text-align:center;margin:8px 0 0;font-size:.84rem;color:#8b1a1a;font-weight:600}
+
+  .cl .cl-staterow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+  .cl .cl-state{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1e6b3f;padding:8px 12px;border-radius:999px!important}
+  .cl .cl-state i{width:8px;height:8px;border-radius:50%;background:#1e6b3f;box-shadow:0 0 0 3px rgba(30,107,63,.15)}
+  .cl .cl-state.closed{color:#8b1a1a}.cl .cl-state.closed i{background:#8b1a1a;box-shadow:0 0 0 3px rgba(139,26,26,.12)}
+  .cl .cl-mode{height:36px;padding:0 12px;border-radius:10px!important;font-size:12.5px;font-weight:600;color:var(--cl-ink2);cursor:pointer;white-space:nowrap}
+
+  /* striscia natale */
+  .cl .cl-xmas-strip{margin-top:12px;display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:74px;width:100%;text-align:left;border:0;cursor:pointer;border-radius:var(--cl-r);
+    background:#2b1810 url("/natale.jpg") center 35%/cover;position:relative;overflow:hidden;color:#fff;box-shadow:0 14px 30px -18px rgba(43,24,16,.6)}
+  .cl .cl-xmas-strip::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(43,24,16,.88) 0%,rgba(43,24,16,.7) 55%,rgba(43,24,16,.35) 100%)}
+  .cl .cl-xmas-strip>*{position:relative}
+  .cl .cl-xmas-strip .cl-ico{color:#f4d35e}
+  .cl .cl-xmas-strip .tx{line-height:1.2;min-width:0}.cl .cl-xmas-strip b{display:block;font-size:15.5px;font-weight:700;white-space:nowrap}.cl .cl-xmas-strip small{display:block;font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl .cl-xmas-strip .cd{margin-left:auto;font-weight:700;color:#2b1810;background:#f4d35e;padding:6px 10px;border-radius:999px;white-space:nowrap;font-size:13px}
+  .cl .cl-xmas-strip .chev{color:#fff}
+
+  /* sezioni + categorie */
+  .cl .cl-sec{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 10px}
+  .cl .cl-sec h2{font-size:17px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .cl .cl-sec span{font-size:12.5px;color:var(--cl-ink3);font-weight:600}
+  .cl .cnt{background:#8b1a1a;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 7px}
+  .cl .cl-cat.bar{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin:10px 0 0;min-height:52px;cursor:pointer;border-radius:var(--cl-rs)!important}
+  .cl .cl-cat.bar .t{display:flex;align-items:center;gap:8px}.cl .cl-cat.bar h2{font-size:17px;font-weight:700;margin:0}
+  .cl .cl-cat.bar .r{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--cl-ink3);font-weight:600;white-space:nowrap}
+  .cl .cl-cat.bar .chev{transform:rotate(-90deg);transition:transform .2s}.cl .cl-cat.bar.closed .chev{transform:rotate(90deg)}
+  .cl .cl-cat.bar+.cl-list{margin-top:6px}
+
+  /* righe piatto (una colonna, anche su desktop) */
+  .cl .cl-list{overflow:hidden;animation:fadeIn .3s ease both}
+  .cl .cl-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:56px;padding:8px 12px 8px 14px;border-top:1px solid var(--cl-line-soft)}
+  .cl .cl-row:first-child{border-top:0}
+  .cl .cl-row.in{background:linear-gradient(90deg,rgba(212,175,55,.2),transparent 40%)}
+  .cl .cl-row.req{background:rgba(212,175,55,.14)}
+  .cl .cl-row-name{flex:1;min-width:0}
+  .cl .cl-row-title{font-size:15px;line-height:1.25;display:flex;align-items:center;gap:6px}
+  .cl .cl-row-name small{display:block;font-size:12px;color:var(--cl-ink3);margin-top:2px}
+  .cl .cl-price{font-size:15px;font-weight:700;min-width:52px;text-align:right;white-space:nowrap}
+  .cl .cl-price small{font-size:11.5px;color:var(--cl-ink3);font-weight:500;white-space:normal}
+  .cl .cl-edit{width:30px;height:30px;border-radius:9px;border:0;background:none;cursor:pointer;font-size:14px}
+  .cl .cl-add{width:38px;height:38px;border-radius:12px;border:0;background:#8b1a1a;color:#fff;display:grid;place-items:center;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 4px 10px -4px rgba(139,26,26,.6);transition:transform .15s;flex:none}
+  .cl .cl-add:active{transform:scale(.92)}
+  .cl .cl-step{display:inline-flex;align-items:center;background:#2b1810;color:#fff;border-radius:12px;height:38px;padding:0 3px;flex:none}
+  .cl .cl-step button{width:30px;height:32px;border-radius:9px;border:0;background:none;color:inherit;display:grid;place-items:center;font-size:18px;line-height:1;cursor:pointer}
+  .cl .cl-step span{font-weight:700;font-size:14px;min-width:22px;text-align:center}
+  .cl .cl-step.sm{height:32px}.cl .cl-step.sm button{width:26px;height:26px}
+  .cl .cl-note{flex-basis:100%;margin:0 0 4px;min-height:42px;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--cl-line);background:#fff;font-size:16px}
+
+  /* novità con foto */
+  .cl .cl-specials{padding:0 14px 14px;margin-top:14px}
+  .cl .cl-specials .cl-sec{margin-top:14px}
+  .cl .cl-special-text{font-size:.9rem;color:var(--cl-ink2);line-height:1.5;margin-bottom:12px;white-space:pre-line}
+  .cl .cl-nov{display:grid;grid-auto-flow:column;grid-auto-columns:calc(50% - 5px);gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 14px;margin:0 -14px;padding:0 14px 6px;scrollbar-width:none}
+  .cl .cl-nov::-webkit-scrollbar{display:none}
+  .cl .cl-ncard{overflow:hidden;display:flex;flex-direction:column;scroll-snap-align:start;background:#fff}
+  .cl .cl-ncard.in{box-shadow:0 0 0 2px rgba(139,26,26,.3),var(--cl-shadow)}
+  .cl .cl-ncard .im{aspect-ratio:1/1;position:relative;background:#f3e9da}
+  .cl .cl-ncard img{width:100%;height:100%;object-fit:cover;display:block}
+  .cl .cl-ncard .noimg{position:absolute;inset:0;align-items:center;justify-content:center;font-size:2rem}
+  .cl .cl-ncard .tag{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#8b1a1a;padding:4px 8px;border-radius:999px}
+  .cl .cl-ncard .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .cl .cl-ncard .n{font-size:14.5px;font-weight:600;line-height:1.25}
+  .cl .cl-ncard .b{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px}
+
+  /* richiesta personalizzata */
+  .cl .cl-custom{margin-top:18px;padding:14px;border:1px dashed #d4af37!important}
+  .cl .cl-custom .lbl{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a5a12;margin-bottom:8px}
+  .cl .cl-custom .in{display:flex;gap:8px}
+  .cl .cl-custom input{flex:1;min-width:0}
+  .cl .cl-custom button{height:46px;padding:0 16px;border-radius:12px;border:0;background:#d4af37;color:#2b1810;font-weight:700;cursor:pointer;font-size:15px}
+  .cl .cl-custom small{display:block;font-size:12px;color:var(--cl-ink3);margin-top:8px}
+
+  /* ordine inviato */
+  .cl .cl-sent{padding:16px;margin-top:14px}
+  .cl .cl-h3{font-size:17px;font-weight:700;letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .cl .cl-sub{font-size:13px;color:var(--cl-ink3);margin:2px 0 10px;text-transform:capitalize}
+  .cl .cl-crow{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--cl-line-soft)}
+  .cl .cl-th{width:44px;height:44px;border-radius:14px;overflow:hidden;flex:none;background:#f3e9da}.cl .cl-th img{width:100%;height:100%;object-fit:cover}
+  .cl .cl-crow-name{flex:1;min-width:0;font-size:14.5px;font-weight:600}.cl .cl-crow-name small{display:block;font-size:12px;color:var(--cl-ink3);font-weight:500}
+  .cl .cl-tot{margin-top:12px}.cl .cl-tot .l{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;color:var(--cl-ink2)}
+  .cl .cl-tot .l.ok{color:#1e6b3f;font-weight:600}
+  .cl .cl-tot .l.big{font-size:15px;font-weight:600;color:var(--cl-ink);padding-top:10px;margin-top:6px;border-top:1px solid var(--cl-line)}
+  .cl .cl-tot .l.big b{font-size:26px;font-weight:700}.cl .cl-tot .l.big b small{font-size:13px;font-weight:500;opacity:.8}
+  .cl .cl-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  .cl .cl-ghost{height:44px;padding:0 16px;border-radius:14px;border:0;font-weight:600;font-size:14.5px;background:rgba(43,24,16,.07);color:var(--cl-ink2);cursor:pointer}
+  .cl .cl-ghost.danger{color:#8b1a1a;background:rgba(240,185,180,.35)}
+  .cl .cl-hint{text-align:center;color:var(--cl-ink3);font-size:13.5px;padding:14px 0 0;line-height:1.5}
+  .cl .cl-big{width:100%;margin-top:14px;height:54px;border-radius:16px;border:0;background:#8b1a1a;color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(139,26,26,.7);transition:transform .15s}
+  .cl .cl-big:active{transform:scale(.98)}.cl .cl-big:disabled{opacity:.55;box-shadow:none;cursor:not-allowed}
+
+  /* storico */
+  .cl .cl-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
+  .cl .cl-kpi{padding:12px}
+  .cl .cl-kpi .k{font-size:11.5px;color:var(--cl-ink3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl .cl-kpi .v{font-size:20px;font-weight:700;margin-top:2px;letter-spacing:-.01em;white-space:nowrap}
+  .cl .cl-ords{display:grid;grid-template-columns:1fr;gap:0}
+  .cl .cl-kpi.dark{background:rgba(43,24,16,.9);color:#fff;border-color:transparent}.cl .cl-kpi.dark .k{color:rgba(255,255,255,.65)}.cl .cl-kpi.dark .v{color:#f4d35e}
+  .cl .cl-ord{display:grid;grid-template-columns:46px 1fr;gap:12px;padding:12px 14px;margin-bottom:8px;align-items:start;border-radius:18px!important}
+  .cl .cl-ord.today{box-shadow:0 0 0 2px rgba(139,26,26,.25),var(--cl-shadow)}
+  .cl .cl-dt{width:46px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;line-height:1;align-content:center}
+  .cl .cl-dt b{font-size:17px;font-weight:700}.cl .cl-dt small{font-size:10px;font-weight:600;color:var(--cl-ink3);text-transform:uppercase}
+  .cl .cl-ord-body{min-width:0}
+  .cl .cl-ord-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .cl .cl-ord-date{font-weight:700;font-size:14.5px;text-transform:capitalize}
+  .cl .cl-ord-line{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:3px 0;color:var(--cl-ink2)}
+  .cl .cl-ord-line>span:last-child{white-space:nowrap;flex:none}
+  .cl .cl-ord-line i{color:var(--cl-ink3)}
+  .cl .cl-ord-note{font-size:12.5px;color:var(--cl-ink3);margin-top:4px;font-style:italic}
+  .cl .cl-ord-tot{display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--cl-line-soft);font-weight:700;font-size:15px}
+
+  /* account */
+  .cl .cl-two{display:block}
+  .cl .cl-me{background:rgba(43,24,16,.9);color:#fff;border-radius:24px;padding:18px;display:flex;align-items:center;gap:14px;margin-top:4px;position:relative;overflow:hidden}
+  .cl .cl-me::after{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:#d4af37;opacity:.18}
+  .cl .cl-av{width:54px;height:54px;border-radius:18px;background:#f4d35e;color:#2b1810;display:grid;place-items:center;font-weight:700;font-size:18px;flex:none}
+  .cl .cl-me .n{font-size:19px;font-weight:700}.cl .cl-me .u{font-size:13px;opacity:.75}
+  .cl .cl-two-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cl .cl-frow{width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:15px;font-weight:500;border:0;border-top:1px solid var(--cl-line-soft);min-height:54px;background:none;cursor:pointer;color:var(--cl-ink)}
+  .cl .cl-frow:first-child{border-top:0}
+  .cl .cl-frow .l{flex:1}.cl .cl-frow .v{font-size:13.5px;color:var(--cl-ink3)}
+  .cl .cl-frow.out{color:#8b1a1a;justify-content:center;font-weight:700}
+  .cl .cl-closex{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(43,24,16,.07);display:grid;place-items:center;color:var(--cl-ink2);cursor:pointer;z-index:2}
+  .cl .cl-closex .cl-ico{font-size:16px}
+
+  /* popup richiesta */
+  .cl .cl-modal{position:fixed;inset:0;z-index:9999;background:rgba(43,24,16,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+  .cl .cl-modal-box{background:#fff;border-radius:26px;padding:26px 22px;max-width:380px;width:100%;text-align:center;box-shadow:0 40px 80px -30px rgba(43,24,16,.6)}
+  .cl .cl-modal-ico{font-size:2.4rem;margin-bottom:8px}
+  .cl .cl-modal-box .cl-h3{justify-content:center;font-size:1.25rem;line-height:1.25;text-align:center}
+  .cl .cl-modal-box p{font-size:.95rem;color:var(--cl-ink2);line-height:1.55;margin:10px 0 0}
+  .cl .cl-modal-acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .cl .cl-modal-acts .cl-big{margin-top:0;height:48px}
+
+  /* natale pagina intera */
+  .cl[data-screen=natale]{background:radial-gradient(120% 70% at 50% -10%,#a31818 0%,#8b1a1a 38%,#4a1611 70%,#2b1810 100%) fixed}
+  .cl[data-screen=natale]::before,.cl[data-screen=natale]::after{display:none}
+  .cl[data-screen=natale] .cl-head,.cl[data-screen=natale] .cl-hi,.cl[data-screen=natale] .cl-h1{color:#fff}
+  .cl[data-screen=natale] .cl-hi{opacity:.75}
+  .cl[data-screen=natale] .cl-iconbtn{background:rgba(255,255,255,.14);color:#fff;box-shadow:none;border-color:transparent}
+  .cl[data-screen=natale] .cl-tabbar{background:linear-gradient(to top,#2b1810 60%,transparent)}
+  .cl[data-screen=natale] .cl-tabbar .in{background:#fff}
+  .cl .cl-xmas-page{max-width:900px;margin:0 auto}
+  .cl .cl-xmas-page{position:relative;z-index:1;color:#fff;padding-top:4px}
+  .cl .cl-snow{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .cl .cl-snow i{position:absolute;top:-6%;font-style:normal;color:rgba(255,255,255,.9);animation:clFall linear infinite;text-shadow:0 0 8px rgba(255,255,255,.7)}
+  .cl .cl-snow i:nth-child(1){left:3%;font-size:15px;animation-duration:12s}.cl .cl-snow i:nth-child(2){left:9%;font-size:10px;animation-duration:16s;animation-delay:-3s}.cl .cl-snow i:nth-child(3){left:15%;font-size:18px;animation-duration:13s;animation-delay:-6s}.cl .cl-snow i:nth-child(4){left:22%;font-size:9px;animation-duration:18s;animation-delay:-1s}.cl .cl-snow i:nth-child(5){left:28%;font-size:13px;animation-duration:14s;animation-delay:-8s}.cl .cl-snow i:nth-child(6){left:35%;font-size:11px;animation-duration:17s;animation-delay:-4s}.cl .cl-snow i:nth-child(7){left:41%;font-size:16px;animation-duration:12s;animation-delay:-9s}.cl .cl-snow i:nth-child(8){left:48%;font-size:10px;animation-duration:19s;animation-delay:-2s}.cl .cl-snow i:nth-child(9){left:54%;font-size:12px;animation-duration:14s;animation-delay:-7s}.cl .cl-snow i:nth-child(10){left:60%;font-size:17px;animation-duration:11s;animation-delay:-5s}.cl .cl-snow i:nth-child(11){left:66%;font-size:9px;animation-duration:16s;animation-delay:-10s}.cl .cl-snow i:nth-child(12){left:72%;font-size:13px;animation-duration:15s;animation-delay:-12s}.cl .cl-snow i:nth-child(13){left:78%;font-size:11px;animation-duration:13s;animation-delay:-2.5s}.cl .cl-snow i:nth-child(14){left:84%;font-size:15px;animation-duration:17s;animation-delay:-6.5s}.cl .cl-snow i:nth-child(15){left:90%;font-size:10px;animation-duration:12s;animation-delay:-9.5s}.cl .cl-snow i:nth-child(16){left:95%;font-size:14px;animation-duration:15s;animation-delay:-4.5s}
+  @keyframes clFall{to{transform:translateY(110vh) rotate(360deg)}}
+  .cl .cl-xmas-head{text-align:center;padding:4px 6px 14px}
+  .cl .cl-script{font-family:"Great Vibes","Snell Roundhand","Brush Script MT",cursive;font-size:44px;line-height:1;color:#f4d35e;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+  .cl .cl-xtitle{font-family:"Mountains of Christmas","Cormorant Garamond",Georgia,serif;font-weight:700;font-size:38px;line-height:1.05;margin-top:2px;text-shadow:0 3px 20px rgba(0,0,0,.35);color:#fff}
+  .cl .cl-xmas-page .card{background:linear-gradient(180deg,#1f3b2d 0%,#14281e 100%)!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+
+  /* barra inferiore + carrello (mobile) */
+  .cl .cl-tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--cl-nav-h) + env(safe-area-inset-bottom));padding:10px 16px env(safe-area-inset-bottom);background:linear-gradient(to top,#fdf6ee 70%,transparent);z-index:31}
+  .cl .cl-tabbar .in{height:62px;border-radius:28px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;padding:0 6px}
+  .cl .cl-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--cl-ink3);height:50px;justify-content:center;border-radius:14px;border:0;background:none;cursor:pointer;position:relative;transition:background .2s,color .2s}
+  .cl .cl-nav-btn.on{background:rgba(43,24,16,.08);color:#8b1a1a}
+  .cl .cl-nav-btn .cl-dot{top:2px;right:14px}
+  .cl .cl-cartbar{position:fixed;left:12px;right:12px;bottom:calc(var(--cl-nav-h) + env(safe-area-inset-bottom));background:#2b1810;color:#fff;border-radius:22px;padding:10px 10px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 20px 40px -20px rgba(43,24,16,.7);z-index:30;animation:clUp .3s cubic-bezier(.2,.8,.2,1)}
+  @keyframes clUp{from{transform:translateY(140%)}}
+  .cl .cl-cartbar .t{flex:1;min-width:0;text-align:left;background:none;border:0;color:#fff;line-height:1.15;cursor:pointer;padding:0}
+  .cl .cl-cartbar .t small{display:block;font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cl .cl-cartbar .t b{font-size:18px}
+  .cl .cl-cartbar .go{height:46px;padding:0 18px;border-radius:14px;border:0;background:#8b1a1a;color:#fff;font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap}
+  .cl .cl-cartbar .go:disabled{opacity:.6}
+  .cl .cl-scrim{position:fixed;inset:0;background:rgba(43,24,16,.45);z-index:40}
+  .cl .cl-sheet{position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:26px 26px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));z-index:41;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:88dvh;overflow:auto;box-shadow:0 -20px 60px -30px rgba(43,24,16,.6)}
+  .cl .cl-sheet.show{transform:none}
+  .cl .cl-sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--cl-line);margin:0 auto 12px}
+  .cl .cl-cartp{display:none}
+  .cl .toast{bottom:calc(var(--cl-nav-h) + 20px);left:50%;right:auto;transform:translateX(-50%);border-radius:999px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+  .cl.cart-on .toast{bottom:calc(var(--cl-nav-h) + var(--cl-cartbar-h) + 20px)}
+
+  /* ─── desktop ─── */
+  @media (min-width:900px){
+    .cl{grid-template-columns:88px minmax(0,1fr);height:100dvh;overflow:hidden}
+    .cl.cart-on{grid-template-columns:88px minmax(0,1fr) 380px}
+    .cl .cl-side{display:flex;flex-direction:column;align-items:center;padding:22px 0;gap:8px;background:rgba(43,24,16,.92);backdrop-filter:blur(20px);position:relative;z-index:2}
+    .cl .cl-logo{width:56px;height:56px;border-radius:16px;background:#fff;display:grid;place-items:center;margin-bottom:18px;overflow:hidden;box-shadow:0 6px 16px -8px rgba(0,0,0,.5)}
+    .cl .cl-side .cl-nav-btn{width:60px;height:58px;border-radius:16px;gap:4px;color:rgba(255,255,255,.6);font-size:10.5px}
+    .cl .cl-side .cl-nav-btn .cl-ico{font-size:21px}
+    .cl .cl-side .cl-nav-btn.on{background:rgba(255,255,255,.1);color:#fff}.cl .cl-side .cl-nav-btn.on .cl-ico{color:#f4d35e}
+    .cl .cl-side .cl-nav-btn .cl-dot{top:6px;right:8px;border-color:#2b1810}
+    .cl .cl-sp{flex:1}
+    .cl .cl-col{height:100dvh;min-height:0}
+    .cl .cl-head{padding:30px 34px 8px}.cl .cl-h1{font-size:32px}
+    .cl .cl-mlogo,.cl .cl-bell{display:none}
+    .cl .cl-main{padding:0 34px 40px!important;max-width:none;overflow:auto;flex:1;min-height:0}
+    .cl .cl-seg{width:min(100%,420px)}
+    .cl .cl-nov{grid-auto-flow:row;grid-template-columns:repeat(4,1fr);gap:14px;overflow:visible;margin:0;padding:0}.cl .cl-ncard .im{aspect-ratio:1/1}
+    .cl .cl-kpis{grid-template-columns:repeat(3,minmax(0,280px));gap:14px}.cl .cl-kpi .v{font-size:24px}
+    .cl .cl-ords{grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+    .cl .cl-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+    .cl .cl-cartp{display:flex;flex-direction:column;margin:16px 16px 16px 0;padding:24px;overflow:auto;position:relative;z-index:1;animation:fadeIn .3s ease}
+    .cl .cl-cartp .cl-tot{margin-top:auto}
+    .cl .cl-tabbar,.cl .cl-cartbar,.cl .cl-sheet,.cl .cl-scrim{display:none!important}
+    .cl .toast{bottom:28px}
+    .cl .cl-script{font-size:52px}.cl .cl-xtitle{font-size:50px}
+  }
 `;
 
 // ─── State & persistence ──────────────────────────────────────────────────
@@ -3528,7 +3807,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [editingCustomName, setEditingCustomName] = useState("");
   const [accName,  setAccName]  = useState(user.name);
   const [atBottom, setAtBottom] = useState(false);
-  const [menuCompact, setMenuCompact] = useState(()=>{try{return localStorage.getItem('menu_compact')==='1'}catch{return false}});
+  const [menuCompact, setMenuCompact] = useState(()=>{try{const v=localStorage.getItem('menu_compact');return v===null?true:v==='1'}catch{return true}});
   const [openCats, setOpenCats] = useState({});
   const toggleCat = (catId) => setOpenCats(p=>({...p,[catId]:!p[catId]}));
   const orderFormRef = useRef(null);
@@ -3740,8 +4019,131 @@ function ClientPanel({ user, appState, update, onLogout }) {
     setCustomDish("");
   };
 
+  // ─── Stato esclusivo del saldo: o da saldare, o credito, o in pari ─────
+  const balanceKind = unpaid>0 ? "due" : (credit>0 ? "credit" : "ok");
+  const screenName  = tab==="order" ? "ordina" : tab==="notifs" ? "notifiche" : tab;
+  const cartVisible = tab==="order" && ordersOpen && !myOrder && cartCount>0;
+  const titles = {
+    order:   ["Buongiorno, "+user.name.split(" ")[0], "Cosa mangiamo oggi?"],
+    storico: ["Ultimi 30 giorni", "I tuoi ordini"],
+    top:     ["Chi ordina di più", "Top clienti"],
+    notifs:  [unreadCount>0 ? `${unreadCount} da leggere` : "Tutte lette", "Notifiche"],
+    natale:  ["Dicembre si avvicina", "Natale"],
+    account: ["Il tuo profilo", "Account"],
+  };
+  const [cartOpen, setCartOpen] = useState(false);
+  useEffect(()=>{ if(!cartVisible) setCartOpen(false); },[cartVisible]);
+
+  // Riga piatto (stesso setQty / itemNotes di sempre, solo markup nuovo)
+  const renderRow = (item, {custom=false}={}) => {
+    const q = quantities[item.id]||0;
+    return (
+      <div key={item.id} className={`cl-row ${q>0?"in":""} ${custom?"req":""}`}>
+        <div className="cl-row-name">
+          {custom && editingCustomId===item.id
+            ? <div className="flex" style={{gap:6}}>
+                <input value={editingCustomName} onChange={e=>setEditingCustomName(e.target.value)} autoFocus style={{flex:1}}/>
+                <button className="btn btn-success btn-sm" onClick={()=>{
+                  if(!editingCustomName.trim()) return;
+                  const newName=editingCustomName.trim();
+                  const updatedMenu=menu.map(i=>i.id===item.id?{...i,name:newName}:i);
+                  const newOrders={...appState.orders};
+                  Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
+                    const ord=newOrders[k];
+                    if(ord&&ord.items.find(i=>i.id===item.id)){
+                      newOrders[k]={...ord,items:ord.items.map(i=>i.id===item.id?{...i,name:newName}:i)};
+                    }
+                  });
+                  update({menus:{...appState.menus,[date]:updatedMenu},orders:newOrders});
+                  setEditingCustomId(null);
+                }}>✓</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setEditingCustomId(null)}>✕</button>
+              </div>
+            : <>
+                <div className="cl-row-title">
+                  {custom && "⭐ "}{item.name}
+                  {custom && <button className="cl-edit" aria-label="Modifica nome" onClick={()=>{setEditingCustomId(item.id);setEditingCustomName(item.name);}}>✏️</button>}
+                </div>
+                {custom && item.price==null && <small>In attesa del prezzo dal cuoco</small>}
+              </>
+          }
+        </div>
+        <span className="cl-price">{item.price!=null ? eur(item.price) : <small>{custom?"TBD":"Prezzo da definire"}</small>}</span>
+        {q>0
+          ? <span className="cl-step">
+              <button onClick={()=>setQty(item.id,-1)} aria-label="Togli">−</button>
+              <span>{q}</span>
+              <button onClick={()=>setQty(item.id,+1)} aria-label="Aggiungi">+</button>
+            </span>
+          : <button className="cl-add" onClick={()=>setQty(item.id,+1)} aria-label="Aggiungi">+</button>
+        }
+        {q>0 && (
+          <input className="cl-note"
+            value={itemNotes[item.id]||""}
+            onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
+            placeholder={custom ? "📝 Nota per questo piatto..." : "📝 Nota (es. senza cipolla)..."}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Contenuto carrello (pannello desktop + foglio mobile): stessi totali di prima
+  const cartItems = menu.filter(i=>(quantities[i.id]||0)>0);
+  const renderCartBody = () => (
+    <>
+      <h3 className="cl-h3">Il tuo ordine</h3>
+      <div className="cl-sub">{fmt(date)}</div>
+      <div className="cl-cart-list">
+        {cartItems.map(item=>{
+          const q=quantities[item.id]||0; const src=item.special?photoUrl(item.photo):null;
+          return (
+            <div key={item.id} className="cl-crow">
+              {src && <div className="cl-th"><img src={src} alt=""/></div>}
+              <div className="cl-crow-name">{item.custom&&"⭐ "}{item.name}
+                <small>{item.special?"Novità":item.custom?"Su richiesta":""}{(itemNotes[item.id]||"").trim()?` · 📝 ${itemNotes[item.id].trim()}`:""}</small></div>
+              <span className="cl-step sm">
+                <button onClick={()=>setQty(item.id,-1)} aria-label="Togli">−</button><span>{q}</span><button onClick={()=>setQty(item.id,+1)} aria-label="Aggiungi">+</button>
+              </span>
+              <span className="cl-price">{item.price!=null?eur(item.price*q):<small>TBD</small>}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="cl-tot">
+        {crUsable>0 && <>
+          <div className="l"><span>Totale lordo</span><span><s>{eur(estRaw)}</s></span></div>
+          <div className="l ok"><span>💳 Credito</span><span>−{eur(crUsable)}</span></div>
+        </>}
+        <div className="l big"><span>Da pagare</span><b>{estRaw===0&&hasUnpricedInCart ? "da definire" : eur(estNet)}{hasUnpricedInCart&&estRaw>0&&<small> + richieste</small>}</b></div>
+      </div>
+      {ordersOpen
+        ? <button className="cl-big" onClick={sendOrder} disabled={sendingOrder}>{sendingOrder?"⏳ Invio in corso…":"📨 Invia ordine"}</button>
+        : <div className="pending-badge" style={{justifyContent:"center",width:"100%",padding:10}}>🔒 Ordini chiusi alle 11:30</div>}
+    </>
+  );
+
+  const NavBtn = ({id, icon, label, onClick, badge}) => (
+    <button className={`cl-nav-btn ${tab===id?"on":""}`} onClick={onClick||(()=>setTab(id))} aria-label={label}>
+      <span className="cl-ico" aria-hidden="true">{icon}</span>{label}
+      {badge>0 && <span className="cl-dot">{badge}</span>}
+    </button>
+  );
+  const ICON = {
+    fork:  <svg viewBox="0 0 24 24"><path d="M7 3v7a3 3 0 0 0 6 0V3M10 13v8M17 3c-1.7 1.3-2.5 3.6-2.5 6.5 0 1.6.8 2.5 2.5 2.5v9"/></svg>,
+    clock: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>,
+    trophy:<svg viewBox="0 0 24 24"><path d="M8 4h8v6a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8M9 18h6"/></svg>,
+    user:  <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>,
+    bell:  <svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15L6 17ZM10 21h4"/></svg>,
+    tree:  <svg viewBox="0 0 24 24"><path d="M12 3 7 10h3l-4 6h4l-2 4h8l-2-4h4l-4-6h3l-5-7Z"/></svg>,
+    cal:   <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>,
+    out:   <svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>,
+    chev:  <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>,
+    x:     <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>,
+  };
+
   return(
-    <div className="app">
+    <div className={`app cl ${cartVisible?"cart-on":""}`} data-screen={screenName}>
       {/* Popup compleanno (una volta al giorno) */}
       {showBdayPopup && (
         <BirthdayPopup userName={user.name} onClose={()=>{
@@ -3758,155 +4160,119 @@ function ClientPanel({ user, appState, update, onLogout }) {
       )}
       {/* Popup: la richiesta di un piatto NON è un ordine */}
       {showRequestReminder && (
-        <div onClick={()=>setShowRequestReminder(false)} style={{
-          position:"fixed", inset:0, zIndex:9999,
-          background:"rgba(0,0,0,.6)",
-          display:"flex", alignItems:"center", justifyContent:"center", padding:20
-        }}>
-          <div onClick={e=>e.stopPropagation()} style={{
-            background:"var(--surface)", borderRadius:18, padding:"26px 22px",
-            maxWidth:360, width:"100%", textAlign:"center",
-            boxShadow:"0 20px 60px rgba(0,0,0,.4)", border:"2px solid var(--gold)"
-          }}>
-            <div style={{fontSize:"2.6rem",marginBottom:8}}>⚠️</div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.35rem",fontWeight:700,color:"var(--accent)",marginBottom:10,lineHeight:1.25}}>
-              Il piatto è nel carrello,<br/>ma l'ordine non è ancora partito
-            </div>
-            <div style={{fontSize:".92rem",color:"var(--text2)",lineHeight:1.55,marginBottom:18}}>
-              La sola richiesta <b>non basta</b>: per farci arrivare l'ordine devi premere
-              <b> 📨 Invia ordine</b>. Puoi prima aggiungere altri piatti, poi invia.
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div onClick={()=>setShowRequestReminder(false)} className="cl-modal">
+          <div onClick={e=>e.stopPropagation()} className="cl-modal-box">
+            <div className="cl-modal-ico">⚠️</div>
+            <h3 className="cl-h3" style={{color:"var(--accent)"}}>Il piatto è nel carrello,<br/>ma l'ordine non è ancora partito</h3>
+            <p>La sola richiesta <b>non basta</b>: per farci arrivare l'ordine devi premere <b>📨 Invia ordine</b>. Puoi prima aggiungere altri piatti, poi invia.</p>
+            <div className="cl-modal-acts">
               {ordersOpen && !myOrder ? (
-                <button className="btn btn-primary" style={{padding:"13px"}}
-                  onClick={()=>{ setShowRequestReminder(false); sendOrder(); }}>
-                  📨 Invia ordine adesso
-                </button>
+                <button className="cl-big" onClick={()=>{ setShowRequestReminder(false); sendOrder(); }}>📨 Invia ordine adesso</button>
               ) : (
-                <div style={{fontSize:".82rem",color:"var(--yellow)",fontWeight:700,padding:"6px 0"}}>
-                  🔒 Gli ordini sono al momento chiusi: invia appena riaprono.
-                </div>
+                <div style={{fontSize:".85rem",color:"var(--yellow)",fontWeight:700,padding:"6px 0"}}>🔒 Gli ordini sono al momento chiusi: invia appena riaprono.</div>
               )}
-              <button className="btn btn-ghost" onClick={()=>setShowRequestReminder(false)}>
+              <button className="cl-ghost" onClick={()=>setShowRequestReminder(false)}>
                 {ordersOpen && !myOrder ? "Aggiungo altro, poi invio" : "Ho capito"}
               </button>
             </div>
           </div>
         </div>
       )}
-      {/* Banner compleanno (resta tutta la giornata) */}
-      {isBirthday && <BirthdayBanner userName={user.name}/>}
-      {/* Banner festività (se oggi è una festa italiana) */}
-      {holiday && !isBirthday && <HolidayBanner holiday={holiday}/>}
-      {showNotifBanner && (
-        <div style={{
-          background:"linear-gradient(135deg,#1a3a2e,#0d2b1e)",
-          color:"#fff", padding:"12px 16px",
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-          gap:"10px", fontSize:".82rem", lineHeight:"1.4",
-          borderBottom:"2px solid rgba(46,200,100,.4)"
-        }}>
-          <span>🔔 <b>Attiva le notifiche!</b><br/>
-            Ricevi avvisi quando il menù è pronto o gli ordini aprono.
-          </span>
-          <div style={{display:"flex",gap:6,flexShrink:0}}>
-            <button onClick={async()=>{
-              const perm = await Notification.requestPermission();
-              if(perm==='granted') {
-                setShowNotifBanner(false);
-                localStorage.setItem("notif_banner_dismissed","1");
-                // Ottieni token FCM e salvalo subito
-                try {
-                  await window.initFirebase();
-                  // Aspetta che il token sia disponibile
-                  await new Promise(r=>setTimeout(r,2000));
-                  if(window._fcmToken && user) {
-                    const newTokens = {...(appState.fcmTokens||{}), [user.id]: window._fcmToken};
-                    update({fcmTokens: newTokens});
-                  }
-                } catch(e) { console.error('Token save error:', e); }
-              } else {
-                setShowNotifBanner(false);
-                localStorage.setItem("notif_banner_dismissed","1");
-              }
-            }} style={{background:"#2ec864",border:"none",color:"#fff",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:".8rem",fontWeight:700}}>
-              Attiva
-            </button>
-            <button onClick={()=>{ localStorage.setItem("notif_banner_dismissed","1"); setShowNotifBanner(false); }}
-              style={{background:"rgba(255,255,255,.15)",border:"none",color:"#fff",borderRadius:"50%",width:"26px",height:"26px",cursor:"pointer",fontSize:"1rem"}}>✕</button>
-          </div>
-        </div>
-      )}
 
-      {showIosBanner && (
-        <div style={{
-          background:"linear-gradient(135deg,#1a1a2e,#16213e)",
-          color:"#fff", padding:"12px 16px",
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-          gap:"10px", fontSize:".82rem", lineHeight:"1.4",
-          borderBottom:"2px solid rgba(200,148,42,.4)"
-        }}>
-          <span>📱 <b>Aggiungi alla schermata Home!</b><br/>
-            Tocca <b>Condividi</b> (↑) → <b>"Aggiungi a schermata Home"</b>
-          </span>
-          <button onClick={()=>{ localStorage.setItem("ios_banner_dismissed","1"); setShowIosBanner(false); }}
-            style={{background:"rgba(255,255,255,.15)",border:"none",color:"#fff",borderRadius:"50%",
-              width:"26px",height:"26px",cursor:"pointer",fontSize:"1rem",flexShrink:0}}>✕</button>
-        </div>
-      )}
-      <div className="header">
-        <div className="header-top">
-          <div className="header-logo"><LogoIcon size={42}/>{!BRAND.logoUrl && BRAND.name}</div>
-          <div className="header-actions" style={{flex:1,minWidth:0,overflow:"hidden"}}>
-            <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
-            <button className={`tab ${tab==="order"?"active":""}`} onClick={()=>setTab("order")}>🍽 Ordina</button>
-            <button className={`tab ${tab==="storico"?"active":""}`} onClick={()=>setTab("storico")}>📋</button>
-            <button className={`tab ${tab==="top"?"active":""}`} onClick={()=>setTab("top")}
-              style={tab!=="top" ? {
-                background:'linear-gradient(135deg,rgba(212,175,55,.22),rgba(212,175,55,.08))',
-                border:'1px solid rgba(212,175,55,.5)',
-                fontWeight:700,
-                color:'#8b6a15'
-              } : undefined}>🏆 Top</button>
-            <button className={`tab ${tab==="natale"?"active":""}`} onClick={()=>setTab("natale")}
-              style={tab!=="natale" ? {
-                background:'linear-gradient(135deg,rgba(230,57,70,.25),rgba(42,157,143,.25))',
-                border:'1px solid rgba(244,211,94,.7)',
-                fontWeight:700,
-                color:'#fff'
-              } : undefined}>🎄 Natale</button>
-            <button className={`tab ${tab==="account"?"active":""}`} onClick={()=>setTab("account")}>⚙️</button>
-            <button className={`tab ${tab==="notifs"?"active":""}`} onClick={openNotifs}>
-              🔔{unreadCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{unreadCount}</span>}
-            </button>
+      {/* ─── Barra laterale (desktop) ─────────────────────────────── */}
+      <aside className="cl-side" aria-label="Navigazione">
+        <div className="cl-logo"><LogoIcon size={56} style={{maxWidth:56,height:56,objectFit:"cover",filter:"none"}}/></div>
+        <NavBtn id="order"   icon={ICON.fork}   label="Ordina"/>
+        <NavBtn id="storico" icon={ICON.clock}  label="Storico"/>
+        <NavBtn id="top"     icon={ICON.trophy} label="Top"/>
+        <NavBtn id="notifs"  icon={ICON.bell}   label="Avvisi" onClick={openNotifs} badge={unreadCount}/>
+        <NavBtn id="natale"  icon={ICON.tree}   label="Natale"/>
+        <span className="cl-sp"/>
+        <NavBtn id="account" icon={ICON.user}   label="Account"/>
+      </aside>
+
+      <div className="cl-col">
+        {/* Banner compleanno (resta tutta la giornata) */}
+        {isBirthday && <BirthdayBanner userName={user.name}/>}
+        {/* Banner festività (se oggi è una festa italiana) */}
+        {holiday && !isBirthday && <HolidayBanner holiday={holiday}/>}
+        {showNotifBanner && (
+          <div className="cl-sysbanner green">
+            <span>🔔 <b>Attiva le notifiche!</b><br/>Ricevi avvisi quando il menù è pronto o gli ordini aprono.</span>
+            <div style={{display:"flex",gap:6,flexShrink:0}}>
+              <button onClick={async()=>{
+                const perm = await Notification.requestPermission();
+                if(perm==='granted') {
+                  setShowNotifBanner(false);
+                  localStorage.setItem("notif_banner_dismissed","1");
+                  // Ottieni token FCM e salvalo subito
+                  try {
+                    await window.initFirebase();
+                    // Aspetta che il token sia disponibile
+                    await new Promise(r=>setTimeout(r,2000));
+                    if(window._fcmToken && user) {
+                      const newTokens = {...(appState.fcmTokens||{}), [user.id]: window._fcmToken};
+                      update({fcmTokens: newTokens});
+                    }
+                  } catch(e) { console.error('Token save error:', e); }
+                } else {
+                  setShowNotifBanner(false);
+                  localStorage.setItem("notif_banner_dismissed","1");
+                }
+              }} className="cl-sys-ok">Attiva</button>
+              <button onClick={()=>{ localStorage.setItem("notif_banner_dismissed","1"); setShowNotifBanner(false); }} className="cl-sys-x">✕</button>
             </div>
-            <button className="tab" onClick={onLogout} style={{flexShrink:0,marginLeft:4}}>← Esci</button>
           </div>
-        </div>
-        <div style={{padding:"0 20px 8px",fontSize:".78rem",color:"rgba(255,255,255,.7)"}}>
-          Ciao, <b style={{color:"#fff"}}>{user.name}</b>
-          {credit>0&&<span style={{marginLeft:10,background:"rgba(255,255,255,.15)",borderRadius:20,padding:"2px 9px",fontWeight:700,color:"#fff"}}>💳 Credito {eur(credit)}</span>}
-          {unpaid>0&&<span style={{marginLeft:6,background:"rgba(192,57,43,.4)",borderRadius:20,padding:"2px 9px",fontWeight:700,color:"#fff"}}>⚠ Devi {eur(unpaid)}</span>}
-        </div>
-      </div>
-      <div className="main">
+        )}
+        {showIosBanner && (
+          <div className="cl-sysbanner dark">
+            <span>📱 <b>Aggiungi alla schermata Home!</b><br/>Tocca <b>Condividi</b> (↑) → <b>"Aggiungi a schermata Home"</b></span>
+            <button onClick={()=>{ localStorage.setItem("ios_banner_dismissed","1"); setShowIosBanner(false); }} className="cl-sys-x">✕</button>
+          </div>
+        )}
 
-        {tab==="natale" && <ChristmasSection/>}
+        {/* ─── Intestazione ──────────────────────────────────────────── */}
+        <header className="cl-head">
+          <div className="cl-head-l">
+            <div className="cl-mlogo"><LogoIcon size={44} style={{maxWidth:44,height:44,objectFit:"cover",filter:"none"}}/></div>
+            <div style={{minWidth:0}}>
+              <div className="cl-hi">{titles[tab]?.[0]}</div>
+              <h1 className="cl-h1">{titles[tab]?.[1]}</h1>
+            </div>
+          </div>
+          <button className="cl-iconbtn cl-bell" onClick={openNotifs} aria-label="Notifiche">
+            <span className="cl-ico">{ICON.bell}</span>{unreadCount>0 && <span className="cl-dot">{unreadCount}</span>}
+          </button>
+        </header>
 
-        {tab==="top" && <>
+        <main className="cl-main">
+
+        {tab==="natale" && (
+          <div className="cl-xmas-page">
+            <div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div>
+            <div className="cl-xmas-head">
+              <div className="cl-script">Buon Natale</div>
+              <h2 className="cl-xtitle">Il Natale di Dolci Sapori</h2>
+            </div>
+            <ChristmasSection/>
+          </div>
+        )}
+
+        {tab==="top" && <div className="cl-two">
           <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
           <Leaderboard appState={appState} currentUserId={user.id} period="year"/>
-        </>}
+        </div>}
 
         {tab==="notifs"&&(
-          <div className="card">
+          <div className="card cl-card" style={{position:"relative"}}>
+            <button className="cl-closex" onClick={()=>setTab("order")} aria-label="Chiudi"><span className="cl-ico">{ICON.x}</span></button>
             <div className="card-title">🔔 Notifiche</div>
             {myNotifs.length===0&&<div className="empty">Nessuna notifica.</div>}
             {myNotifs.map(n=>(
               <div key={n.id} className="notif-item">
                 <div className={`notif-dot ${n.read?"read":""}`}/>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:".88rem",fontWeight:n.read?400:700}}>{n.text||n.message||""}</div>
+                  <div style={{fontSize:".92rem",fontWeight:n.read?400:700}}>{n.text||n.message||""}</div>
                   <div className="muted mt4">{n.date ? new Date(n.date).toLocaleString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : ""}</div>
                 </div>
               </div>
@@ -3915,30 +4281,52 @@ function ClientPanel({ user, appState, update, onLogout }) {
         )}
 
         {tab==="account"&&(
-          <div className="card">
-            <div className="card-title">⚙️ Il mio account</div>
-            <div className="field" style={{marginBottom:10}}>
-              <label>Nome visualizzato</label>
-              <input value={accName} onChange={e=>setAccName(e.target.value)} placeholder="Il tuo nome"/>
-            </div>
-            <div className="field" style={{marginBottom:10}}>
-              <label>Nuova password</label>
-              <input type="password" value={accPwd} onChange={e=>setAccPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
-            </div>
-            <div className="field" style={{marginBottom:14}}>
-              <label>Conferma password</label>
-              <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
-            </div>
-            <div className="field" style={{marginBottom:14}}>
-              <label>🎂 Data di nascita (opzionale)</label>
-              <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)}
-                max={today()} style={{width:'100%'}}/>
-              <div style={{fontSize:'.72rem',color:'var(--muted)',marginTop:4,fontStyle:'italic'}}>
-                Ti faremo gli auguri il giorno del tuo compleanno! 🎉
+          <div className="cl-two">
+            <div>
+              <div className="cl-me">
+                <div className="cl-av">{(user.name||"?").split(" ").map(s=>s[0]).join("").slice(0,2).toUpperCase()}</div>
+                <div><div className="n">{user.name}</div><div className="u">@{user.id}</div></div>
+              </div>
+              <div className="cl-kpis">
+                {balanceKind==="due"    && <div className="cl-kpi"><div className="k">Da saldare</div><div className="v" style={{color:"var(--accent)"}}>{eur(unpaid)}</div></div>}
+                {balanceKind==="credit" && <div className="cl-kpi"><div className="k">Credito</div><div className="v" style={{color:"var(--green)"}}>{eur(credit)}</div></div>}
+                {balanceKind==="ok"     && <div className="cl-kpi"><div className="k">Saldo</div><div className="v" style={{color:"var(--green)"}}>In pari ✓</div></div>}
+                <div className="cl-kpi"><div className="k">Compleanno</div><div className="v" style={{fontSize:"1.05rem"}}>{user.birthDate ? new Date(user.birthDate+"T12:00:00").toLocaleDateString("it-IT",{day:"numeric",month:"long"}) : "—"}</div></div>
               </div>
             </div>
-            {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
-            <button className="btn btn-primary" onClick={saveAccount}>💾 Salva modifiche</button>
+            <div>
+              <div className="card cl-card">
+                <div className="card-title">⚙️ Il mio account</div>
+                <div className="field" style={{marginBottom:10}}>
+                  <label>Nome visualizzato</label>
+                  <input value={accName} onChange={e=>setAccName(e.target.value)} placeholder="Il tuo nome"/>
+                </div>
+                <div className="cl-two-in">
+                  <div className="field" style={{marginBottom:10}}>
+                    <label>Nuova password</label>
+                    <input type="password" value={accPwd} onChange={e=>setAccPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
+                  </div>
+                  <div className="field" style={{marginBottom:14}}>
+                    <label>Conferma password</label>
+                    <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
+                  </div>
+                </div>
+                <div className="field" style={{marginBottom:14}}>
+                  <label>🎂 Data di nascita (opzionale)</label>
+                  <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)}
+                    max={today()} style={{width:'100%'}}/>
+                  <div style={{fontSize:'.78rem',color:'var(--muted)',marginTop:4,fontStyle:'italic'}}>
+                    Ti faremo gli auguri il giorno del tuo compleanno! 🎉
+                  </div>
+                </div>
+                {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
+                <button className="cl-big" onClick={saveAccount}>💾 Salva modifiche</button>
+              </div>
+              <div className="card cl-card" style={{padding:0}}>
+                <button className="cl-frow" onClick={()=>setTab("natale")}><span className="cl-ico" style={{color:"var(--green)"}}>{ICON.tree}</span><span className="l">Natale</span><span className="v">Menù delle feste</span><span className="cl-ico chev">{ICON.chev}</span></button>
+                <button className="cl-frow out" onClick={onLogout}><span className="cl-ico">{ICON.out}</span>Esci dall'account</button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -3953,48 +4341,44 @@ function ClientPanel({ user, appState, update, onLogout }) {
           }
           // Filtra solo i giorni con ordini
           const daysWithOrders = days.filter(d=>appState.orders[`${d}:${user.id}`]);
+          const spent30 = daysWithOrders.reduce((s,d)=>s+((appState.orders[`${d}:${user.id}`]||{}).total||0),0);
           return(
-            <div className="card">
-              <div className="card-title">📋 I miei ordini (ultimi 30 giorni)</div>
-              {daysWithOrders.length===0&&<div className="empty">Nessun ordine nell'ultimo mese.</div>}
-              {daysWithOrders.map((d)=>{
+            <>
+              <div className="cl-kpis">
+                {balanceKind==="due"    && <div className="cl-kpi dark"><div className="k">Da saldare</div><div className="v">{eur(unpaid)}</div></div>}
+                {balanceKind==="credit" && <div className="cl-kpi dark"><div className="k">Credito</div><div className="v">{eur(credit)}</div></div>}
+                {balanceKind==="ok"     && <div className="cl-kpi dark"><div className="k">Saldo</div><div className="v">In pari ✓</div></div>}
+                <div className="cl-kpi"><div className="k">Ordini (30 gg)</div><div className="v">{daysWithOrders.length}</div></div>
+                <div className="cl-kpi"><div className="k">Spesi (30 gg)</div><div className="v">{eur(spent30)}</div></div>
+              </div>
+              {daysWithOrders.length===0&&<div className="card cl-card"><div className="empty">Nessun ordine nell'ultimo mese.</div></div>}
+              <div className="cl-ords">
+              {[...daysWithOrders].reverse().map((d)=>{
                 const ord = appState.orders[`${d}:${user.id}`];
                 const isToday = d===today();
+                const dt = new Date(d+"T12:00:00");
                 return(
-                  <div key={d} style={{
-                    borderBottom:"1px solid var(--border-lt)", padding:"10px 0"
-                  }}>
-                    <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontWeight:700,color:isToday?"var(--accent)":"var(--text)"}}>
-                        {isToday?"📍 ":""}{new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"})}
-                      </span>
-                      {ord
-                        ? <span className={`paid-badge ${ord.paid?"pagato":"non-pagato"}`} style={{cursor:"default",fontSize:".68rem"}}>
-                            {ord.paid?"✓ Pagato":"⏳ Da pagare"}
-                          </span>
-                        : <span className="muted" style={{fontSize:".78rem"}}>—</span>
-                      }
+                  <div key={d} className={`cl-ord ${isToday?"today":""}`}>
+                    <div className="cl-dt"><b>{dt.getDate()}</b><small>{dt.toLocaleDateString("it-IT",{weekday:"short"}).replace(".","")}</small></div>
+                    <div className="cl-ord-body">
+                      <div className="cl-ord-top">
+                        <span className="cl-ord-date">{isToday?"📍 Oggi · ":""}{dt.toLocaleDateString("it-IT",{day:"numeric",month:"long"})}</span>
+                        <span className={`paid-badge ${ord.paid?"pagato":"non-pagato"}`} style={{cursor:"default"}}>{ord.paid?"✓ Pagato":"⏳ Da pagare"}</span>
+                      </div>
+                      {ord.items.map(it=>(
+                        <div key={it.id} className="cl-ord-line">
+                          <span>{it.qty}× {it.name}{it.custom?" 🌟":""}{it.note?<i> · 📝 {it.note}</i>:null}</span>
+                          <span>{it.price!=null?eur(it.price*it.qty):"prezzo da definire"}</span>
+                        </div>
+                      ))}
+                      {ord.note&&<div className="cl-ord-note">📝 {ord.note}</div>}
+                      <div className="cl-ord-tot"><span>Totale</span><span>{eur(ord.total)}</span></div>
                     </div>
-                    {ord
-                      ? <>
-                          {ord.items.map(it=>(
-                            <div key={it.id} className="flex" style={{fontSize:".83rem",justifyContent:"space-between",padding:"2px 0"}}>
-                              <span>{it.qty}× {it.name}{it.custom?" 🌟":""}</span>
-                              <span style={{color:"var(--muted)"}}>{it.price!=null?eur(it.price*it.qty):"prezzo da definire"}</span>
-                            </div>
-                          ))}
-                          {ord.note&&<div style={{fontSize:".78rem",color:"var(--muted)",marginTop:4,fontStyle:"italic"}}>📝 {ord.note}</div>}
-                          <div className="flex" style={{justifyContent:"space-between",marginTop:5,fontWeight:700}}>
-                            <span>Totale</span>
-                            <span style={{color:"var(--accent)"}}>{eur(ord.total)}</span>
-                          </div>
-                        </>
-                      : <div className="muted" style={{fontSize:".8rem"}}>Nessun ordine</div>
-                    }
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </>
           );
         })()}
 
@@ -4003,84 +4387,41 @@ function ClientPanel({ user, appState, update, onLogout }) {
           {wrapActive && !showWrapPopup && yearStats && yearStats.orderCount>0 && (
             <YearWrapCard stats={yearStats} onOpen={()=>setShowWrapPopup(true)}/>
           )}
-          {/* Bottone sticky in basso con totale */}
-          {ordersOpen && !myOrder && cartCount>0 && !atBottom && (
-            <div style={{
-              position:"fixed", bottom:0, left:0, right:0, zIndex:200,
-              padding:"10px 16px 20px",
-              background:"linear-gradient(transparent, rgba(253,246,238,0.98) 30%)",
-              pointerEvents:"none"
-            }}>
-              <button className="btn btn-primary" onClick={sendOrder} disabled={sendingOrder}
-                style={{width:"100%",pointerEvents:"all",fontSize:"1rem",padding:"14px",
-                  boxShadow:"0 4px 20px rgba(139,26,26,.3)",borderRadius:14,opacity:sendingOrder?.7:1}}>
-                {sendingOrder
-                  ? "⏳ Invio in corso…"
-                  : <>📨 Invia ordine — {
-                      estRaw===0 && hasUnpricedInCart
-                        ? <span style={{fontSize:".85rem",opacity:.9}}>prezzo da definire</span>
-                        : crUsable>0
-                          ? <><s style={{opacity:.6,fontSize:".85rem"}}>{eur(estRaw)}</s> {eur(estNet)}</>
-                          : eur(estRaw)
-                    }{hasUnpricedInCart && estRaw>0 && <span style={{fontSize:".75rem",opacity:.85}}> + richieste</span>}</>}
-              </button>
-            </div>
+
+          {/* Saldo: o da saldare, o credito, o in pari */}
+          {balanceKind==="due" && (
+            <button className="cl-bal red" onClick={()=>setTab("storico")}>
+              <div><b>💳 Importo da saldare</b><small>Totale ordini non ancora pagati · tocca per i dettagli</small></div>
+              <span className="amt">{eur(unpaid)}</span>
+            </button>
           )}
-          {/* Saldo / Credito banners */}
-          {credit>0&&(
-            <div className="banner banner-green">
-              <div><div style={{fontWeight:700,color:"var(--green)"}}>💳 Hai un credito disponibile</div><div className="muted mt4">Verrà scalato automaticamente al prossimo ordine</div></div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.9rem",color:"var(--green)",fontWeight:700}}>{eur(credit)}</div>
-            </div>
+          {balanceKind==="credit" && (
+            <button className="cl-bal green" onClick={()=>setTab("storico")}>
+              <div><b>💳 Hai un credito disponibile</b><small>Verrà scalato automaticamente al prossimo ordine</small></div>
+              <span className="amt">{eur(credit)}</span>
+            </button>
           )}
-          {unpaid>0&&(
-            <div className="banner banner-red">
-              <div><div style={{fontWeight:700,color:"var(--red)"}}>💳 Importo da saldare</div><div className="muted mt4">Totale ordini non ancora pagati</div></div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.9rem",color:"var(--red)",fontWeight:700}}>{eur(unpaid)}</div>
-            </div>
-          )}
-          {unpaid===0&&credit===0&&(
-            <div className="banner banner-green" style={{padding:"10px 15px"}}>
-              <span style={{fontWeight:700,color:"var(--green)"}}>✅ Sei in pari! Nessun importo da saldare.</span>
-            </div>
+          {balanceKind==="ok" && (
+            <div className="cl-bal green slim"><b>✅ Sei in pari! Nessun importo da saldare.</b></div>
           )}
 
           {/* ─── Selettore giorno ─────────────────────────────────── */}
-          <div style={{
-            display:"flex", gap:6, marginBottom:12,
-            background:"var(--surface)", padding:6, borderRadius:12,
-            border:"1px solid var(--border-lt)"
-          }}>
+          <div className="cl-seg" role="tablist">
             {nextThree.map((d,i)=>{
               const isActive = d===date;
               const isPublished = appState.menuPub?.[d]===true;
               return (
-                <button key={d}
+                <button key={d} role="tab" aria-selected={isActive}
                   onClick={()=>isPublished && changeDate(d)}
                   disabled={!isPublished}
-                  style={{
-                    flex:1, padding:"8px 4px",
-                    background: isActive ? "var(--accent)" : "transparent",
-                    color: isActive ? "#fff" : (isPublished ? "var(--text)" : "var(--muted)"),
-                    border:"none", borderRadius:8,
-                    cursor: isPublished ? "pointer" : "not-allowed",
-                    opacity: isPublished ? 1 : 0.45,
-                    fontWeight: isActive ? 700 : 500,
-                    transition:"all .15s",
-                    display:"flex", flexDirection:"column", alignItems:"center", gap:2
-                  }}>
-                  <span style={{fontSize:".82rem"}}>{tabLabels[i]}</span>
-                  <span style={{fontSize:".68rem", opacity:.85}}>{fmtS(d)}</span>
+                  className={`${isActive?"on":""} ${isPublished?"":"off"}`}>
+                  <span>{tabLabels[i]}</span>
+                  <small>{fmtS(d).replace(/\s\d{4}$/,"")}</small>
                 </button>
               );
             })}
-            <label style={{
-              display:"flex", alignItems:"center", justifyContent:"center",
-              padding:"0 12px", background:"transparent",
-              borderRadius:8, cursor:"pointer", position:"relative",
-              border: !nextThree.includes(date) ? "2px solid var(--accent)" : "none"
-            }}>
-              <span style={{fontSize:"1.2rem"}}>📅</span>
+            <label className={`cl-cal ${!nextThree.includes(date)?"on":""}`} aria-label="Scegli un altro giorno">
+              <span className="cl-ico">{ICON.cal}</span>
               <input type="date"
                 value={date}
                 min={today()}
@@ -4089,277 +4430,178 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   const v = e.target.value;
                   if (!v) return;
                   if (appState.menuPub?.[v]===true) changeDate(v);
-                  else showToast?.("Menù non disponibile per quel giorno", true);
-                }}
-                style={{
-                  position:"absolute", inset:0, opacity:0, cursor:"pointer",
-                  width:"100%", height:"100%"
+                  else { setToast("Menù non disponibile per quel giorno"); setTimeout(()=>setToast(""),2000); }
                 }}
               />
             </label>
           </div>
           {/* Indicatore data se fuori dai 3 tab */}
           {!nextThree.includes(date) && (
-            <div style={{
-              textAlign:"center", marginBottom:12, marginTop:-4,
-              fontSize:".82rem", color:"var(--accent)", fontWeight:600
-            }}>
-              📅 Stai vedendo il menù di <b>{fmt(date)}</b>
-              {" · "}
-              <span onClick={()=>changeDate(today())}
-                style={{textDecoration:"underline", cursor:"pointer"}}>
-                torna a oggi
-              </span>
+            <div className="cl-datehint">
+              📅 Stai vedendo il menù di <b>{fmt(date)}</b>{" · "}
+              <span onClick={()=>changeDate(today())} style={{textDecoration:"underline",cursor:"pointer"}}>torna a oggi</span>
             </div>
           )}
 
-          {/* ─── Novità della settimana (con foto) ───────────────────── */}
-          {activeSpecials.map(sp=>{
-            const items = specialItems.filter(i=>i.specialId===sp.id);
-            if(!items.length && !sp.text) return null;
-            return (
-              <div key={sp.id} className="card" style={{
-                border:"2px solid var(--gold)", position:"relative", overflow:"hidden",
-                background:"linear-gradient(180deg,#fff9ec 0%,var(--card) 60%)"
-              }}>
-                <style>{`
-                  @keyframes newPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
-                  .special-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-                  @media(min-width:560px){.special-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-                  .special-item{background:#fff;border:1px solid var(--border-lt);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-                  .special-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#f3e9da}
-                  .special-item .noimg{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:2rem;background:#f3e9da}
-                  .special-body{padding:8px 9px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
-                  .special-name{font-weight:700;font-size:.86rem;line-height:1.2}
-                  .special-price{color:var(--accent);font-weight:700;font-size:.9rem}
-                  .special-ctl{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
-                `}</style>
-                <div style={{position:"absolute",top:10,right:10,background:"var(--accent)",color:"#fff",
-                  fontSize:".68rem",fontWeight:800,letterSpacing:".1em",padding:"4px 10px",borderRadius:20,
-                  animation:"newPulse 1.6s ease-in-out infinite",boxShadow:"0 2px 10px rgba(139,26,26,.35)"}}>NEW</div>
-                <div className="card-title" style={{marginBottom:4,paddingRight:60}}>{sp.title||"⭐ Novità della settimana"}</div>
-                {sp.text && <div style={{fontSize:".88rem",color:"var(--text2)",lineHeight:1.5,marginBottom:12,whiteSpace:"pre-line"}}>{sp.text}</div>}
-                {items.length>0 && (
-                  <div className="special-grid">
-                    {items.map(item=>{
-                      const q = quantities[item.id]||0;
-                      const src = photoUrl(item.photo);
-                      return (
-                        <div key={item.id} className="special-item" style={q>0?{borderColor:"var(--accent)",boxShadow:"0 0 0 2px rgba(139,26,26,.15)"}:undefined}>
-                          {src ? <img src={src} alt={item.name} loading="lazy"
-                                   onError={e=>{e.currentTarget.style.display="none"; e.currentTarget.nextSibling && (e.currentTarget.nextSibling.style.display="flex");}}/> : null}
-                          <div className="noimg" style={{display:src?"none":"flex"}}>🍕</div>
-                          <div className="special-body">
-                            <div className="special-name">{item.name}</div>
-                            <div className="special-ctl">
-                              <span className="special-price">{item.price!=null?eur(item.price):<span className="muted" style={{fontSize:".75rem"}}>prezzo da definire</span>}</span>
-                              {!myOrder && (
-                                <div className="flex" style={{gap:4}}>
-                                  <button className="qty-btn" onClick={()=>setQty(item.id,-1)} disabled={q===0} style={q===0?{opacity:.4}:undefined}>−</button>
-                                  <span className="qty-num">{q}</span>
-                                  <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <div className="cl-staterow">
+            <div className={`cl-state ${ordersOpen?"":"closed"}`}><i/>{ordersOpen ? (date===today() ? "Ordini aperti fino alle 11:30" : `Puoi già ordinare per ${fmtS(date).replace(/\s\d{4}$/,"")}`) : "🔒 Ordini chiusi"}</div>
+            {published && !myOrder && (
+              <button className="cl-mode" onClick={()=>setMenuCompact(v=>{const n=!v;try{localStorage.setItem('menu_compact',n?'1':'0')}catch{}return n;})}>
+                {menuCompact?"☷ Esteso":"☰ Compatto"}
+              </button>
+            )}
+          </div>
 
-          {myOrder?(
-            <div className="card">
-              <div className="card-title">🍽 Il tuo ordine — {fmt(date)}</div>
+          {/* Striscia Natale (discreta, porta alla sezione) */}
+          <button className="cl-xmas-strip" onClick={()=>setTab("natale")}>
+            <span className="cl-ico">{ICON.tree}</span>
+            <span className="tx"><b>Natale a Dolci Sapori</b><small>Menù delle feste in lavorazione</small></span>
+            <span className="cd">{daysToChristmas()} giorni</span>
+            <span className="cl-ico chev">{ICON.chev}</span>
+          </button>
+
+          {myOrder ? (
+            <div className="cl-sent">
+              <h3 className="cl-h3">🍽 Il tuo ordine · {date===today()?"oggi":fmtS(date).replace(/\s\d{4}$/,"")}
+                <span className={`paid-badge ${myOrder.paid?"pagato":"non-pagato"}`} style={{cursor:"default"}}>{myOrder.paid?"✓ Pagato — Grazie!":"⏳ In attesa di pagamento"}</span>
+              </h3>
               {myOrder.items.map(item=>(
-                <div key={item.id}>
-                  <div className="menu-order-item" style={{cursor:"default"}}>
-                    <div>
-                      <div style={{fontWeight:700}}>{item.custom&&"⭐ "}{item.name}</div>
-                      <div className="muted mt4">×{item.qty}</div>
-                    </div>
-                  <span style={{fontWeight:700,color:"var(--accent)"}}>
-                    {item.price!=null?eur(item.price*item.qty):<span className="muted" style={{fontSize:".79rem"}}>Prezzo TBD</span>}
-                  </span>
+                <div key={item.id} className="cl-crow">
+                  <div className="cl-crow-name">{item.custom&&"⭐ "}{item.name}<small>× {item.qty}{item.note?` · 📝 ${item.note}`:""}</small></div>
+                  <span className="cl-price">{item.price!=null?eur(item.price*item.qty):<small>Prezzo TBD</small>}</span>
                 </div>
-                {item.note&&<div style={{fontSize:".78rem",color:"var(--muted)",fontStyle:"italic",padding:"2px 4px 6px"}}>📝 {item.note}</div>}
-              </div>
               ))}
-              <hr className="divider"/>
-              {(myOrder.creditUsed||0)>0&&<>
-                <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}><span className="muted">Totale lordo:</span><span style={{textDecoration:"line-through",color:"var(--muted)"}}>{eur(myOrder.rawTotal)}</span></div>
-                <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}><span style={{color:"var(--green)",fontWeight:700}}>💳 Credito:</span><span style={{color:"var(--green)",fontWeight:700}}>−{eur(myOrder.creditUsed)}</span></div>
-              </>}
-              <div className="flex" style={{justifyContent:"space-between",marginBottom:11}}>
-                <span style={{fontWeight:700}}>Da pagare:</span>
-                <span style={{color:"var(--accent)",fontWeight:900,fontSize:"1.2rem"}}>{eur(myOrder.total)}</span>
+              <div className="cl-tot">
+                {(myOrder.creditUsed||0)>0&&<>
+                  <div className="l"><span>Totale lordo</span><span><s>{eur(myOrder.rawTotal)}</s></span></div>
+                  <div className="l ok"><span>💳 Credito</span><span>−{eur(myOrder.creditUsed)}</span></div>
+                </>}
+                <div className="l big"><span>Da pagare</span><b>{eur(myOrder.total)}</b></div>
               </div>
-              <div className="flex" style={{justifyContent:"space-between",alignItems:"center"}}>
-                <span className={`paid-badge ${myOrder.paid?"pagato":"non-pagato"}`} style={{cursor:"default"}}>
-                  {myOrder.paid?"✓ Pagato — Grazie!":"⏳ In attesa di pagamento"}
-                </span>
-                <div className="flex" style={{gap:6}}>
-                  {ordersOpen ? <>
-                    <button className="btn btn-ghost btn-sm" onClick={()=>{
-                      const q={}; myOrder.items.forEach(i=>{q[i.id]=i.qty;}); setQuantities(q); cancelOrder();
-                    }}>✏️ Modifica</button>
-                    <button className="btn btn-danger btn-sm" onClick={()=>{
-                      if(!window.confirm("Annullare l'ordine?")) return; fullCancelOrder();
-                    }}>🗑 Annulla</button>
-                  </> : <span className="pending-badge">🔒 Ordini chiusi alle 11:30</span>}
-                </div>
+              <div className="cl-acts">
+                {ordersOpen ? <>
+                  <button className="cl-ghost" onClick={()=>{
+                    const q={}; myOrder.items.forEach(i=>{q[i.id]=i.qty;}); setQuantities(q); cancelOrder();
+                  }}>✏️ Modifica</button>
+                  <button className="cl-ghost danger" onClick={()=>{
+                    if(!window.confirm("Annullare l'ordine?")) return; fullCancelOrder();
+                  }}>🗑 Annulla</button>
+                </> : <span className="pending-badge">🔒 Ordini chiusi alle 11:30</span>}
               </div>
+              <p className="cl-hint">Vuoi aggiungere o cambiare qualcosa? Premi <b>Modifica</b>: il menù riappare con i tuoi piatti già selezionati.</p>
             </div>
           ):(
-            <div className="card">
-              <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div className="card-title" style={{marginBottom:0}}>🍴 Menù — {fmt(date)}</div>
-                <button onClick={()=>setMenuCompact(v=>{const n=!v;try{localStorage.setItem('menu_compact',n?'1':'0')}catch{}return n;})}
-                  style={{background:"var(--surface)",border:"1px solid var(--border-lt)",borderRadius:8,padding:"4px 10px",fontSize:".75rem",cursor:"pointer",color:"var(--muted)"}}>
-                  {menuCompact?"☷ Esteso":"☰ Compatto"}
-                </button>
-              </div>
-              {!published
-                ?<div className="empty">⏳<br/>Il menù non è ancora disponibile.<br/>Ricontrolla tra poco!</div>
-                :<>
-                  {normalMenu.length===0&&<div className="empty" style={{padding:"16px 0"}}>Nessun piatto nel menù standard.</div>}
-                  {CATEGORIE.map(cat=>{
-                    const catItems = normalMenu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
-                    if(!catItems.length) return null;
-                    const catQty = catItems.reduce((s,i)=>s+(quantities[i.id]||0),0);
-                    const isOpen = menuCompact ? (openCats[cat.id]===true) : true;
-                    return(<div key={cat.id}>
-                      <div onClick={()=>menuCompact&&toggleCat(cat.id)} style={{
-                        fontSize:".75rem",fontWeight:700,color:"var(--accent)",
-                        margin:"12px 0 5px",textTransform:"uppercase",letterSpacing:".04em",
-                        borderBottom:"1px solid var(--border-lt)",paddingBottom:3,
-                        display:"flex",justifyContent:"space-between",alignItems:"center",
-                        cursor:menuCompact?"pointer":"default",
-                        userSelect:"none"
-                      }}>
-                        <span>{cat.label}{catQty>0&&<span style={{background:"var(--accent)",color:"#fff",borderRadius:20,padding:"1px 7px",fontSize:".7rem",marginLeft:6}}>{catQty}</span>}</span>
-                        {menuCompact&&<span style={{fontSize:"1rem",color:"var(--muted)"}}>{isOpen?"▲":"▼"}</span>}
-                      </div>
-                      {isOpen&&catItems.map(item=>(
-                    <div key={item.id}>
-                      <div className="menu-order-item">
-                        <div>
-                          <div style={{fontWeight:700}}>{item.name}</div>
-                          <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>Prezzo da definire</span>}</div>
+            !published
+              ? <div className="card cl-card"><div className="empty">⏳<br/>Il menù non è ancora disponibile.<br/>Ricontrolla tra poco!</div></div>
+              : <>
+                {/* ─── Novità della settimana (con foto) ───────────────────── */}
+                {activeSpecials.map(sp=>{
+                  const items = specialItems.filter(i=>i.specialId===sp.id);
+                  if(!items.length && !sp.text) return null;
+                  return (
+                    <div key={sp.id} className="cl-specials">
+                      <div className="cl-sec"><h2>{sp.title||"⭐ Novità della settimana"}</h2>{sp.to && <span>fino al {fmtS(sp.to).replace(/\s\d{4}$/,"")}</span>}</div>
+                      {sp.text && <div className="cl-special-text">{sp.text}</div>}
+                      {items.length>0 && (
+                        <div className="cl-nov">
+                          {items.map(item=>{
+                            const q = quantities[item.id]||0;
+                            const src = photoUrl(item.photo);
+                            return (
+                              <article key={item.id} className={`cl-ncard ${q>0?"in":""}`}>
+                                <div className="im">
+                                  {src ? <img src={src} alt={item.name} loading="lazy"
+                                           onError={e=>{e.currentTarget.style.display="none"; e.currentTarget.nextSibling && (e.currentTarget.nextSibling.style.display="flex");}}/> : null}
+                                  <div className="noimg" style={{display:src?"none":"flex"}}>🍕</div>
+                                  <span className="tag">Novità</span>
+                                </div>
+                                <div className="body">
+                                  <div className="n">{item.name}</div>
+                                  <div className="b">
+                                    <span className="cl-price">{item.price!=null?eur(item.price):<small>prezzo da definire</small>}</span>
+                                    {q>0
+                                      ? <span className="cl-step"><button onClick={()=>setQty(item.id,-1)} aria-label="Togli">−</button><span>{q}</span><button onClick={()=>setQty(item.id,+1)} aria-label="Aggiungi">+</button></span>
+                                      : <button className="cl-add" onClick={()=>setQty(item.id,+1)} aria-label="Aggiungi">+</button>}
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
-                        <div className="qty-ctrl">
-                          <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
-                          <span className="qty-num">{quantities[item.id]||0}</span>
-                          <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
-                        </div>
-                      </div>
-                      {(quantities[item.id]||0)>0&&(
-                        <input
-                          value={itemNotes[item.id]||""}
-                          onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
-                          placeholder="📝 Nota (es. senza cipolla)..."
-                          style={{fontSize:".8rem",margin:"4px 0 6px",borderColor:"var(--border-lt)"}}
-                        />
                       )}
                     </div>
-                  ))}
-                    </div>
-                  );})}
+                  );
+                })}
 
-                  {/* Custom dishes already requested */}
-                  {myCustom.length>0&&(
-                    <>
-                      <div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold)",margin:"10px 0 6px",textTransform:"uppercase"}}>⭐ Le tue richieste</div>
-                      {myCustom.map(item=>(
-                        <div key={item.id}>
-                          <div className="menu-order-item menu-order-item-custom">
-                            <div style={{flex:1}}>
-                              {editingCustomId===item.id
-                                ? <div className="flex" style={{gap:6}}>
-                                    <input value={editingCustomName}
-                                      onChange={e=>setEditingCustomName(e.target.value)}
-                                      style={{flex:1,fontSize:".85rem"}}
-                                      autoFocus
-                                    />
-                                    <button className="btn btn-success btn-sm" onClick={()=>{
-                                      if(!editingCustomName.trim()) return;
-                                      const newName=editingCustomName.trim();
-                                      const updatedMenu=menu.map(i=>i.id===item.id?{...i,name:newName}:i);
-                                      // Aggiorna anche gli ordini esistenti che contengono questo piatto
-                                      const newOrders={...appState.orders};
-                                      Object.keys(newOrders).filter(k=>k.startsWith(date+":")).forEach(k=>{
-                                        const ord=newOrders[k];
-                                        if(ord&&ord.items.find(i=>i.id===item.id)){
-                                          newOrders[k]={...ord,items:ord.items.map(i=>i.id===item.id?{...i,name:newName}:i)};
-                                        }
-                                      });
-                                      update({menus:{...appState.menus,[date]:updatedMenu},orders:newOrders});
-                                      setEditingCustomId(null);
-                                    }}>✓</button>
-                                    <button className="btn btn-ghost btn-sm" onClick={()=>setEditingCustomId(null)}>✕</button>
-                                  </div>
-                                : <div className="flex" style={{alignItems:"center",gap:6}}>
-                                    <div style={{fontWeight:700}}>{item.name}</div>
-                                    <button className="btn btn-ghost btn-xs" onClick={()=>{setEditingCustomId(item.id);setEditingCustomName(item.name);}}
-                                      style={{fontSize:".7rem",padding:"2px 6px"}}>✏️</button>
-                                  </div>
-                              }
-                              <div className="mt4">{item.price!=null?<span style={{color:"var(--accent)",fontWeight:700}}>{eur(item.price)}</span>:<span className="muted" style={{fontSize:".77rem"}}>In attesa del prezzo</span>}</div>
-                            </div>
-                            <div className="qty-ctrl">
-                              <button className="qty-btn" onClick={()=>setQty(item.id,-1)}>−</button>
-                              <span className="qty-num">{quantities[item.id]||0}</span>
-                              <button className="qty-btn" onClick={()=>setQty(item.id,+1)}>+</button>
-                            </div>
-                          </div>
-                          {(quantities[item.id]||0)>0&&(
-                            <input
-                              value={itemNotes[item.id]||""}
-                              onChange={e=>setItemNotes(p=>({...p,[item.id]:e.target.value}))}
-                              placeholder="📝 Nota per questo piatto..."
-                              style={{fontSize:".8rem",margin:"4px 0 6px",borderColor:"var(--gold)"}}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </>
-                  )}
+                {normalMenu.length===0&&<div className="card cl-card"><div className="empty" style={{padding:"16px 0"}}>Nessun piatto nel menù standard.</div></div>}
+                {CATEGORIE.map(cat=>{
+                  const catItems = normalMenu.filter(i=>i.categoria===cat.id||(!i.categoria&&cat.id==="primi"));
+                  if(!catItems.length) return null;
+                  const catQty = catItems.reduce((s,i)=>s+(quantities[i.id]||0),0);
+                  const isOpen = menuCompact ? (openCats[cat.id]===true) : true;
+                  return(<div key={cat.id} className="cl-catblock">
+                    {menuCompact
+                      ? <button className={`cl-cat bar ${isOpen?"":"closed"}`} onClick={()=>toggleCat(cat.id)} aria-expanded={isOpen}>
+                          <span className="t"><h2>{cat.label}</h2>{catQty>0&&<span className="cnt">{catQty}</span>}</span>
+                          <span className="r">{catItems.length} {catItems.length===1?"piatto":"piatti"} <span className="cl-ico chev">{ICON.chev}</span></span>
+                        </button>
+                      : <div className="cl-sec"><h2>{cat.label}{catQty>0&&<span className="cnt">{catQty}</span>}</h2><span>{catItems.length} {catItems.length===1?"piatto":"piatti"}</span></div>}
+                    {isOpen && <div className="cl-list">{catItems.map(item=>renderRow(item))}</div>}
+                  </div>);
+                })}
 
-                  {/* Custom dish request box */}
-                  <div style={{background:"var(--bg)",borderRadius:10,padding:"12px 14px",border:"1px solid var(--border)",marginTop:10}}>
-                    <div style={{fontSize:".75rem",fontWeight:700,color:"var(--gold)",marginBottom:7,textTransform:"uppercase"}}>⭐ Vuoi qualcosa di diverso?</div>
-                    <div className="flex">
-                      <input placeholder="Scrivi il tuo piatto personalizzato..." value={customDish} onChange={e=>setCustomDish(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustomDish()} style={{flex:1}}/>
-                      <button className="btn btn-gold btn-sm" onClick={addCustomDish}>Richiedi</button>
-                    </div>
-                    <div className="muted mt4" style={{fontSize:".72rem"}}>Il cuoco vedrà la tua richiesta e inserirà il prezzo</div>
+                {/* Custom dishes already requested */}
+                {myCustom.length>0&&(
+                  <div className="cl-catblock">
+                    <div className="cl-sec"><h2 style={{color:"#7a5a12"}}>⭐ Le tue richieste</h2><span>{myCustom.length}</span></div>
+                    <div className="cl-list">{myCustom.map(item=>renderRow(item,{custom:true}))}</div>
                   </div>
+                )}
 
-                  <hr className="divider"/>
-                  {crUsable>0&&<>
-                    <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}><span className="muted">Totale lordo:</span><span style={{textDecoration:"line-through",color:"var(--muted)"}}>{eur(estRaw)}</span></div>
-                    <div className="flex" style={{justifyContent:"space-between",marginBottom:4}}><span style={{color:"var(--green)",fontWeight:700}}>💳 Credito:</span><span style={{color:"var(--green)",fontWeight:700}}>−{eur(crUsable)}</span></div>
-                  </>}
-                  <div className="flex" style={{justifyContent:"space-between",marginBottom:11}}>
-                    <span style={{fontWeight:700}}>Da pagare:</span>
-                    <span style={{color:"var(--accent)",fontWeight:900,fontSize:"1.1rem"}}>{eur(estNet)}</span>
+                {/* Custom dish request box */}
+                <div className="cl-custom">
+                  <div className="lbl">⭐ Vuoi qualcosa di diverso?</div>
+                  <div className="in">
+                    <input placeholder="Scrivi il tuo piatto personalizzato..." value={customDish} onChange={e=>setCustomDish(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustomDish()}/>
+                    <button onClick={addCustomDish}>Richiedi</button>
                   </div>
+                  <small>Il cuoco vedrà la tua richiesta e inserirà il prezzo</small>
+                </div>
 
-                  <div style={{display:"flex",justifyContent:"flex-end"}}>
-                    {ordersOpen
-                      ? <button className="btn btn-primary" onClick={sendOrder} disabled={sendingOrder}>{sendingOrder?"⏳ Invio in corso…":"📨 Invia ordine"}</button>
-                      : <div className="pending-badge">🔒 Ordini chiusi alle 11:30</div>
-                    }
-                  </div>
-                </>
-              }
-            </div>
+                {!ordersOpen && <div className="pending-badge" style={{marginTop:14}}>🔒 Ordini chiusi alle 11:30</div>}
+              </>
           )}
         </>)}
+        </main>
       </div>
+
+      {/* ─── Carrello: pannello desktop ───────────────────────────── */}
+      {cartVisible && <aside className="cl-cartp" aria-label="Il tuo ordine">{renderCartBody()}</aside>}
+
+      {/* ─── Barra inferiore (mobile) ─────────────────────────────── */}
+      <nav className="cl-tabbar" aria-label="Navigazione"><div className="in">
+        <NavBtn id="order"   icon={ICON.fork}   label="Ordina"/>
+        <NavBtn id="storico" icon={ICON.clock}  label="Storico"/>
+        <NavBtn id="top"     icon={ICON.trophy} label="Top"/>
+        <NavBtn id="account" icon={ICON.user}   label="Account"/>
+      </div></nav>
+
+      {/* ─── Carrello: barra + foglio (mobile) ─────────────────────── */}
+      {cartVisible && (
+        <div className="cl-cartbar">
+          <button className="t" onClick={()=>setCartOpen(true)} aria-label="Apri il carrello">
+            <small>{cartCount} {cartCount===1?"piatto":"piatti"}{crUsable>0?` · credito −${eur(crUsable)}`:""} · tocca per vedere</small>
+            <b>{estRaw===0&&hasUnpricedInCart ? "da definire" : eur(estNet)}{hasUnpricedInCart&&estRaw>0?" + richieste":""}</b>
+          </button>
+          <button className="go" onClick={sendOrder} disabled={sendingOrder}>{sendingOrder?"⏳ Invio…":"Invia 📨"}</button>
+        </div>
+      )}
+      {cartVisible && cartOpen && <div className="cl-scrim" onClick={()=>setCartOpen(false)}/>}
+      <div className={`cl-sheet ${cartVisible&&cartOpen?"show":""}`} role="dialog" aria-label="Il tuo ordine">
+        <div className="grab"/>
+        {cartVisible && renderCartBody()}
+      </div>
+
       {toast&&<div className="toast">{toast}</div>}
     </div>
   );
