@@ -769,6 +769,28 @@ const STYLE = `
   .cl .toast{bottom:calc(var(--cl-nav-h) + 20px);left:50%;right:auto;transform:translateX(-50%);border-radius:999px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
   .cl.cart-on .toast{bottom:calc(var(--cl-nav-h) + var(--cl-cartbar-h) + 20px)}
 
+
+  /* ─── admin ─── */
+  .cl-admin .cl-side{overflow:auto;scrollbar-width:none}
+  .cl-admin .cl-datenav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+  .cl-admin .cl-datefield{display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;border-radius:14px;background:var(--cl-glass);border:1px solid rgba(255,255,255,.7);box-shadow:var(--cl-shadow);margin:0;color:#8b1a1a}
+  .cl-admin .cl-datefield input{border:0;background:none;padding:0;min-height:0;height:40px;width:150px;color:var(--cl-ink);font-weight:600}
+  .cl-admin .cl-mode{height:44px;border-radius:14px!important;padding:0 14px}
+  .cl-admin .cl-datelabel{font-size:.86rem;color:var(--cl-ink3);text-transform:capitalize}
+  .cl-admin .cl-main{max-width:none}
+  .cl .cl-more{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .cl .cl-more-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:84px;border-radius:18px;border:1px solid var(--cl-line-soft);background:#fdf6ee;font-size:13px;font-weight:600;color:var(--cl-ink2);cursor:pointer}
+  .cl .cl-more-btn .cl-ico{font-size:24px;color:#8b1a1a}
+  .cl .cl-more-btn.on{background:#2b1810;color:#fff;border-color:transparent}.cl .cl-more-btn.on .cl-ico{color:#f4d35e}
+  .cl .cl-more-btn.out{color:#8b1a1a}
+  .cl-admin .card .card-title{font-size:1.02rem}
+  .cl-admin .menu-item,.cl-admin .order-block,.cl-admin .menu-order-item{background:#fff;border-radius:14px}
+  .cl-admin .btn{border-radius:12px;min-height:38px}
+  .cl-admin .cl-xmas-page .card{background:linear-gradient(180deg,#1f3b2d 0%,#14281e 100%)!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+  @media (min-width:900px){
+    .cl-admin .cl-side .cl-nav-btn{height:54px;width:64px}
+    .cl-admin .cl-main{padding-bottom:40px}
+  }
   /* ─── desktop ─── */
   @media (min-width:900px){
     .cl{grid-template-columns:88px minmax(0,1fr);height:100dvh;overflow:hidden}
@@ -3780,51 +3802,95 @@ function AdminSpecials({ appState, update }) {
 function AdminPanel({ user, appState, update, onLogout }) {
   const [tab, setTab]   = useState("menu");
   const [date,setDate]  = useState(today());
+  const [moreOpen, setMoreOpen] = useState(false);
   const pendingCount = appState.users.filter(u=>u.role==="client"&&!u.approved).length;
 
+  const TABS = [
+    ["menu","Menù",      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>],
+    ["orders","Ordini",  <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3ZM9 8h6M9 12h6M9 16h4"/></svg>],
+    ["clients","Clienti",<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4a3.5 3.5 0 0 1 0 7M18 13.5a6 6 0 0 1 3.5 6.5"/></svg>],
+    ["novita","Novità",  <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8L12 3Z"/></svg>],
+    ["riepilogo","Riepilogo",<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>],
+    ["notif","Notifiche",<svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15L6 17ZM10 21h4"/></svg>],
+    ["summary","Storico",<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>],
+    ["top","Top",        <svg viewBox="0 0 24 24"><path d="M8 4h8v6a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8M9 18h6"/></svg>],
+    ["natale","Natale",  <svg viewBox="0 0 24 24"><path d="M12 3 7 10h3l-4 6h4l-2 4h8l-2-4h4l-4-6h3l-5-7Z"/></svg>],
+  ];
+  const MAIN = ["menu","orders","clients"];
+  const label = Object.fromEntries(TABS.map(([v,l])=>[v,l]));
+  const withDate = !["summary","clients","notif","top","natale","novita"].includes(tab);
+  const go = v => { setTab(v); setMoreOpen(false); };
+  const Btn = ({v,l,icon,onClick}) => (
+    <button className={`cl-nav-btn ${tab===v?"on":""}`} onClick={onClick||(()=>go(v))} aria-label={l}>
+      <span className="cl-ico" aria-hidden="true">{icon}</span>{l}
+      {v==="clients"&&pendingCount>0&&<span className="cl-dot">{pendingCount}</span>}
+    </button>
+  );
+  const outIcon = <svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>;
+  const moreIcon = <svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>;
+
   return(
-    <div className="app">
-      <div className="header">
-        <div className="header-top">
-          <div className="header-logo" style={{gap:6}}>
-            <LogoIcon size={42}/>
-            {!BRAND.logoUrl && BRAND.name}
-            <span className="badge">ADMIN</span>
+    <div className="app cl cl-admin" data-screen={tab==="natale"?"natale":tab}>
+      <aside className="cl-side" aria-label="Navigazione">
+        <div className="cl-logo"><img src="/logo192.png" alt="Dolci Sapori"/></div>
+        {TABS.map(([v,l,icon])=><Btn key={v} v={v} l={l} icon={icon}/>)}
+        <span className="cl-sp"/>
+        <Btn v="__out" l="Esci" icon={outIcon} onClick={onLogout}/>
+      </aside>
+
+      <div className="cl-col">
+        <header className="cl-head">
+          <div className="cl-head-l">
+            <div className="cl-mlogo"><img src="/logo192.png" alt="Dolci Sapori"/></div>
+            <div style={{minWidth:0}}>
+              <div className="cl-hi">Admin · {user.name}</div>
+              <h1 className="cl-h1">{label[tab]}</h1>
+            </div>
           </div>
-          <div className="header-actions">
-            <span className="header-user">👤 {user.name}</span>
-            <button className="tab" onClick={onLogout} style={{marginLeft:2,padding:"5px 8px"}}>⬅</button>
-          </div>
-        </div>
-        <div className="header-tabs">
-          {[["menu","📋 Menù"],["novita","⭐ Novità"],["orders","🧾 Ordini"],["riepilogo","📊 Riepilogo"],["notif","🔔 Notifiche"],["clients","👥 Clienti"],["summary","📅 Storico"],["top","🏆 Top"],["natale","🎄 Natale"]].map(([v,l])=>(
-            <button key={v} className={`tab ${tab===v?"active":""}`} onClick={()=>setTab(v)}>
-              {l}{v==="clients"&&pendingCount>0&&<span className="badge badge-red" style={{marginLeft:3}}>{pendingCount}</span>}
-            </button>
-          ))}
-        </div>
+          <button className="cl-iconbtn cl-bell" onClick={onLogout} aria-label="Esci"><span className="cl-ico">{outIcon}</span></button>
+        </header>
+
+        <main className="cl-main">
+          {withDate && (
+            <div className="cl-datenav">
+              <label className="cl-datefield">
+                <span className="cl-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+                <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+              </label>
+              <button className="cl-mode" onClick={()=>setDate(today())}>Oggi</button>
+              <span className="cl-datelabel">{fmt(date)}</span>
+            </div>
+          )}
+          {tab==="menu"    &&<AdminMenu    date={date} appState={appState} update={update}/>}
+          {tab==="orders"  &&<AdminOrders  date={date} appState={appState} update={update}/>}
+          {tab==="notif"   &&<AdminNotifications       appState={appState} update={update}/>}
+          {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
+          {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
+          {tab==="summary" &&<AdminSummary             appState={appState}/>}
+          {tab==="natale"  &&<div className="cl-xmas-page" style={{maxWidth:900}}><div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div><ChristmasSection isAdmin/></div>}
+          {tab==="novita"  &&<AdminSpecials appState={appState} update={update}/>}
+          {tab==="top"     &&<div className="cl-two">
+            <Leaderboard appState={appState} period="month"/>
+            <Leaderboard appState={appState} period="year"/>
+          </div>}
+        </main>
       </div>
-      <div className="main">
-        {!["summary","clients","notif","top","natale","novita"].includes(tab)&&(
-          <div className="date-nav">
-            <span style={{fontWeight:700,color:"var(--accent)"}}>📅</span>
-            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:165}}/>
-            <button className="btn btn-ghost btn-sm" onClick={()=>setDate(today())}>Oggi</button>
-            <span className="muted" style={{fontStyle:"italic",fontSize:".82rem"}}>{fmt(date)}</span>
-          </div>
-        )}
-        {tab==="menu"    &&<AdminMenu    date={date} appState={appState} update={update}/>}
-        {tab==="orders"  &&<AdminOrders  date={date} appState={appState} update={update}/>}
-        {tab==="notif"   &&<AdminNotifications       appState={appState} update={update}/>}
-        {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
-        {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
-        {tab==="summary" &&<AdminSummary             appState={appState}/>}
-        {tab==="natale"  &&<ChristmasSection isAdmin/>}
-        {tab==="novita"  &&<AdminSpecials appState={appState} update={update}/>}
-        {tab==="top"     &&<>
-          <Leaderboard appState={appState} period="month"/>
-          <Leaderboard appState={appState} period="year"/>
-        </>}
+
+      {/* barra inferiore mobile: 3 principali + Altro */}
+      <nav className="cl-tabbar" aria-label="Navigazione"><div className="in">
+        {TABS.filter(([v])=>MAIN.includes(v)).map(([v,l,icon])=><Btn key={v} v={v} l={l} icon={icon}/>)}
+        <button className={`cl-nav-btn ${!MAIN.includes(tab)?"on":""}`} onClick={()=>setMoreOpen(true)} aria-label="Altro"><span className="cl-ico">{moreIcon}</span>Altro</button>
+      </div></nav>
+      {moreOpen && <div className="cl-scrim" onClick={()=>setMoreOpen(false)}/>}
+      <div className={`cl-sheet ${moreOpen?"show":""}`} role="dialog" aria-label="Altre sezioni">
+        <div className="grab"/>
+        <h3 className="cl-h3">Altre sezioni</h3>
+        <div className="cl-more">
+          {TABS.filter(([v])=>!MAIN.includes(v)).map(([v,l,icon])=>(
+            <button key={v} className={`cl-more-btn ${tab===v?"on":""}`} onClick={()=>go(v)}><span className="cl-ico">{icon}</span>{l}</button>
+          ))}
+          <button className="cl-more-btn out" onClick={onLogout}><span className="cl-ico">{outIcon}</span>Esci</button>
+        </div>
       </div>
     </div>
   );
