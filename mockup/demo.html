@@ -186,16 +186,31 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .frow.out{color:var(--rosso);justify-content:center;font-weight:600}
 
 /* natale */
-.xhero{border-radius:var(--r);overflow:hidden;background:var(--bruno);color:#fff;margin-top:10px;position:relative}
+.xwrap{position:relative;overflow:hidden;border-radius:var(--r);margin-top:10px;padding:22px 18px 18px;color:#fff;background:radial-gradient(120% 80% at 50% 0%,var(--rosso-2) 0%,var(--rosso) 45%,var(--bruno) 100%);box-shadow:0 24px 50px -28px rgba(43,24,16,.8)}
+.xwrap>*{position:relative;z-index:1}
+.snow{position:absolute;inset:0;z-index:0;pointer-events:none}
+.snow i{position:absolute;top:-10%;font-style:normal;color:rgba(255,255,255,.85);animation:fall linear infinite;text-shadow:0 0 6px rgba(255,255,255,.6)}
+.snow i:nth-child(1){left:4%;font-size:14px;animation-duration:11s}.snow i:nth-child(2){left:12%;font-size:10px;animation-duration:14s;animation-delay:-3s}.snow i:nth-child(3){left:21%;font-size:16px;animation-duration:12s;animation-delay:-6s}.snow i:nth-child(4){left:30%;font-size:9px;animation-duration:16s;animation-delay:-1s}.snow i:nth-child(5){left:39%;font-size:13px;animation-duration:13s;animation-delay:-8s}.snow i:nth-child(6){left:48%;font-size:11px;animation-duration:15s;animation-delay:-4s}.snow i:nth-child(7){left:57%;font-size:15px;animation-duration:12s;animation-delay:-9s}.snow i:nth-child(8){left:66%;font-size:10px;animation-duration:17s;animation-delay:-2s}.snow i:nth-child(9){left:74%;font-size:12px;animation-duration:13s;animation-delay:-7s}.snow i:nth-child(10){left:82%;font-size:16px;animation-duration:11s;animation-delay:-5s}.snow i:nth-child(11){left:90%;font-size:9px;animation-duration:15s;animation-delay:-10s}.snow i:nth-child(12){left:96%;font-size:13px;animation-duration:14s;animation-delay:-12s}
+@keyframes fall{to{transform:translateY(115vh) rotate(360deg)}}
+.lights{display:flex;justify-content:space-between;margin:-22px -18px 14px;padding:0 10px;height:14px;border-top:2px solid rgba(244,211,94,.6)}
+.lights i{width:10px;height:14px;border-radius:0 0 6px 6px;background:var(--oro-2);box-shadow:0 0 10px var(--oro-2);animation:blink 1.6s ease-in-out infinite}
+.lights i:nth-child(odd){background:var(--rosa);box-shadow:0 0 10px var(--rosa);animation-delay:-.8s}
+.lights i:nth-child(3n){background:#fff;box-shadow:0 0 10px #fff;animation-delay:-.4s}
+@keyframes blink{50%{opacity:.35}}
+.ribbon{display:inline-block;justify-self:start;background:var(--oro-2);color:var(--bruno);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:12px}
+.xtitle{font-size:34px;line-height:1.02;font-weight:700;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.25)}
+.xsub{font-size:14.5px;line-height:1.5;opacity:.92;margin:10px 0 16px}.xsub b{color:var(--oro-2)}
+.xhero{border-radius:var(--r);overflow:hidden;border:3px solid var(--oro-2);box-shadow:0 14px 34px -16px rgba(0,0,0,.6)}
 .xhero video,.xhero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.xhero .cap{padding:14px 16px}
-.xhero .cap h2{font-size:20px}.xhero .cap p{font-size:13.5px;opacity:.8;margin-top:4px}
-.marq{overflow:hidden;white-space:nowrap;margin-top:10px;font-size:22px;letter-spacing:.3em;opacity:.9}
-.marq span{display:inline-block;animation:mq 18s linear infinite}
+.marq{overflow:hidden;white-space:nowrap;margin-top:14px;font-size:22px;letter-spacing:.3em}
+.marq span{display:inline-block;animation:mq 22s linear infinite}
 @keyframes mq{to{transform:translateX(-50%)}}
-.cdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.cdown div{background:var(--surface);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
-.cdown b{display:block;font-family:var(--font-h);font-size:28px;font-weight:600}.cdown small{font-size:12px;color:var(--ink-3);font-weight:600}
+.cdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.cdown div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);border-radius:var(--r);padding:12px;text-align:center}
+.cdown b{display:block;font-family:var(--font-h);font-size:30px;font-weight:700;color:var(--oro-2)}.cdown small{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;font-weight:600}
+.xnote{margin-top:14px;font-size:13px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;text-align:center}
+[data-t=c] .xwrap,[data-t=c] .xhero,[data-t=c] .cdown div{border-radius:0}
+@media (min-width:900px){.xwrap{padding:30px 34px 26px;display:grid;grid-template-columns:1fr 1.1fr;column-gap:34px;align-items:center}.xwrap .lights{grid-column:1/-1;margin:-30px -34px 20px}.xwrap .xhero{grid-row:2/5}.xwrap .cdown,.xwrap .marq,.xwrap .xnote{grid-column:1/-1}.xtitle{font-size:46px}.xhero video,.xhero img{aspect-ratio:4/3}}
 
 /* sheet (carrello mobile) + modale */
 .scrim{position:fixed;inset:0;background:rgba(43,24,16,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
@@ -264,7 +279,6 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
   .sheet,.scrim{display:none!important}
   .toast{bottom:28px}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-  .xhero video,.xhero img{aspect-ratio:21/9}
 }
 
 /* ═════════ TEMA A · Liquid Glass ═════════ */
@@ -450,12 +464,19 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
       </section>
       <!-- NATALE -->
       <section class="screen" id="s-natale">
-        <div class="xhero">
-          <video src="../public/natale.mp4" poster="../public/natale.jpg" autoplay muted loop playsinline></video>
-          <div class="cap"><h2 class="h">Il Natale di Dolci Sapori</h2><p>Il menù delle feste è in lavorazione: panettoni, pandori e i piatti della tradizione arrivano presto.</p>
-          <div class="marq" aria-hidden="true"><span>🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ </span></div></div>
+        <div class="xwrap">
+          <div class="snow" aria-hidden="true"><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i></div>
+          <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="ribbon">🎄 Natale 2026</div>
+          <h2 class="h xtitle">Il Natale di<br>Dolci Sapori</h2>
+          <p class="xsub">Panettoni, pandori e i piatti della tradizione. Il menù delle feste è <b>in lavorazione</b>: appena pronto lo troverai qui e potrai ordinare come sempre.</p>
+          <div class="xhero">
+            <video src="../public/natale.mp4" poster="../public/natale.jpg" autoplay muted loop playsinline></video>
+          </div>
+          <div class="cdown" id="cdown"></div>
+          <div class="marq" aria-hidden="true"><span>🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 </span></div>
+          <div class="xnote">🔔 Attiva le notifiche per sapere quando il menù di Natale è pronto.</div>
         </div>
-        <div class="cdown" id="cdown"></div>
       </section>
       <!-- ACCOUNT -->
       <section class="screen" id="s-account">
