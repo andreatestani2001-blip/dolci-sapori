@@ -172,7 +172,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .rank .pos{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-family:var(--font-h);font-weight:700;font-size:13px;background:var(--surface-2)}
 .rank .r:nth-child(1) .pos{background:var(--oro-2)}.rank .r:nth-child(2) .pos{background:#e8e8e8}.rank .r:nth-child(3) .pos{background:#e9c7a2}
 .rank .nm{flex:1;font-weight:600;font-size:14.5px}.rank .nm small{display:block;font-weight:500;font-size:12px;color:var(--ink-3)}
-.rank .r.me{background:var(--oro-20)}
+.rank .r.mine{background:var(--oro-20)}
 
 /* account */
 .me{background:var(--bruno);color:#fff;border-radius:24px;padding:18px;display:flex;align-items:center;gap:14px;margin-top:10px;position:relative;overflow:hidden}
@@ -469,10 +469,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
       <!-- TOP -->
       <section class="screen" id="s-top">
         <div class="chips" id="topf"><button class="chip on" data-t="m">Novembre</button><button class="chip" data-t="y">Anno 2026</button></div>
-        <div class="two">
-          <div><div class="month">Classifica del mese</div><div class="rank" id="rank-m"></div></div>
-          <div><div class="month">Il tuo posto</div><div class="kpis" style="margin-top:0;grid-template-columns:1fr 1fr"><div class="kpi"><div class="k">Posizione</div><div class="v">5°</div></div><div class="kpi"><div class="k">Speso a novembre</div><div class="v tnum">€ 47,50</div></div></div></div>
-        </div>
+        <div class="month">Classifica del mese</div><div class="rank" id="rank-m"></div>
       </section>
       <!-- NOTIFICHE -->
       <section class="screen" id="s-notifiche">
@@ -620,7 +617,7 @@ function renderCart(){const it=allItems();const ids=Object.keys(cart).filter(id=
 function renderOrders(){let m="",h="";ORDERS.filter(o=>filter==="all"||o.st===filter).forEach((o,i)=>{if(o.m!==m){m=o.m;h+=`<div class="month">${m}</div>`;}
  h+=`<button class="ord" data-ord="${i}"><div class="dt"><b>${o.d}</b><small>${o.w}</small></div><div><div class="t">${o.t}</div><div class="d">${o.s}</div></div><div><div class="amt tnum">${eur(o.a)}</div><span class="st ${o.st}">${o.st==="due"?"Da pagare":"Pagato"}</span></div><div class="det">${o.lines.map(l=>`<div><span>${l[0]}</span><span class="tnum">${eur(l[1])}</span></div>`).join("")}${o.note?`<div><span>📝 Nota</span><span>${o.note}</span></div>`:""}<div><span>Stato</span><span style="color:var(${o.st==="due"?"--rosso":"--ok"})">${o.st==="due"?"Da saldare in forno":"Pagato"}</span></div></div></button>`;});
  $("#orders").innerHTML=h||`<div class="empty">Nessun ordine.</div>`;}
-function renderTop(){$("#rank-m").innerHTML=TOP[topT].map((r,i)=>`<div class="r ${r[0]==="Marco C."?"me":""}"><span class="pos">${i+1}</span><span class="nm">${r[0]}<small>${r[1]} ordini</small></span><span class="p tnum">${r[2]}</span></div>`).join("");
+function renderTop(){$("#rank-m").innerHTML=TOP[topT].map((r,i)=>`<div class="r ${r[0]==="Marco C."?"mine":""}"><span class="pos">${i+1}</span><span class="nm">${r[0]}<small>${r[1]} ordini</small></span><span class="p tnum">${r[2]}</span></div>`).join("");
  $("#s-top .month").textContent=topT==="m"?"Classifica del mese":"Classifica dell'anno";}
 function renderXmas(){const now=new Date(),x=new Date(now.getFullYear(),11,25);if(x<now)x.setFullYear(x.getFullYear()+1);const ms=x-now,d=Math.floor(ms/864e5),hh=Math.floor(ms%864e5/36e5),mm=Math.floor(ms%36e5/6e4);
  $("#xcd").textContent=`${d} giorni`;$("#cdown").innerHTML=`<div><b class="tnum">${d}</b><small>giorni</small></div><div><b class="tnum">${hh}</b><small>ore</small></div><div><b class="tnum">${mm}</b><small>minuti</small></div>`;}
