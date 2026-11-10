@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dolci Sapori · Prototipo</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@400;500;600&family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@400;500;600&family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=Mountains+of+Christmas:wght@700&family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 /* ───────────────── palette (invariata) ───────────────── */
 :root{
@@ -185,32 +185,47 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .tog.on{background:var(--ok)}.tog.on::after{transform:translateX(20px)}
 .frow.out{color:var(--rosso);justify-content:center;font-weight:600}
 
-/* natale */
-.xwrap{position:relative;overflow:hidden;border-radius:var(--r);margin-top:10px;padding:22px 18px 18px;color:#fff;background:radial-gradient(120% 80% at 50% 0%,var(--rosso-2) 0%,var(--rosso) 45%,var(--bruno) 100%);box-shadow:0 24px 50px -28px rgba(43,24,16,.8)}
-.xwrap>*{position:relative;z-index:1}
-.snow{position:absolute;inset:0;z-index:0;pointer-events:none}
-.snow i{position:absolute;top:-10%;font-style:normal;color:rgba(255,255,255,.85);animation:fall linear infinite;text-shadow:0 0 6px rgba(255,255,255,.6)}
-.snow i:nth-child(1){left:4%;font-size:14px;animation-duration:11s}.snow i:nth-child(2){left:12%;font-size:10px;animation-duration:14s;animation-delay:-3s}.snow i:nth-child(3){left:21%;font-size:16px;animation-duration:12s;animation-delay:-6s}.snow i:nth-child(4){left:30%;font-size:9px;animation-duration:16s;animation-delay:-1s}.snow i:nth-child(5){left:39%;font-size:13px;animation-duration:13s;animation-delay:-8s}.snow i:nth-child(6){left:48%;font-size:11px;animation-duration:15s;animation-delay:-4s}.snow i:nth-child(7){left:57%;font-size:15px;animation-duration:12s;animation-delay:-9s}.snow i:nth-child(8){left:66%;font-size:10px;animation-duration:17s;animation-delay:-2s}.snow i:nth-child(9){left:74%;font-size:12px;animation-duration:13s;animation-delay:-7s}.snow i:nth-child(10){left:82%;font-size:16px;animation-duration:11s;animation-delay:-5s}.snow i:nth-child(11){left:90%;font-size:9px;animation-duration:15s;animation-delay:-10s}.snow i:nth-child(12){left:96%;font-size:13px;animation-duration:14s;animation-delay:-12s}
-@keyframes fall{to{transform:translateY(115vh) rotate(360deg)}}
-.lights{display:flex;justify-content:space-between;margin:-22px -18px 14px;padding:0 10px;height:14px;border-top:2px solid rgba(244,211,94,.6)}
-.lights i{width:10px;height:14px;border-radius:0 0 6px 6px;background:var(--oro-2);box-shadow:0 0 10px var(--oro-2);animation:blink 1.6s ease-in-out infinite}
-.lights i:nth-child(odd){background:var(--rosa);box-shadow:0 0 10px var(--rosa);animation-delay:-.8s}
-.lights i:nth-child(3n){background:#fff;box-shadow:0 0 10px #fff;animation-delay:-.4s}
-@keyframes blink{50%{opacity:.35}}
-.ribbon{display:inline-block;justify-self:start;background:var(--oro-2);color:var(--bruno);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:12px}
-.xtitle{font-size:34px;line-height:1.02;font-weight:700;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.25)}
-.xsub{font-size:14.5px;line-height:1.5;opacity:.92;margin:10px 0 16px}.xsub b{color:var(--oro-2)}
-.xhero{border-radius:var(--r);overflow:hidden;border:3px solid var(--oro-2);box-shadow:0 14px 34px -16px rgba(0,0,0,.6)}
-.xhero video,.xhero img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.marq{overflow:hidden;white-space:nowrap;margin-top:14px;font-size:22px;letter-spacing:.3em}
-.marq span{display:inline-block;animation:mq 22s linear infinite}
-@keyframes mq{to{transform:translateX(-50%)}}
-.cdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-.cdown div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);border-radius:var(--r);padding:12px;text-align:center}
-.cdown b{display:block;font-family:var(--font-h);font-size:30px;font-weight:700;color:var(--oro-2)}.cdown small{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;font-weight:600}
-.xnote{margin-top:14px;font-size:13px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;text-align:center}
-[data-t=c] .xwrap,[data-t=c] .xhero,[data-t=c] .cdown div{border-radius:0}
-@media (min-width:900px){.xwrap{padding:30px 34px 26px;display:grid;grid-template-columns:1fr 1.1fr;column-gap:34px;align-items:center}.xwrap .lights{grid-column:1/-1;margin:-30px -34px 20px}.xwrap .xhero{grid-row:2/5}.xwrap .cdown,.xwrap .marq,.xwrap .xnote{grid-column:1/-1}.xtitle{font-size:46px}.xhero video,.xhero img{aspect-ratio:4/3}}
+/* natale — pagina intera */
+.app[data-screen=natale]{background:radial-gradient(120% 70% at 50% -10%,#a31818 0%,#8b1a1a 38%,#4a1611 70%,#2b1810 100%) fixed}
+.app[data-screen=natale] .mhead,.app[data-screen=natale] .mhead .hi{color:#fff}
+.app[data-screen=natale] .mhead .hi{opacity:.75}
+.app[data-screen=natale] .iconbtn{background:rgba(255,255,255,.14);color:#fff;box-shadow:none}
+.app[data-screen=natale] .tabbar{background:linear-gradient(to top,#2b1810 60%,transparent)}
+.snow{position:fixed;inset:0;z-index:0;pointer-events:none}
+.snow i{position:absolute;top:-6%;font-style:normal;color:rgba(255,255,255,.9);animation:fall linear infinite;text-shadow:0 0 8px rgba(255,255,255,.7)}
+.snow i:nth-child(1){left:3%;font-size:15px;animation-duration:12s}.snow i:nth-child(2){left:9%;font-size:10px;animation-duration:16s;animation-delay:-3s}.snow i:nth-child(3){left:15%;font-size:18px;animation-duration:13s;animation-delay:-6s}.snow i:nth-child(4){left:22%;font-size:9px;animation-duration:18s;animation-delay:-1s}.snow i:nth-child(5){left:28%;font-size:13px;animation-duration:14s;animation-delay:-8s}.snow i:nth-child(6){left:35%;font-size:11px;animation-duration:17s;animation-delay:-4s}.snow i:nth-child(7){left:41%;font-size:16px;animation-duration:12s;animation-delay:-9s}.snow i:nth-child(8){left:48%;font-size:10px;animation-duration:19s;animation-delay:-2s}.snow i:nth-child(9){left:54%;font-size:12px;animation-duration:14s;animation-delay:-7s}.snow i:nth-child(10){left:60%;font-size:17px;animation-duration:11s;animation-delay:-5s}.snow i:nth-child(11){left:66%;font-size:9px;animation-duration:16s;animation-delay:-10s}.snow i:nth-child(12){left:72%;font-size:13px;animation-duration:15s;animation-delay:-12s}.snow i:nth-child(13){left:78%;font-size:11px;animation-duration:13s;animation-delay:-2.5s}.snow i:nth-child(14){left:84%;font-size:15px;animation-duration:17s;animation-delay:-6.5s}.snow i:nth-child(15){left:90%;font-size:10px;animation-duration:12s;animation-delay:-9.5s}.snow i:nth-child(16){left:95%;font-size:14px;animation-duration:15s;animation-delay:-4.5s}.snow i:nth-child(17){left:50%;font-size:20px;animation-duration:20s;animation-delay:-14s;opacity:.6}.snow i:nth-child(18){left:30%;font-size:19px;animation-duration:21s;animation-delay:-11s;opacity:.6}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+.xwrap{position:relative;z-index:1;color:#fff;padding:6px 0 10px}
+.xhead{text-align:center;padding:4px 6px 0}
+.script{font-family:"Great Vibes",cursive;font-size:44px;line-height:1;color:var(--oro-2);text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.xtitle{font-family:"Mountains of Christmas",cursive;font-weight:700;font-size:40px;line-height:1.05;margin-top:2px;text-shadow:0 3px 20px rgba(0,0,0,.35)}
+.gold-rule{display:flex;align-items:center;gap:12px;margin:12px auto 10px;max-width:260px;color:var(--oro-2)}
+.gold-rule::before,.gold-rule::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--oro-2));}
+.gold-rule::after{background:linear-gradient(90deg,var(--oro-2),transparent)}
+.gold-rule svg{font-size:16px;stroke:var(--oro-2)}
+.xsub{font-size:15px;line-height:1.55;opacity:.95;max-width:560px;margin:0 auto}.xsub b{color:var(--oro-2);font-weight:700}
+.xhero{position:relative;margin:22px 0 0;border-radius:var(--r);overflow:visible}
+.xhero video{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:var(--r);border:3px solid var(--oro-2);box-shadow:0 0 0 6px rgba(244,211,94,.18),0 24px 50px -20px rgba(0,0,0,.7)}
+.orn{position:absolute;top:-10px;z-index:2;width:34px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));animation:sway 4s ease-in-out infinite;transform-origin:top center}
+.orn.o1{left:14px}.orn.o2{right:18px;width:30px;animation-delay:-2s}
+@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.cd-wrap{margin-top:22px;text-align:center}
+.cd-lab{font-family:"Great Vibes",cursive;font-size:28px;color:var(--oro-2);margin-bottom:8px}
+.cdown{display:flex;justify-content:center;gap:14px}
+.cdown div{width:92px;height:92px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),transparent 40%),var(--bruno);border:2px solid var(--oro-2);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 10px 24px -10px rgba(0,0,0,.7);position:relative}
+.cdown div::before{content:"";position:absolute;top:-10px;width:12px;height:8px;border-radius:2px;background:var(--oro-2)}
+.cdown b{font-family:"Mountains of Christmas",cursive;font-size:34px;line-height:1;color:var(--oro-2);font-weight:700}.cdown small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;opacity:.9;margin-top:2px}
+.branches{margin:16px 0 0}.branches svg{width:100%;height:40px;display:block}
+.xnote{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;height:50px;border-radius:999px;background:var(--oro-2);color:var(--bruno);font-weight:700;font-size:14.5px;box-shadow:0 12px 26px -12px rgba(0,0,0,.6)}
+.xnote svg{font-size:19px}
+@media (min-width:900px){
+  .xwrap{display:grid;grid-template-columns:1.05fr 1fr;column-gap:40px;align-items:center;padding:10px 0 20px}
+  .xhead{text-align:left;grid-column:2;grid-row:1}.gold-rule{margin-left:0}.xsub{margin:0}
+  .xhero{grid-column:1;grid-row:1/4;margin:0}.xhero video{aspect-ratio:4/3}
+  .cd-wrap{grid-column:2;text-align:left;margin-top:18px}.cdown{justify-content:flex-start}
+  .branches{grid-column:1/-1}.xnote{grid-column:2;width:auto;justify-self:start;padding:0 26px;margin-top:0}
+  .script{font-size:52px}.xtitle{font-size:54px}
+}
 
 /* sheet (carrello mobile) + modale */
 .scrim{position:fixed;inset:0;background:rgba(43,24,16,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
@@ -463,18 +478,27 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
       </section>
       <!-- NATALE -->
       <section class="screen" id="s-natale">
+        <div class="snow" aria-hidden="true"><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i></div>
         <div class="xwrap">
-          <div class="snow" aria-hidden="true"><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i><i>❄</i><i>❅</i><i>❆</i></div>
-          <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="ribbon">🎄 Natale 2026</div>
-          <h2 class="h xtitle">Il Natale di<br>Dolci Sapori</h2>
-          <p class="xsub">Panettoni, pandori e i piatti della tradizione. Il menù delle feste è <b>in lavorazione</b>: appena pronto lo troverai qui e potrai ordinare come sempre.</p>
+          <div class="xhead">
+            <div class="script">Buon Natale</div>
+            <h2 class="xtitle">Il Natale di Dolci Sapori</h2>
+            <div class="gold-rule"><svg viewBox="0 0 24 24" class="i"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></div>
+            <p class="xsub">Panettoni, pandori, torroni e i piatti della tradizione. Il menù delle feste è <b>in lavorazione</b>: appena pronto lo troverai qui e potrai ordinare come sempre.</p>
+          </div>
           <div class="xhero">
+            <svg class="orn o1" viewBox="0 0 40 60" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="18" stroke="#f4d35e" stroke-width="1.5"/><rect x="15" y="16" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="40" r="18" fill="#8b1a1a" stroke="#f4d35e" stroke-width="2"/><path d="M6 36c6-4 22-4 28 0" stroke="#f4d35e" stroke-width="1.5" fill="none"/><circle cx="14" cy="33" r="3" fill="#fff" opacity=".35"/></svg>
+            <svg class="orn o2" viewBox="0 0 40 80" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="38" stroke="#f4d35e" stroke-width="1.5"/><rect x="15" y="36" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="60" r="18" fill="#f4d35e" stroke="#fff" stroke-width="1.5"/><path d="M8 54l24 12M8 66l24-12" stroke="#8b1a1a" stroke-width="2"/><circle cx="14" cy="53" r="3" fill="#fff" opacity=".5"/></svg>
             <video src="../public/natale.mp4" poster="../public/natale.jpg" autoplay muted loop playsinline></video>
           </div>
-          <div class="cdown" id="cdown"></div>
-          <div class="marq" aria-hidden="true"><span>🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 🎄 ⭐ 🎁 ❄️ 🍪 🕯️ 🎅 🦌 </span></div>
-          <div class="xnote">🔔 Attiva le notifiche per sapere quando il menù di Natale è pronto.</div>
+          <div class="cd-wrap">
+            <div class="cd-lab">Mancano a Natale</div>
+            <div class="cdown" id="cdown"></div>
+          </div>
+          <div class="branches" aria-hidden="true">
+            <svg viewBox="0 0 400 40" preserveAspectRatio="xMidYMid meet"><defs><path id="st" d="M0-6 1.8-1.8 6-1.3 2.9 1.6 3.7 6 0 3.8-3.7 6-2.9 1.6-6-1.3-1.8-1.8Z"/></defs><path d="M10 26 Q 100 6 200 26 T 390 26" stroke="#f4d35e" stroke-width="1.2" fill="none" stroke-dasharray="3 5"/><g fill="#f4d35e"><use href="#st" transform="translate(40 20) scale(1.1)"/><use href="#st" transform="translate(120 12)"/><use href="#st" transform="translate(200 26) scale(1.4)"/><use href="#st" transform="translate(280 12)"/><use href="#st" transform="translate(360 20) scale(1.1)"/></g><g fill="#fff" opacity=".9"><circle cx="80" cy="15" r="1.8"/><circle cx="160" cy="18" r="1.8"/><circle cx="240" cy="18" r="1.8"/><circle cx="320" cy="15" r="1.8"/></g><g fill="#8b1a1a" stroke="#f4d35e" stroke-width="1"><circle cx="100" cy="22" r="3.5"/><circle cx="300" cy="22" r="3.5"/></g></svg>
+          </div>
+          <button class="xnote" data-toast="Notifiche già attive"><svg class="i"><use href="#i-bell"/></svg>Avvisami quando il menù di Natale è pronto</button>
         </div>
       </section>
       <!-- ACCOUNT -->
