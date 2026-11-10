@@ -509,7 +509,7 @@ const STYLE = `
   .cl::before{width:360px;height:360px;background:#d4af37;opacity:.35;top:-120px;right:-120px}
   .cl::after{width:320px;height:320px;background:#f0b9b4;opacity:.45;bottom:10%;left:-140px}
   .cl .cl-col{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}
-  .cl button{font-family:inherit}
+  .cl button{font-family:inherit;color:inherit;-webkit-appearance:none;appearance:none}
   .cl input,.cl textarea,.cl select{font-size:16px;border-radius:12px;padding:11px 13px;min-height:46px;background:#fff}
   .cl label{font-size:.72rem;letter-spacing:.06em}
   .cl .cl-ico{display:inline-grid;place-items:center;width:1em;height:1em;font-size:22px;flex:none}
@@ -532,7 +532,7 @@ const STYLE = `
   .cl .cl-head{padding:calc(env(safe-area-inset-top) + 14px) 16px 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   .cl .cl-head-l{display:flex;align-items:center;gap:12px;min-width:0}
   .cl .cl-mlogo{width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:var(--cl-shadow)}
-  .cl .cl-mlogo img,.cl .cl-logo img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important}
+  .cl .cl-mlogo img,.cl .cl-logo img{width:100%;height:100%;object-fit:cover;display:block}
   .cl .cl-hi{font-size:13px;color:var(--cl-ink3)}
   .cl .cl-h1{font-size:23px;line-height:1.1;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cl-ink)}
   .cl .cl-iconbtn{width:42px;height:42px;border-radius:14px!important;display:grid;place-items:center;position:relative;color:var(--cl-ink2);cursor:pointer;border:0}
@@ -682,8 +682,17 @@ const STYLE = `
   .cl .cl-av{width:54px;height:54px;border-radius:18px;background:#f4d35e;color:#2b1810;display:grid;place-items:center;font-weight:700;font-size:18px;flex:none}
   .cl .cl-me .n{font-size:19px;font-weight:700}.cl .cl-me .u{font-size:13px;opacity:.75}
   .cl .cl-two-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .cl .cl-frow{width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:15px;font-weight:500;border:0;border-top:1px solid var(--cl-line-soft);min-height:54px;background:none;cursor:pointer;color:var(--cl-ink)}
-  .cl .cl-frow:first-child{border-top:0}
+  .cl .cl-grp{background:var(--cl-glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.7);box-shadow:var(--cl-shadow);border-radius:var(--cl-r);margin-top:12px;overflow:hidden}
+  .cl .cl-grp .lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--cl-ink3);padding:12px 16px 4px}
+  .cl .cl-grp-note{font-size:12.5px;color:var(--cl-ink3);padding:4px 16px 12px;font-style:italic}
+  .cl .cl-frow .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex:none}
+  .cl .ic.r{background:rgba(240,185,180,.3);color:#8b1a1a}.cl .ic.o{background:rgba(212,175,55,.2);color:#7a5a12}.cl .ic.g{background:rgba(30,107,63,.12);color:#1e6b3f}
+  .cl .cl-frow.field{cursor:text;flex-wrap:wrap;gap:6px 12px}
+  .cl .cl-frow.field .l{flex:1;font-size:12px;font-weight:600;color:var(--cl-ink3);letter-spacing:.02em}
+  .cl .cl-frow.field input{flex-basis:100%;margin-left:46px;width:calc(100% - 46px);min-height:44px;padding:9px 12px;border-radius:12px;border:1px solid var(--cl-line);background:#fff}
+  .cl .cl-kpis.two{grid-template-columns:1fr 1fr}
+  .cl .cl-frow{width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:15px;font-weight:500;border:0;border-top:1px solid var(--cl-line-soft);min-height:54px;background:none;cursor:pointer;color:var(--cl-ink);margin:0}
+  .cl .cl-grp .lbl+.cl-frow,.cl .cl-grp>.cl-frow:first-child{border-top:0}
   .cl .cl-frow .l{flex:1}.cl .cl-frow .v{font-size:13.5px;color:var(--cl-ink3)}
   .cl .cl-frow.out{color:#8b1a1a;justify-content:center;font-weight:700}
   .cl .cl-closex{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(43,24,16,.07);display:grid;place-items:center;color:var(--cl-ink2);cursor:pointer;z-index:2}
@@ -712,10 +721,33 @@ const STYLE = `
   .cl .cl-snow i{position:absolute;top:-6%;font-style:normal;color:rgba(255,255,255,.9);animation:clFall linear infinite;text-shadow:0 0 8px rgba(255,255,255,.7)}
   .cl .cl-snow i:nth-child(1){left:3%;font-size:15px;animation-duration:12s}.cl .cl-snow i:nth-child(2){left:9%;font-size:10px;animation-duration:16s;animation-delay:-3s}.cl .cl-snow i:nth-child(3){left:15%;font-size:18px;animation-duration:13s;animation-delay:-6s}.cl .cl-snow i:nth-child(4){left:22%;font-size:9px;animation-duration:18s;animation-delay:-1s}.cl .cl-snow i:nth-child(5){left:28%;font-size:13px;animation-duration:14s;animation-delay:-8s}.cl .cl-snow i:nth-child(6){left:35%;font-size:11px;animation-duration:17s;animation-delay:-4s}.cl .cl-snow i:nth-child(7){left:41%;font-size:16px;animation-duration:12s;animation-delay:-9s}.cl .cl-snow i:nth-child(8){left:48%;font-size:10px;animation-duration:19s;animation-delay:-2s}.cl .cl-snow i:nth-child(9){left:54%;font-size:12px;animation-duration:14s;animation-delay:-7s}.cl .cl-snow i:nth-child(10){left:60%;font-size:17px;animation-duration:11s;animation-delay:-5s}.cl .cl-snow i:nth-child(11){left:66%;font-size:9px;animation-duration:16s;animation-delay:-10s}.cl .cl-snow i:nth-child(12){left:72%;font-size:13px;animation-duration:15s;animation-delay:-12s}.cl .cl-snow i:nth-child(13){left:78%;font-size:11px;animation-duration:13s;animation-delay:-2.5s}.cl .cl-snow i:nth-child(14){left:84%;font-size:15px;animation-duration:17s;animation-delay:-6.5s}.cl .cl-snow i:nth-child(15){left:90%;font-size:10px;animation-duration:12s;animation-delay:-9.5s}.cl .cl-snow i:nth-child(16){left:95%;font-size:14px;animation-duration:15s;animation-delay:-4.5s}
   @keyframes clFall{to{transform:translateY(110vh) rotate(360deg)}}
+  .cl .cl-xwrap{position:relative;z-index:1;padding:6px 0 10px}
+  .cl .cl-xhead{text-align:center;padding:4px 6px 0}
+  .cl .cl-gold-rule{display:flex;align-items:center;gap:12px;margin:12px auto 10px;max-width:260px;color:#f4d35e}
+  .cl .cl-gold-rule::before,.cl .cl-gold-rule::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#f4d35e)}
+  .cl .cl-gold-rule::after{background:linear-gradient(90deg,#f4d35e,transparent)}
+  .cl .cl-gold-rule .cl-ico{font-size:16px}
+  .cl .cl-xsub{font-size:15px;line-height:1.55;opacity:.95;max-width:560px;margin:0 auto;color:#fff}.cl .cl-xsub b{color:#f4d35e;font-weight:700}
+  .cl .cl-xhero{position:relative;margin:22px 0 0}
+  .cl .cl-xhero video{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:var(--cl-r);border:3px solid #f4d35e;box-shadow:0 0 0 6px rgba(244,211,94,.18),0 24px 50px -20px rgba(0,0,0,.7);background:#2b1810}
+  .cl .cl-orn{position:absolute;top:-10px;z-index:2;width:34px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));animation:clSway 4s ease-in-out infinite;transform-origin:top center}
+  .cl .cl-orn.o1{left:14px}.cl .cl-orn.o2{right:18px;width:30px;animation-delay:-2s}
+  @keyframes clSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  .cl .cl-cdwrap{margin-top:22px;text-align:center}
+  .cl .cl-cdlab{font-family:"Great Vibes","Snell Roundhand",cursive;font-size:28px;color:#f4d35e;margin-bottom:8px}
+  .cl .cl-cdown{display:flex;justify-content:center;gap:14px}
+  .cl .cl-cdown div{width:92px;height:92px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),transparent 40%),#2b1810;border:2px solid #f4d35e;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 10px 24px -10px rgba(0,0,0,.7);position:relative}
+  .cl .cl-cdown div::before{content:"";position:absolute;top:-10px;width:12px;height:8px;border-radius:2px;background:#f4d35e}
+  .cl .cl-cdown b{font-family:"Mountains of Christmas","Cormorant Garamond",serif;font-size:34px;line-height:1;color:#f4d35e;font-weight:700}.cl .cl-cdown small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;opacity:.9;margin-top:2px;color:#fff}
+  .cl .cl-branches{margin:16px 0 0}.cl .cl-branches svg{width:100%;height:40px;display:block}
+  .cl .cl-xnote{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;height:50px;border-radius:999px;border:0;background:#f4d35e;color:#2b1810;font-weight:700;font-size:14.5px;box-shadow:0 12px 26px -12px rgba(0,0,0,.6);cursor:pointer}
+  .cl .cl-xnote .cl-ico{font-size:19px}
+  .cl .cl-chips{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
+  .cl .cl-chip{height:38px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.7);background:var(--cl-glass);font-size:13.5px;font-weight:600;color:var(--cl-ink2);display:inline-flex;align-items:center;cursor:pointer;box-shadow:var(--cl-shadow)}
+  .cl .cl-chip.on{background:#2b1810;color:#fff;border-color:transparent}
   .cl .cl-xmas-head{text-align:center;padding:4px 6px 14px}
   .cl .cl-script{font-family:"Great Vibes","Snell Roundhand","Brush Script MT",cursive;font-size:44px;line-height:1;color:#f4d35e;text-shadow:0 2px 18px rgba(0,0,0,.35)}
   .cl .cl-xtitle{font-family:"Mountains of Christmas","Cormorant Garamond",Georgia,serif;font-weight:700;font-size:38px;line-height:1.05;margin-top:2px;text-shadow:0 3px 20px rgba(0,0,0,.35);color:#fff}
-  .cl .cl-xmas-page .card{background:linear-gradient(180deg,#1f3b2d 0%,#14281e 100%)!important;backdrop-filter:none;-webkit-backdrop-filter:none}
 
   /* barra inferiore + carrello (mobile) */
   .cl .cl-tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--cl-nav-h) + env(safe-area-inset-bottom));padding:10px 16px env(safe-area-inset-bottom);background:linear-gradient(to top,#fdf6ee 70%,transparent);z-index:31}
@@ -762,6 +794,12 @@ const STYLE = `
     .cl .cl-tabbar,.cl .cl-cartbar,.cl .cl-sheet,.cl .cl-scrim{display:none!important}
     .cl .toast{bottom:28px}
     .cl .cl-script{font-size:52px}.cl .cl-xtitle{font-size:50px}
+    .cl .cl-xwrap{display:grid;grid-template-columns:1.05fr 1fr;column-gap:40px;align-items:center;padding:10px 0 20px}
+    .cl .cl-xhead{text-align:left;grid-column:2;grid-row:1}.cl .cl-gold-rule{margin-left:0}.cl .cl-xsub{margin:0}
+    .cl .cl-xhero{grid-column:1;grid-row:1/4;margin:0}.cl .cl-xhero video{aspect-ratio:4/3}
+    .cl .cl-cdwrap{grid-column:2;text-align:left;margin-top:18px}.cl .cl-cdown{justify-content:flex-start}
+    .cl .cl-branches{grid-column:1/-1}.cl .cl-xnote{grid-column:2;width:auto;justify-self:start;padding:0 26px;margin-top:0}
+    .cl .cl-xmas-page{max-width:1100px}
   }
 `;
 
@@ -4032,6 +4070,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
     account: ["Il tuo profilo", "Account"],
   };
   const [cartOpen, setCartOpen] = useState(false);
+  const [topPeriod, setTopPeriod] = useState('month');
+  const [xVideo, setXVideo] = useState(NATALE_VIDEO_LOCAL);
+  const [xPoster, setXPoster] = useState(NATALE_IMG_LOCAL);
   useEffect(()=>{ if(!cartVisible) setCartOpen(false); },[cartVisible]);
 
   // Riga piatto (stesso setQty / itemNotes di sempre, solo markup nuovo)
@@ -4181,7 +4222,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
       {/* ─── Barra laterale (desktop) ─────────────────────────────── */}
       <aside className="cl-side" aria-label="Navigazione">
-        <div className="cl-logo"><LogoIcon size={56} style={{maxWidth:56,height:56,objectFit:"cover",filter:"none"}}/></div>
+        <div className="cl-logo"><img src="/logo192.png" alt="Dolci Sapori"/></div>
         <NavBtn id="order"   icon={ICON.fork}   label="Ordina"/>
         <NavBtn id="storico" icon={ICON.clock}  label="Storico"/>
         <NavBtn id="top"     icon={ICON.trophy} label="Top"/>
@@ -4234,15 +4275,17 @@ function ClientPanel({ user, appState, update, onLogout }) {
         {/* ─── Intestazione ──────────────────────────────────────────── */}
         <header className="cl-head">
           <div className="cl-head-l">
-            <div className="cl-mlogo"><LogoIcon size={44} style={{maxWidth:44,height:44,objectFit:"cover",filter:"none"}}/></div>
+            <div className="cl-mlogo"><img src="/logo192.png" alt="Dolci Sapori"/></div>
             <div style={{minWidth:0}}>
               <div className="cl-hi">{titles[tab]?.[0]}</div>
               <h1 className="cl-h1">{titles[tab]?.[1]}</h1>
             </div>
           </div>
-          <button className="cl-iconbtn cl-bell" onClick={openNotifs} aria-label="Notifiche">
-            <span className="cl-ico">{ICON.bell}</span>{unreadCount>0 && <span className="cl-dot">{unreadCount}</span>}
-          </button>
+          {tab==="notifs"
+            ? <button className="cl-iconbtn cl-bell" onClick={()=>setTab("order")} aria-label="Chiudi notifiche"><span className="cl-ico">{ICON.x}</span></button>
+            : <button className="cl-iconbtn cl-bell" onClick={openNotifs} aria-label="Notifiche">
+                <span className="cl-ico">{ICON.bell}</span>{unreadCount>0 && <span className="cl-dot">{unreadCount}</span>}
+              </button>}
         </header>
 
         <main className="cl-main">
@@ -4250,22 +4293,46 @@ function ClientPanel({ user, appState, update, onLogout }) {
         {tab==="natale" && (
           <div className="cl-xmas-page">
             <div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div>
-            <div className="cl-xmas-head">
-              <div className="cl-script">Buon Natale</div>
-              <h2 className="cl-xtitle">Il Natale di Dolci Sapori</h2>
+            <div className="cl-xwrap">
+              <div className="cl-xhead">
+                <div className="cl-script">Buon Natale</div>
+                <h2 className="cl-xtitle">Il Natale di Dolci Sapori</h2>
+                <div className="cl-gold-rule"><span className="cl-ico"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></span></div>
+                <p className="cl-xsub">Panettoni, pandori, torroni e i piatti della tradizione. Il menù delle feste è <b>in lavorazione</b>: appena pronto lo troverai qui e potrai ordinare come sempre.</p>
+              </div>
+              <div className="cl-xhero">
+                <svg className="cl-orn o1" viewBox="0 0 40 60" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="18" stroke="#f4d35e" strokeWidth="1.5"/><rect x="15" y="16" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="40" r="18" fill="#8b1a1a" stroke="#f4d35e" strokeWidth="2"/><path d="M6 36c6-4 22-4 28 0" stroke="#f4d35e" strokeWidth="1.5" fill="none"/><circle cx="14" cy="33" r="3" fill="#fff" opacity=".35"/></svg>
+                <svg className="cl-orn o2" viewBox="0 0 40 80" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="38" stroke="#f4d35e" strokeWidth="1.5"/><rect x="15" y="36" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="60" r="18" fill="#f4d35e" stroke="#fff" strokeWidth="1.5"/><path d="M8 54l24 12M8 66l24-12" stroke="#8b1a1a" strokeWidth="2"/><circle cx="14" cy="53" r="3" fill="#fff" opacity=".5"/></svg>
+                <video src={xVideo} poster={xPoster} autoPlay muted loop playsInline
+                  onError={()=>{ if(xVideo!==NATALE_VIDEO_CDN) setXVideo(NATALE_VIDEO_CDN); }}/>
+                <img alt="" src={xPoster} style={{display:"none"}} onError={()=>{ if(xPoster!==NATALE_IMG_CDN) setXPoster(NATALE_IMG_CDN); }}/>
+              </div>
+              <div className="cl-cdwrap">
+                <div className="cl-cdlab">Mancano a Natale</div>
+                {(()=>{ const now=new Date(); const x=new Date(now.getFullYear(),11,25); if(x<now) x.setFullYear(x.getFullYear()+1);
+                  const ms=x-now, d=Math.floor(ms/864e5), hh=Math.floor(ms%864e5/36e5), mm=Math.floor(ms%36e5/6e4);
+                  return <div className="cl-cdown"><div><b>{d}</b><small>giorni</small></div><div><b>{hh}</b><small>ore</small></div><div><b>{mm}</b><small>minuti</small></div></div>; })()}
+              </div>
+              <div className="cl-branches" aria-hidden="true">
+                <svg viewBox="0 0 400 40" preserveAspectRatio="xMidYMid meet"><defs><path id="clst" d="M0-6 1.8-1.8 6-1.3 2.9 1.6 3.7 6 0 3.8-3.7 6-2.9 1.6-6-1.3-1.8-1.8Z"/></defs><path d="M10 26 Q 100 6 200 26 T 390 26" stroke="#f4d35e" strokeWidth="1.2" fill="none" strokeDasharray="3 5"/><g fill="#f4d35e"><use href="#clst" transform="translate(40 20) scale(1.1)"/><use href="#clst" transform="translate(120 12)"/><use href="#clst" transform="translate(200 26) scale(1.4)"/><use href="#clst" transform="translate(280 12)"/><use href="#clst" transform="translate(360 20) scale(1.1)"/></g><g fill="#fff" opacity=".9"><circle cx="80" cy="15" r="1.8"/><circle cx="160" cy="18" r="1.8"/><circle cx="240" cy="18" r="1.8"/><circle cx="320" cy="15" r="1.8"/></g><g fill="#8b1a1a" stroke="#f4d35e" strokeWidth="1"><circle cx="100" cy="22" r="3.5"/><circle cx="300" cy="22" r="3.5"/></g></svg>
+              </div>
+              <button className="cl-xnote" onClick={()=>{ setToast("🔔 Ti avviseremo quando il menù di Natale sarà pronto"); setTimeout(()=>setToast(""),2500); }}><span className="cl-ico">{ICON.bell}</span>Avvisami quando il menù di Natale è pronto</button>
             </div>
-            <ChristmasSection/>
           </div>
         )}
 
-        {tab==="top" && <div className="cl-two">
-          <Leaderboard appState={appState} currentUserId={user.id} period="month"/>
-          <Leaderboard appState={appState} currentUserId={user.id} period="year"/>
-        </div>}
+        {tab==="top" && <>
+          <div className="cl-chips">
+            <button className={`cl-chip ${topPeriod==='month'?'on':''}`} onClick={()=>setTopPeriod('month')}>{new Date().toLocaleDateString("it-IT",{month:"long"}).replace(/^./,c=>c.toUpperCase())}</button>
+            <button className={`cl-chip ${topPeriod==='year'?'on':''}`} onClick={()=>setTopPeriod('year')}>Anno {new Date().getFullYear()}</button>
+          </div>
+          {topPeriod==='month'
+            ? <Leaderboard key="m" appState={appState} currentUserId={user.id} period="month"/>
+            : <Leaderboard key="y" appState={appState} currentUserId={user.id} period="year"/>}
+        </>}
 
         {tab==="notifs"&&(
-          <div className="card cl-card" style={{position:"relative"}}>
-            <button className="cl-closex" onClick={()=>setTab("order")} aria-label="Chiudi"><span className="cl-ico">{ICON.x}</span></button>
+          <div className="card cl-card">
             <div className="card-title">🔔 Notifiche</div>
             {myNotifs.length===0&&<div className="empty">Nessuna notifica.</div>}
             {myNotifs.map(n=>(
@@ -4287,7 +4354,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 <div className="cl-av">{(user.name||"?").split(" ").map(s=>s[0]).join("").slice(0,2).toUpperCase()}</div>
                 <div><div className="n">{user.name}</div><div className="u">@{user.id}</div></div>
               </div>
-              <div className="cl-kpis">
+              <div className="cl-kpis two">
                 {balanceKind==="due"    && <div className="cl-kpi"><div className="k">Da saldare</div><div className="v" style={{color:"var(--accent)"}}>{eur(unpaid)}</div></div>}
                 {balanceKind==="credit" && <div className="cl-kpi"><div className="k">Credito</div><div className="v" style={{color:"var(--green)"}}>{eur(credit)}</div></div>}
                 {balanceKind==="ok"     && <div className="cl-kpi"><div className="k">Saldo</div><div className="v" style={{color:"var(--green)"}}>In pari ✓</div></div>}
@@ -4295,37 +4362,34 @@ function ClientPanel({ user, appState, update, onLogout }) {
               </div>
             </div>
             <div>
-              <div className="card cl-card">
-                <div className="card-title">⚙️ Il mio account</div>
-                <div className="field" style={{marginBottom:10}}>
-                  <label>Nome visualizzato</label>
+              <div className="cl-grp">
+                <div className="lbl">Profilo</div>
+                <label className="cl-frow field">
+                  <span className="cl-ico ic o">{ICON.user}</span><span className="l">Nome visualizzato</span>
                   <input value={accName} onChange={e=>setAccName(e.target.value)} placeholder="Il tuo nome"/>
-                </div>
-                <div className="cl-two-in">
-                  <div className="field" style={{marginBottom:10}}>
-                    <label>Nuova password</label>
-                    <input type="password" value={accPwd} onChange={e=>setAccPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
-                  </div>
-                  <div className="field" style={{marginBottom:14}}>
-                    <label>Conferma password</label>
-                    <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
-                  </div>
-                </div>
-                <div className="field" style={{marginBottom:14}}>
-                  <label>🎂 Data di nascita (opzionale)</label>
-                  <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)}
-                    max={today()} style={{width:'100%'}}/>
-                  <div style={{fontSize:'.78rem',color:'var(--muted)',marginTop:4,fontStyle:'italic'}}>
-                    Ti faremo gli auguri il giorno del tuo compleanno! 🎉
-                  </div>
-                </div>
-                {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",marginBottom:10}}>{accToast}</div>}
-                <button className="cl-big" onClick={saveAccount}>💾 Salva modifiche</button>
+                </label>
+                <label className="cl-frow field">
+                  <span className="cl-ico ic r"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><span className="l">Nuova password</span>
+                  <input type="password" value={accPwd} onChange={e=>setAccPwd(e.target.value)} placeholder="Lascia vuoto per non cambiarla"/>
+                </label>
+                <label className="cl-frow field">
+                  <span className="cl-ico ic r"><svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg></span><span className="l">Conferma password</span>
+                  <input type="password" value={accPwd2} onChange={e=>setAccPwd2(e.target.value)} placeholder="Ripeti la nuova password"/>
+                </label>
+                <label className="cl-frow field">
+                  <span className="cl-ico ic o"><svg viewBox="0 0 24 24"><path d="M4 20h16M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6M5 15c2 1.5 4-1.5 6 0s4 1.5 6 0M8 12V9M12 12V8M16 12V9M12 4v2"/></svg></span><span className="l">Compleanno</span>
+                  <input type="date" value={accBirthDate} onChange={e=>setAccBirthDate(e.target.value)} max={today()}/>
+                </label>
+                <div className="cl-grp-note">Ti faremo gli auguri il giorno del tuo compleanno! 🎉</div>
+                {accToast&&<div className={`toast ${accToast.startsWith("✓")?"":"toast-err"}`} style={{position:"relative",margin:"0 16px 12px",transform:"none",left:"auto",bottom:"auto",whiteSpace:"normal"}}>{accToast}</div>}
+                <div style={{padding:"0 16px 16px"}}><button className="cl-big" style={{marginTop:4,height:48}} onClick={saveAccount}>💾 Salva modifiche</button></div>
               </div>
-              <div className="card cl-card" style={{padding:0}}>
-                <button className="cl-frow" onClick={()=>setTab("natale")}><span className="cl-ico" style={{color:"var(--green)"}}>{ICON.tree}</span><span className="l">Natale</span><span className="v">Menù delle feste</span><span className="cl-ico chev">{ICON.chev}</span></button>
-                <button className="cl-frow out" onClick={onLogout}><span className="cl-ico">{ICON.out}</span>Esci dall'account</button>
+              <div className="cl-grp">
+                <div className="lbl">Altro</div>
+                <button className="cl-frow" onClick={()=>setTab("natale")}><span className="cl-ico ic g">{ICON.tree}</span><span className="l">Natale</span><span className="v">Menù delle feste</span><span className="cl-ico chev">{ICON.chev}</span></button>
+                <button className="cl-frow" onClick={()=>setTab("storico")}><span className="cl-ico ic o">{ICON.clock}</span><span className="l">I miei ordini</span><span className="v">Ultimi 30 giorni</span><span className="cl-ico chev">{ICON.chev}</span></button>
               </div>
+              <div className="cl-grp"><button className="cl-frow out" onClick={onLogout}><span className="cl-ico">{ICON.out}</span>Esci dall'account</button></div>
             </div>
           </div>
         )}
