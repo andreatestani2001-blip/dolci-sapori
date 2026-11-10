@@ -26,6 +26,8 @@ svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke
 .tnum{font-variant-numeric:tabular-nums}
 .h{font-family:var(--font-h);font-weight:var(--head-weight);letter-spacing:-.02em}
 :focus-visible{outline:2px solid var(--oro);outline-offset:2px}
+/* iOS: niente auto-zoom sui campi → testo ≥16px */
+input,textarea,select{font-size:16px!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
@@ -101,7 +103,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 .step span{font-family:var(--font-h);font-weight:600;font-size:14px;min-width:22px;text-align:center}
 
 .rowi{flex-wrap:wrap}
-.rowi .note{flex-basis:100%;margin:0 0 4px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);padding:0 12px;font:inherit;font-size:13.5px;color:var(--ink);width:100%}
+.rowi .note{flex-basis:100%;margin:0 0 4px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);padding:0 12px;font:inherit;font-size:13.5px;color:var(--ink);width:100%}
 .rowi .note:focus{outline:2px solid var(--oro);border-color:transparent}
 .sec .cat{display:flex;align-items:center;gap:8px;font:inherit;color:inherit}
 .sec.bar{width:100%;text-align:left;align-items:center;background:var(--surface);border-radius:var(--r-s);padding:12px 14px;margin:10px 0 0;box-shadow:var(--shadow);min-height:52px;cursor:pointer}
