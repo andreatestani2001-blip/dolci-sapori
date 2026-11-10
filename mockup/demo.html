@@ -254,8 +254,9 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
   .seg{width:min(100%,420px)}
   .nov{grid-auto-flow:row;grid-template-columns:repeat(3,1fr);gap:14px;overflow:visible;margin:0;padding:0}.ncard .im{aspect-ratio:4/3}
   .kpis{grid-template-columns:repeat(4,1fr);gap:14px}
-  .app:not([data-screen=ordina]):not([data-screen=natale]){grid-template-columns:var(--side-w,88px) minmax(0,1fr)}
-  .app:not([data-screen=ordina]):not([data-screen=natale]) .cartp{display:none}
+  .app:not([data-cart="1"]){grid-template-columns:var(--side-w,88px) minmax(0,1fr)}
+  .app:not([data-cart="1"]) .cartp{display:none}
+  .cartp{animation:in .3s ease}
   .cartp{display:flex;flex-direction:column;background:var(--surface);margin:16px 16px 16px 0;border-radius:26px;padding:24px;box-shadow:var(--shadow);overflow:auto}
   .cartp h3{font-size:20px}.cartp .sub{font-size:13px;color:var(--ink-3);margin:2px 0 10px}
   .cartp .tot{margin-top:auto}
@@ -398,7 +399,7 @@ main{padding:0 16px calc(var(--nav-h) + var(--cartbar-h) + 16px);max-width:720px
 
 <div class="switch" role="group" aria-label="Stile del prototipo"><span class="lab">Stile</span><button data-th="a" class="on">A</button><button data-th="b">B</button><button data-th="c">C</button><button data-th="d">D</button></div>
 
-<div class="app" id="app" data-screen="ordina">
+<div class="app" id="app" data-screen="ordina" data-cart="0">
   <aside class="side" aria-label="Navigazione">
     <div class="logo"><svg class="i"><use href="#i-logo"/></svg></div>
     <button data-go="ordina" class="on"><svg class="i"><use href="#i-fork"/></svg>Ordina</button>
@@ -565,7 +566,7 @@ function renderCart(){const it=allItems();const ids=Object.keys(cart).filter(id=
  $("#cart-d").innerHTML=$("#cart-m").innerHTML=rows;$("#tot-d").innerHTML=$("#tot-m").innerHTML=tot;
  const n=cnt();$("#send-d").disabled=$("#send-m").disabled=!n;
  $("#cb-small").textContent=`${n} ${n===1?"piatto":"piatti"}${CREDIT>0?` · credito − ${eur(cr)}`:""}`;$("#cb-tot").textContent=eur(due);
- $("#cartbar").classList.toggle("show",n>0&&["ordina","natale"].includes($("#app").dataset.screen));}
+ const vis=n>0&&["ordina","natale"].includes($("#app").dataset.screen);$("#cartbar").classList.toggle("show",vis);$("#app").dataset.cart=vis?"1":"0";}
 function renderOrders(){let m="",h="";ORDERS.filter(o=>filter==="all"||o.st===filter).forEach((o,i)=>{if(o.m!==m){m=o.m;h+=`<div class="month">${m}</div>`;}
  h+=`<button class="ord" data-ord="${i}"><div class="dt"><b>${o.d}</b><small>${o.w}</small></div><div><div class="t">${o.t}</div><div class="d">${o.s}</div></div><div><div class="amt tnum">${eur(o.a)}</div><span class="st ${o.st}">${o.st==="due"?"Da pagare":"Pagato"}</span></div><div class="det">${o.lines.map(l=>`<div><span>${l[0]}</span><span class="tnum">${eur(l[1])}</span></div>`).join("")}${o.note?`<div><span>📝 Nota</span><span>${o.note}</span></div>`:""}<div><span>Stato</span><span style="color:var(${o.st==="due"?"--rosso":"--ok"})">${o.st==="due"?"Da saldare in forno":"Pagato"}</span></div></div></button>`;});
  $("#orders").innerHTML=h||`<div class="empty">Nessun ordine.</div>`;}
