@@ -510,6 +510,8 @@ const STYLE = `
   .cl::after{width:320px;height:320px;background:#f0b9b4;opacity:.45;bottom:10%;left:-140px}
   .cl .cl-col{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}
   .cl button{font-family:inherit;color:inherit;-webkit-appearance:none;appearance:none}
+  .cl .btn-primary,.cl .btn-gold,.cl .btn-danger,.cl .btn-success,.cl .btn-primary *,.cl .btn-gold *,.cl .btn-danger *,.cl .btn-success *{color:#fff}
+  .cl .btn-ghost{color:var(--muted)}.cl .btn-ghost:hover{color:var(--accent)}
   .cl input,.cl textarea,.cl select{font-size:16px;border-radius:12px;padding:11px 13px;min-height:46px;background:#fff}
   .cl label{font-size:.72rem;letter-spacing:.06em}
   .cl .cl-ico{display:inline-grid;place-items:center;width:1em;height:1em;font-size:22px;flex:none}
