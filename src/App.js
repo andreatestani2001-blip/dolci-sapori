@@ -50,7 +50,7 @@ if ('serviceWorker' in navigator) {
     }
   });
 } /* eslint-disable */
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, Fragment } from "react";
 import bcrypt from "bcryptjs";
 
 // ─── BRAND CONFIG (modifica qui per cambiare colori/logo/sfondo) ──────────
@@ -779,6 +779,14 @@ const STYLE = `
   .cl-admin .cl-datefield input{border:0;background:none;padding:0;min-height:0;height:40px;width:150px;color:var(--cl-ink);font-weight:600}
   .cl-admin .cl-mode{height:44px;border-radius:14px!important;padding:0 14px}
   .cl-admin .cl-datelabel{font-size:.86rem;color:var(--cl-ink3);text-transform:capitalize}
+  .cl-admin .cl-datepre{font-size:.8rem;font-weight:700;color:var(--cl-ink3);text-transform:uppercase;letter-spacing:.06em}
+  .cl-admin .cl-datefield.empty input{color:var(--cl-ink3);font-weight:500}
+  .cl-admin .cl-searchfield{display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;border-radius:14px;background:var(--cl-glass);border:1px solid rgba(255,255,255,.7);box-shadow:var(--cl-shadow);margin:0;color:var(--cl-ink3);flex:1;min-width:200px}
+  .cl-admin .cl-searchfield input{border:0;background:none;padding:0;min-height:0;height:40px;flex:1;min-width:0;color:var(--cl-ink);font-weight:600;-webkit-appearance:none}
+  .cl-admin .cl-searchfield input::-webkit-search-cancel-button{display:none}
+  .cl-admin .cl-clear{width:28px;height:28px;border-radius:50%;border:0;background:rgba(43,24,16,.08);color:var(--cl-ink2);font-size:13px;cursor:pointer;display:grid;place-items:center;flex:none}
+  @media (max-width:899px){.cl-admin .cl-datefield input{width:128px}.cl-admin .cl-searchfield{flex-basis:100%}
+    .cl-admin .grid3{grid-template-columns:repeat(3,1fr)!important;gap:8px}.cl-admin .grid3 .stat-box{padding:10px 6px}.cl-admin .grid3 .stat-num{font-size:1.1rem}.cl-admin .grid3 .stat-label{font-size:.6rem}}
   .cl-admin .cl-main{max-width:none}
   .cl .cl-more{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
   .cl .cl-more-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:84px;border-radius:18px;border:1px solid var(--cl-line-soft);background:#fdf6ee;font-size:13px;font-weight:600;color:var(--cl-ink2);cursor:pointer}
@@ -2627,7 +2635,11 @@ function AdminMenu({ date, appState, update }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – ORDINI
 // ════════════════════════════════════════════════════════════════════════════
-function AdminOrders({ date, appState, update }) {
+function AdminOrders({ date, dateTo, search, appState, update }) {
+  const endDate = dateTo && dateTo>=date ? dateTo : date;
+  const isRange = endDate!==date;
+  const q = (search||"").trim().toLowerCase();
+  const oKey = o => `${o.date||date}:${o.userId}`;
   const [editing,    setEditing]    = useState({});
   const [toast,      setToast]      = useState({text:"",err:false});
   const [showAddOrder,setShowAddOrder] = useState(false);
@@ -2648,9 +2660,10 @@ function AdminOrders({ date, appState, update }) {
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const orders = Object.entries(appState.orders)
-    .filter(([k])=>k.startsWith(date+":"))
-    .map(([,v])=>v).filter(Boolean)
-    .sort((a,b)=>a.userName.localeCompare(b.userName));
+    .filter(([k])=>{ const d=k.split(":")[0]; return d>=date && d<=endDate; })
+    .map(([k,v])=>v && ({...v, date: v.date || k.split(":")[0]})).filter(Boolean)
+    .filter(o=>!q || (o.userName||"").toLowerCase().includes(q) || (o.userId||"").toLowerCase().includes(q))
+    .sort((a,b)=>(a.date.localeCompare(b.date)) || a.userName.localeCompare(b.userName));
 
   const togglePaid = order=>{
     const nowPaid = !order.paid;
@@ -2658,7 +2671,7 @@ function AdminOrders({ date, appState, update }) {
     // Il credito non va mai restituito quando si segna pagato/non pagato
     // Il creditUsed è già stato scalato al momento dell'ordine
     // Non tocchiamo i crediti qui
-    update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated}});
+    update({orders:{...appState.orders,[oKey(order)]:updated}});
     showToast(nowPaid?`✓ ${order.userName} segnato pagato`:`${order.userName} segnato non pagato`);
   };
 
@@ -2670,7 +2683,7 @@ function AdminOrders({ date, appState, update }) {
       newCredits[order.userId]=r2((newCredits[order.userId]||0)+order.creditUsed);
     }
     const newOrders={...appState.orders};
-    delete newOrders[`${date}:${order.userId}`];
+    delete newOrders[oKey(order)];
     const patchAdmin={orders:newOrders,credits:newCredits};
     update(patchAdmin);
     showToast(`Ordine di ${order.userName} annullato`);
@@ -2694,7 +2707,7 @@ function AdminOrders({ date, appState, update }) {
   };
 
   const saveEditedOrder=()=>{
-    const menu = adminMenuFor(appState, date);
+    const menu = adminMenuFor(appState, editingOrder.date||date);
     const items = menu.filter(i=>!i.custom&&(editQty[i.id]||0)>0).map(i=>({
       ...i,
       qty:editQty[i.id],
@@ -2721,7 +2734,7 @@ function AdminOrders({ date, appState, update }) {
     const pagato=!hasUnpriced&&nuovoTotal===0;
     const updated={...editingOrder,items,rawTotal,creditUsed,total:nuovoTotal,paid:pagato,note:editNote.trim()};
     const newCredits={...appState.credits,[editingOrder.userId]:newCr};
-    update({orders:{...appState.orders,[`${date}:${editingOrder.userId}`]:updated},credits:newCredits});
+    update({orders:{...appState.orders,[oKey(editingOrder)]:updated},credits:newCredits});
     const pushTokEdit = (appState.fcmTokens||{})[editingOrder.userId];
     if(pushTokEdit) sendPush("✏️ Ordine modificato", `Il tuo ordine è stato modificato. Da pagare: ${eur(nuovoTotal)}`, [pushTokEdit]);
     setEditingOrder(null);
@@ -2786,7 +2799,7 @@ function AdminOrders({ date, appState, update }) {
     const tuttiPrezzati=updatedItems.every(i=>i.price!=null);
     const pagato=tuttiPrezzati&&netTotal===0;
     const updated={...order,items:updatedItems,rawTotal,creditUsed,total:netTotal,paid:pagato};
-    update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:newCredits});
+    update({orders:{...appState.orders,[oKey(order)]:updated},credits:newCredits});
     // Notifica push al cliente
     const pushTokPrice = (appState.fcmTokens||{})[order.userId];
     if(pushTokPrice) sendPush("💰 Prezzo aggiornato", `Ordine aggiornato. Da pagare: ${eur(netTotal)}`, [pushTokPrice]);
@@ -2794,10 +2807,11 @@ function AdminOrders({ date, appState, update }) {
     showToast("✓ Prezzo aggiornato");
 
     // Also update menu item price if it was a custom dish
-    const menuItems=appState.menus[date]||[];
+    const oDate=order.date||date;
+    const menuItems=appState.menus[oDate]||[];
     const menuItem=menuItems.find(m=>m.id===itemId);
     if(menuItem&&menuItem.custom){
-      update({menus:{...appState.menus,[date]:dedupeMenuIds(menuItems.map(m=>m.id===itemId?{...m,price}:m))}});
+      update({menus:{...appState.menus,[oDate]:dedupeMenuIds(menuItems.map(m=>m.id===itemId?{...m,price}:m))}});
     }
   };
 
@@ -2809,15 +2823,15 @@ function AdminOrders({ date, appState, update }) {
 
   return (<>
     <div className="grid3" style={{marginBottom:12}}>
-      <div className="stat-box"><div className="stat-num">{eur(totalGiorno)}</div><div className="stat-label">Totale giornata</div></div>
+      <div className="stat-box"><div className="stat-num">{eur(totalGiorno)}</div><div className="stat-label">{isRange?"Totale periodo":"Totale giornata"}</div></div>
       <div className="stat-box"><div className="stat-num" style={{color:"var(--green)"}}>{eur(totalIncassato)}</div><div className="stat-label">Incassato</div></div>
       <div className="stat-box"><div className="stat-num" style={{color:"var(--red)"}}>{eur(totalDare)}</div><div className="stat-label">Da incassare</div></div>
     </div>
     <div className="card">
-      <div className="card-title">🧾 Ordini — {fmt(date)} <span className="badge" style={{background:"var(--accent)"}}>{orders.length}</span></div>
+      <div className="card-title">🧾 Ordini — {isRange ? `dal ${fmtS(date)} al ${fmtS(endDate)}` : fmt(date)}{q && <span className="muted" style={{fontWeight:400,fontSize:".8rem"}}> · ricerca "{search.trim()}"</span>} <span className="badge" style={{background:"var(--accent)"}}>{orders.length}</span></div>
       {/* Modal modifica ordine */}
       {editingOrder&&(()=>{
-        const menu=adminMenuFor(appState, date).filter(i=>!i.custom);
+        const menu=adminMenuFor(appState, editingOrder.date||date).filter(i=>!i.custom);
         const customOriginals=editingOrder.items.filter(i=>i.custom);
         return(
           <div className="card" style={{marginBottom:14,border:"2px solid var(--accent)",background:"rgba(139,26,26,.03)"}}>
@@ -2981,11 +2995,13 @@ function AdminOrders({ date, appState, update }) {
         );
       })()}
 
-      {orders.length===0&&<div className="empty">Nessun ordine per questa data.</div>}
-      {orders.map(order=>{
+      {orders.length===0&&<div className="empty">{q?"Nessun ordine per questo cliente.":isRange?"Nessun ordine nel periodo.":"Nessun ordine per questa data."}</div>}
+      {orders.map((order,idx)=>{
         const cr=appState.credits[order.userId]||0;
-        return(
-          <div className="order-block" key={order.userId}>
+        const showDay = isRange && (idx===0 || orders[idx-1].date!==order.date);
+        return(<Fragment key={`${order.date}:${order.userId}`}>
+          {showDay && <div className="muted" style={{fontWeight:700,fontSize:".78rem",letterSpacing:".06em",textTransform:"uppercase",margin:"14px 2px 6px"}}>📅 {fmt(order.date)}</div>}
+          <div className="order-block">
             <div className="flex" style={{justifyContent:"space-between",marginBottom:7,flexWrap:"wrap",gap:5}}>
               <span style={{fontWeight:700}}>👤 {order.userName}</span>
               <div className="flex" style={{flexWrap:"wrap",gap:5}}>
@@ -3029,7 +3045,7 @@ function AdminOrders({ date, appState, update }) {
                               const pagato=tuttiPrezzati&&nuovoTot===0&&cu>0;
                               const newCr=r2(crOrig-cu);
                               const updated={...order,items:updItems,rawTotal:raw,creditUsed:cu,total:nuovoTot,paid:pagato};
-                              update({orders:{...appState.orders,[`${date}:${order.userId}`]:updated},credits:{...appState.credits,[order.userId]:newCr}});
+                              update({orders:{...appState.orders,[oKey(order)]:updated},credits:{...appState.credits,[order.userId]:newCr}});
                               setEditing(p=>{const n={...p};delete n[`supp_${item.id}`];return n;});
                               showToast("✓ Supplemento aggiunto");
                             }
@@ -3060,7 +3076,7 @@ function AdminOrders({ date, appState, update }) {
             })}
             {order.items.some(i=>i.price==null)&&<div style={{fontSize:".73rem",color:"var(--yellow)",marginTop:5,fontWeight:700}}>⚠ Prezzi da completare</div>}
           </div>
-        );
+        </Fragment>);
       })}
     </div>
     {toast.text&&<div className={`toast ${toast.err?"toast-err":""}`}>{toast.text}</div>}
@@ -3140,7 +3156,9 @@ function AdminNotifications({ appState, update }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – CLIENTI + CREDITI
 // ════════════════════════════════════════════════════════════════════════════
-function AdminClients({ appState, update }) {
+function AdminClients({ appState, update, search }) {
+  const q = (search||"").trim().toLowerCase();
+  const matchQ = u => !q || (u.name||"").toLowerCase().includes(q) || (u.id||"").toLowerCase().includes(q);
   const [newForm,    setNewForm]    = useState({name:"",id:"",password:""});
   const [creditEdit, setCreditEdit] = useState({});
   const [toast,      setToast]      = useState({text:"",err:false});
@@ -3149,8 +3167,8 @@ function AdminClients({ appState, update }) {
   const showToast=(t,e=false)=>{setToast({text:t,err:e});setTimeout(()=>setToast({text:"",err:false}),2500);};
 
   const clients  = appState.users.filter(u=>u.role==="client");
-  const pending  = clients.filter(u=>!u.approved);
-  const approved = clients.filter(u=>u.approved);
+  const pending  = clients.filter(u=>!u.approved).filter(matchQ);
+  const approved = clients.filter(u=>u.approved).filter(matchQ);
 
   const approve    = id=>{update({users:appState.users.map(u=>u.id===id?{...u,approved:true}:u)});showToast("✓ Cliente approvato");};
   const removeUser = id=>{if(!window.confirm("Eliminare questo account?"))return;update({users:appState.users.filter(u=>u.id!==id)});showToast("Account eliminato",true);};
@@ -3237,7 +3255,7 @@ function AdminClients({ appState, update }) {
     </div>
 
     <div className="card">
-      <div className="card-title">👥 Clienti attivi ({approved.length})</div>
+      <div className="card-title">👥 Clienti attivi ({approved.length}){q&&<span className="muted" style={{fontWeight:400,fontSize:".8rem",marginLeft:6}}>· ricerca "{search.trim()}"</span>}</div>
       {approved.length===0&&<div className="empty">Nessun cliente attivo.</div>}
       {approved.map(u=>{
         const cr   = appState.credits[u.id]||0;
@@ -3452,10 +3470,15 @@ function AdminClients({ appState, update }) {
 // ════════════════════════════════════════════════════════════════════════════
 // ADMIN – RIEPILOGO GIORNALIERO
 // ════════════════════════════════════════════════════════════════════════════
-function AdminRiepilogo({ date, appState }) {
+function AdminRiepilogo({ date, dateTo, search, appState }) {
+  const endDate = dateTo && dateTo>=date ? dateTo : date;
+  const isRange = endDate!==date;
+  const q = (search||"").trim().toLowerCase();
   const orders = Object.entries(appState.orders||{})
-    .filter(([k])=>k.startsWith(date+":"))
-    .map(([,v])=>v).filter(Boolean);
+    .filter(([k])=>{ const d=k.split(":")[0]; return d>=date && d<=endDate; })
+    .map(([k,v])=>v && ({...v, date: v.date || k.split(":")[0]})).filter(Boolean)
+    .filter(o=>!q || (o.userName||"").toLowerCase().includes(q) || (o.userId||"").toLowerCase().includes(q))
+    .sort((a,b)=>(a.date.localeCompare(b.date)) || (a.userName||"").localeCompare(b.userName||""));
 
   // Raggruppa tutti i piatti ordinati
   // Aggrega per nome + nota (separati) così "2× pasta" e "1× pasta - abbondante" restano distinti
@@ -3482,14 +3505,14 @@ function AdminRiepilogo({ date, appState }) {
   // Esporta come testo
   const esporta = ()=>{
     const righe = [
-      `RIEPILOGO ORDINI — ${new Date(date+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`,
+      `RIEPILOGO ORDINI — ${isRange ? `dal ${fmtS(date)} al ${fmtS(endDate)}` : new Date(date+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}${q?` — cliente: ${search.trim()}`:""}`,
       ``,
       `PIATTI DA PREPARARE:`,
       ...lista.flatMap(p=>Array.from({length:p.qty},()=>`  ${p.name}${p.custom?" (su richiesta)":""}${p.note?" - "+p.note:""}`)),
       ``,
       `ORDINI (${totaleOrdini}):`,
       ...orders.map(o=>[
-        `  ${o.userName}: ${eur(o.total)} ${o.paid?"✓":"⏳"}${o.note?` — nota generale: ${o.note}`:""}`,
+        `  ${isRange?fmtS(o.date)+" · ":""}${o.userName}: ${eur(o.total)} ${o.paid?"✓":"⏳"}${o.note?` — nota generale: ${o.note}`:""}`,
         ...o.items.filter(i=>i.note).map(i=>`     └ ${i.name}: ${i.note}`)
       ].join("\n")),
       ``,
@@ -3509,7 +3532,7 @@ function AdminRiepilogo({ date, appState }) {
       <div className="grid3" style={{marginBottom:14}}>
         <div className="stat-box">
           <div className="stat-num">{eur(totaleGiornata)}</div>
-          <div className="stat-label">Totale giornata</div>
+          <div className="stat-label">{isRange?"Totale periodo":"Totale giornata"}</div>
         </div>
         <div className="stat-box">
           <div className="stat-num">{eur(totaleIncasso)}</div>
@@ -3557,7 +3580,7 @@ function AdminRiepilogo({ date, appState }) {
           : orders.map(o=>(
               <div key={o.userId} style={{borderBottom:"1px solid var(--border-lt)",padding:"8px 0"}}>
                 <div className="flex" style={{justifyContent:"space-between"}}>
-                  <span style={{fontWeight:700}}>{o.userName}</span>
+                  <span style={{fontWeight:700}}>{isRange&&<span className="muted" style={{fontWeight:600,marginRight:6}}>{fmtS(o.date).replace(/\s\d{4}$/,"")}</span>}{o.userName}</span>
                   <div className="flex" style={{gap:6}}>
                     <span style={{fontWeight:700,color:"var(--accent)"}}>{eur(o.total)}</span>
                     <span className={`paid-badge ${o.paid?"pagato":"non-pagato"}`} style={{cursor:"default",fontSize:".68rem"}}>
@@ -3804,6 +3827,8 @@ function AdminSpecials({ appState, update }) {
 function AdminPanel({ user, appState, update, onLogout }) {
   const [tab, setTab]   = useState("menu");
   const [date,setDate]  = useState(today());
+  const [dateTo,setDateTo] = useState("");      // fine periodo (solo Ordini/Riepilogo); vuoto = solo il giorno
+  const [search,setSearch] = useState("");      // ricerca cliente (Ordini, Riepilogo, Clienti)
   const [moreOpen, setMoreOpen] = useState(false);
   const pendingCount = appState.users.filter(u=>u.role==="client"&&!u.approved).length;
 
@@ -3821,6 +3846,9 @@ function AdminPanel({ user, appState, update, onLogout }) {
   const MAIN = ["menu","orders","clients"];
   const label = Object.fromEntries(TABS.map(([v,l])=>[v,l]));
   const withDate = !["summary","clients","notif","top","natale","novita"].includes(tab);
+  const withRange = ["orders","riepilogo"].includes(tab);
+  const withSearch = ["orders","riepilogo","clients"].includes(tab);
+  const searchIcon = <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>;
   const go = v => { setTab(v); setMoreOpen(false); };
   const Btn = ({v,l,icon,onClick}) => (
     <button className={`cl-nav-btn ${tab===v?"on":""}`} onClick={onClick||(()=>go(v))} aria-label={l}>
@@ -3853,21 +3881,39 @@ function AdminPanel({ user, appState, update, onLogout }) {
         </header>
 
         <main className="cl-main">
-          {withDate && (
+          {(withDate || withSearch) && (
             <div className="cl-datenav">
-              <label className="cl-datefield">
-                <span className="cl-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
-                <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
-              </label>
-              <button className="cl-mode" onClick={()=>setDate(today())}>Oggi</button>
-              <span className="cl-datelabel">{fmt(date)}</span>
+              {withDate && <>
+                <label className="cl-datefield" title={withRange?"Dal":"Giorno"}>
+                  <span className="cl-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+                  {withRange && <span className="cl-datepre">dal</span>}
+                  <input type="date" value={date} onChange={e=>{ setDate(e.target.value); if(dateTo && dateTo<e.target.value) setDateTo(""); }}/>
+                </label>
+                {withRange && (
+                  <label className={`cl-datefield ${dateTo?"":"empty"}`} title="Al (opzionale)">
+                    <span className="cl-datepre">al</span>
+                    <input type="date" value={dateTo} min={date} onChange={e=>setDateTo(e.target.value)}/>
+                    {dateTo && <button className="cl-clear" onClick={()=>setDateTo("")} aria-label="Togli fine periodo">✕</button>}
+                  </label>
+                )}
+                <button className="cl-mode" onClick={()=>{ setDate(today()); setDateTo(""); }}>Oggi</button>
+                {!withRange && <span className="cl-datelabel">{fmt(date)}</span>}
+                {withRange && dateTo && dateTo>=date && <span className="cl-datelabel">dal {fmtS(date)} al {fmtS(dateTo)}</span>}
+              </>}
+              {withSearch && (
+                <label className="cl-searchfield">
+                  <span className="cl-ico">{searchIcon}</span>
+                  <input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cerca cliente…"/>
+                  {search && <button className="cl-clear" onClick={()=>setSearch("")} aria-label="Cancella ricerca">✕</button>}
+                </label>
+              )}
             </div>
           )}
           {tab==="menu"    &&<AdminMenu    date={date} appState={appState} update={update}/>}
-          {tab==="orders"  &&<AdminOrders  date={date} appState={appState} update={update}/>}
+          {tab==="orders"  &&<AdminOrders  date={date} dateTo={dateTo} search={search} appState={appState} update={update}/>}
           {tab==="notif"   &&<AdminNotifications       appState={appState} update={update}/>}
-          {tab==="clients" &&<AdminClients             appState={appState} update={update}/>}
-          {tab==="riepilogo"&&<AdminRiepilogo date={date} appState={appState}/>}
+          {tab==="clients" &&<AdminClients             appState={appState} update={update} search={search}/>}
+          {tab==="riepilogo"&&<AdminRiepilogo date={date} dateTo={dateTo} search={search} appState={appState}/>}
           {tab==="summary" &&<AdminSummary             appState={appState}/>}
           {tab==="natale"  &&<div className="cl-xmas-page" style={{maxWidth:900}}><div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div><ChristmasSection isAdmin/></div>}
           {tab==="novita"  &&<AdminSpecials appState={appState} update={update}/>}
