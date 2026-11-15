@@ -577,7 +577,7 @@ const STYLE = `
 
   /* striscia natale */
   .cl .cl-xmas-strip{margin-top:12px;display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:74px;width:100%;text-align:left;border:0;cursor:pointer;border-radius:var(--cl-r);
-    background:#2b1810 url("/natale.jpg") center 35%/cover;position:relative;overflow:hidden;color:#fff;box-shadow:0 14px 30px -18px rgba(43,24,16,.6)}
+    background:#2b1810 url("/natale/bg-h.webp") center 55%/cover;position:relative;overflow:hidden;color:#fff;box-shadow:0 14px 30px -18px rgba(43,24,16,.6)}
   .cl .cl-xmas-strip::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(43,24,16,.88) 0%,rgba(43,24,16,.7) 55%,rgba(43,24,16,.35) 100%)}
   .cl .cl-xmas-strip>*{position:relative}
   .cl .cl-xmas-strip .cl-ico{color:#f4d35e}
@@ -728,6 +728,17 @@ const STYLE = `
   .cl .cl-xbg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,12,8,.45) 0%,rgba(26,12,8,.62) 35%,rgba(26,12,8,.8) 100%)}
   .cl[data-screen=natale] .cl-head{position:relative;z-index:1}
   .cl .cl-snow{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .cl .cl-xpop-bg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(20,8,5,.78) url("/natale/bg-v.webp") center/cover;animation:clFade .3s}
+  .cl .cl-xpop-bg::before{content:"";position:absolute;inset:0;background:rgba(20,8,5,.62)}
+  .cl .cl-xpop-bg .cl-snow{z-index:1}
+  .cl .cl-xpop{position:relative;z-index:2;width:min(420px,100%);text-align:center;background:linear-gradient(180deg,rgba(43,24,16,.92),rgba(26,12,8,.96));border:2px solid #f4d35e;border-radius:28px;padding:26px 22px 20px;color:#fff;box-shadow:0 0 0 8px rgba(244,211,94,.14),0 40px 80px -30px rgba(0,0,0,.9);animation:clPopIn .4s cubic-bezier(.2,.8,.2,1)}
+  .cl .cl-xpop .cl-script{font-family:'Great Vibes',cursive;font-size:40px;color:#f4d35e;line-height:1}
+  .cl .cl-xpop h3{font-family:'Mountains of Christmas',cursive;font-size:30px;line-height:1.1;margin:8px 0 10px}
+  .cl .cl-xpop p{font-size:15px;line-height:1.5;color:rgba(255,255,255,.88);margin:0 0 18px}
+  .cl .cl-xpop .cl-big.gold{background:#f4d35e;color:#2b1810;width:100%}
+  .cl .cl-xpop .cl-ghost.light{margin-top:8px}
+  @keyframes clFade{from{opacity:0}to{opacity:1}}
+  @keyframes clPopIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
   .cl .cl-snow i{position:absolute;top:-6%;font-style:normal;color:rgba(255,255,255,.9);animation:clFall linear infinite;text-shadow:0 0 8px rgba(255,255,255,.7)}
   .cl .cl-snow i:nth-child(1){left:3%;font-size:15px;animation-duration:12s}.cl .cl-snow i:nth-child(2){left:9%;font-size:10px;animation-duration:16s;animation-delay:-3s}.cl .cl-snow i:nth-child(3){left:15%;font-size:18px;animation-duration:13s;animation-delay:-6s}.cl .cl-snow i:nth-child(4){left:22%;font-size:9px;animation-duration:18s;animation-delay:-1s}.cl .cl-snow i:nth-child(5){left:28%;font-size:13px;animation-duration:14s;animation-delay:-8s}.cl .cl-snow i:nth-child(6){left:35%;font-size:11px;animation-duration:17s;animation-delay:-4s}.cl .cl-snow i:nth-child(7){left:41%;font-size:16px;animation-duration:12s;animation-delay:-9s}.cl .cl-snow i:nth-child(8){left:48%;font-size:10px;animation-duration:19s;animation-delay:-2s}.cl .cl-snow i:nth-child(9){left:54%;font-size:12px;animation-duration:14s;animation-delay:-7s}.cl .cl-snow i:nth-child(10){left:60%;font-size:17px;animation-duration:11s;animation-delay:-5s}.cl .cl-snow i:nth-child(11){left:66%;font-size:9px;animation-duration:16s;animation-delay:-10s}.cl .cl-snow i:nth-child(12){left:72%;font-size:13px;animation-duration:15s;animation-delay:-12s}.cl .cl-snow i:nth-child(13){left:78%;font-size:11px;animation-duration:13s;animation-delay:-2.5s}.cl .cl-snow i:nth-child(14){left:84%;font-size:15px;animation-duration:17s;animation-delay:-6.5s}.cl .cl-snow i:nth-child(15){left:90%;font-size:10px;animation-duration:12s;animation-delay:-9.5s}.cl .cl-snow i:nth-child(16){left:95%;font-size:14px;animation-duration:15s;animation-delay:-4.5s}
   @keyframes clFall{to{transform:translateY(110vh) rotate(360deg)}}
@@ -753,6 +764,11 @@ const STYLE = `
   .cl .cl-xmas-strip .cd.live{display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;align-self:flex-start;animation:clPulse 2s ease-in-out infinite}
   .cl .cl-xmas-strip .tx{display:flex;flex-direction:column;flex:1}
   .cl .cl-xmas-strip{min-height:92px}
+  .cl .cl-xmas-strip .cd.off{display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;align-self:flex-start;background:rgba(255,255,255,.18);color:#fff}
+  .cl .cl-xmas-strip .cd.off i{width:7px;height:7px;border-radius:50%;background:#c33}
+  .cl .cl-xopen.closed{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}.cl .cl-xopen.closed i{background:#c33;box-shadow:none}
+  .cl .cl-xsec.special .cl-xgrid.one{max-width:460px}
+  .cl .cl-xsec.special .cl-xsec-title{color:#f4d35e}
   .cl .cl-xmas-strip .cd.live i{width:7px;height:7px;border-radius:50%;background:#1e6b3f;box-shadow:0 0 0 2px rgba(30,107,63,.3)}
   @keyframes clPulse{50%{box-shadow:0 0 0 6px rgba(244,211,94,.25)}}
   .cl .cl-xopen{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(244,211,94,.6);color:#f4d35e;font-weight:700;font-size:13px;letter-spacing:.04em}
@@ -783,7 +799,7 @@ const STYLE = `
   .cl .cl-xprice.req{margin-top:8px;color:#f4d35e;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
   .cl .cl-xincl{font-size:11px;font-weight:700;color:#2b1810;background:#f4d35e;border-radius:999px;padding:3px 9px;margin-top:4px}
   .cl .cl-xnote{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:6px;font-style:italic}
-  .cl .cl-xcard.mystery .cl-xname{color:#f4d35e;font-size:16px}.cl .cl-xcard.mystery .cl-xnote{color:#fff;font-style:normal;font-weight:600}
+  .cl .cl-xcard.mystery .cl-xname{color:#f4d35e;font-size:16px}.cl .cl-xcard.mystery .cl-xnote{color:#2b1810;font-style:normal;font-weight:700}
   .cl .cl-xcard.big .cl-xph{aspect-ratio:4/3}
   .cl .cl-xbox{display:grid;grid-template-columns:90px 90px 1fr;gap:12px;align-items:center;background:rgba(26,12,8,.7);border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:14px}
   .cl .cl-xbox img{width:100%;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
@@ -1720,7 +1736,9 @@ const XMAS_CATALOG = [
     { n:"Pistacchio",               img:"pistacchio",      price:25,   boxIncl:true },
     { n:"Frutti di Bosco e Cioccolato Bianco", img:"frutti-di-bosco", price:25, boxIncl:true },
     { n:"Vegano al Cioccolato",     img:"vegano",          price:16.5, tag:"🌱 100% vegetale" },
-    { n:"Panettone Speciale",       mystery:true,          tag:"Limited Edition", note:"In arrivo a metà novembre" },
+  ]},
+  { id:"speciale", title:"Il Panettone Speciale", sub:"Limited Edition · in arrivo a metà novembre", items:[
+    { n:"Panettone Speciale",       mystery:true,          tag:"Limited Edition", note:"Una ricetta segreta, svelata a metà novembre. Resta sintonizzato!", big:true },
   ]},
   { id:"pandoro", title:"Pandoro & formato mini", sub:"Anche in formato mini… ma mega buono!", items:[
     { n:"Pandoro",                  img:"pandoro",       price:16.5 },
@@ -3795,6 +3813,7 @@ function AdminXmas({ appState, update, search }) {
   const aggList=Object.entries(agg).sort((a,b)=>a[0].localeCompare(b[0]));
   const tot=all.reduce((s,o)=>s+(o.total||0),0);
   const nNew=all.filter(o=>o.status==="nuova"||!o.status).length;
+  const xmasOpen=appState.xmasOpen!==false;
   const esporta=()=>{
     const righe=[`PRENOTAZIONI DI NATALE — ${new Date().toLocaleDateString("it-IT")}`,``,`PEZZI DA PREPARARE (non consegnate):`,
       ...aggList.map(([n,qn])=>`  ${qn}× ${n}`),``,`PRENOTAZIONI (${all.length}):`,
@@ -3808,6 +3827,12 @@ function AdminXmas({ appState, update, search }) {
       <div className="stat-box"><div className="stat-num">{all.length}</div><div className="stat-label">Prenotazioni</div></div>
       <div className="stat-box"><div className="stat-num" style={{color:"var(--accent)"}}>{nNew}</div><div className="stat-label">Nuove</div></div>
       <div className="stat-box"><div className="stat-num" style={{color:"var(--green)"}}>{eur(tot)}</div><div className="stat-label">Totale prenotato</div></div>
+    </div>
+    <div className="card">
+      <div className="card-title" style={{justifyContent:"space-between"}}>
+        <span>{xmasOpen?"🟢 Ordinazioni di Natale aperte":"🔒 Ordinazioni di Natale chiuse"}</span>
+        <button className={`btn btn-sm ${xmasOpen?"btn-danger":"btn-success"}`} onClick={()=>{ if(!window.confirm(xmasOpen?"Chiudere le ordinazioni di Natale? I clienti non potranno più prenotare né modificare.":"Riaprire le ordinazioni di Natale?")) return; update({xmasOpen:!xmasOpen}); showToast(xmasOpen?"Ordinazioni chiuse":"Ordinazioni aperte"); }}>{xmasOpen?"Chiudi":"Riapri"}</button>
+      </div>
     </div>
     <div className="card">
       <div className="card-title" style={{justifyContent:"space-between"}}><span>🎁 Pezzi da preparare</span><button className="btn btn-gold btn-sm" onClick={esporta}>⬇ Esporta</button></div>
@@ -4376,7 +4401,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const xCount = xLines.reduce((s,l)=>s+l.qty,0);
   const xTotal = xLines.reduce((s,l)=>s+(l.price!=null?l.price*l.qty:0),0);
   const xHasReq = xLines.some(l=>l.price==null);
-  const xShowCart = tab==="natale" && (!myX || xEditing);
+  const xmasOpen = appState.xmasOpen!==false;
+  const xCanEdit = xmasOpen && (!myX || myX.status==="nuova" || !myX.status);
+  const xShowCart = tab==="natale" && xmasOpen && (!myX || xEditing);
   const sendXmas = async () => {
     if(!xCount || xSending) return;
     setXSending(true);
@@ -4397,7 +4424,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
       setToast("Prenotazione annullata"); setTimeout(()=>setToast(""),2500);
     }catch(e){ setToast("⚠️ Errore, riprova"); setTimeout(()=>setToast(""),2500); }
   };
-  const editXmas = () => { const q={}; (myX?.items||[]).forEach(i=>{ if(XITEMS[i.id]) q[i.id]=i.qty; }); setXCart(q); setXEditing(true); };
+  const editXmas = () => { if(!xCanEdit) return; const q={}; (myX?.items||[]).forEach(i=>{ if(XITEMS[i.id]) q[i.id]=i.qty; }); setXCart(q); setXEditing(true); };
 
   const cartVisible = (tab==="order" && ordersOpen && !myOrder && cartCount>0) || (xShowCart && xCount>0);
   const titles = {
@@ -4410,6 +4437,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
   };
   const [cartOpen, setCartOpen] = useState(false);
   const [topPeriod, setTopPeriod] = useState('month');
+  const [xPop, setXPop] = useState(false);
+  useEffect(()=>{ if(!xmasOpen) return; let seen=null; try{ seen=localStorage.getItem("xmasPopDay"); }catch(e){} if(seen!==today()) setXPop(true); },[xmasOpen]);
+  const closeXPop = (go) => { try{ localStorage.setItem("xmasPopDay", today()); }catch(e){} setXPop(false); if(go) setTab("natale"); };
   useEffect(()=>{ if(!cartVisible) setCartOpen(false); },[cartVisible]);
 
   // Riga piatto (stesso setQty / itemNotes di sempre, solo markup nuovo)
@@ -4651,6 +4681,18 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
         <main className="cl-main">
 
+        {xPop && (
+          <div className="cl-xpop-bg" onClick={()=>closeXPop(false)}>
+            <div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div>
+            <div className="cl-xpop" onClick={e=>e.stopPropagation()} role="dialog" aria-label="Ordinazioni di Natale aperte">
+              <div className="cl-script">Buon Natale</div>
+              <h3>Le ordinazioni di Natale sono aperte!</h3>
+              <p>Panettoni, pandori, torroni e dolci della tradizione: prenota i tuoi direttamente dall'app, senza acconto.</p>
+              <button className="cl-big gold" onClick={()=>closeXPop(true)}>🎄 Scopri il catalogo</button>
+              <button className="cl-ghost light" onClick={()=>closeXPop(false)}>Più tardi</button>
+            </div>
+          </div>
+        )}
         {tab==="natale" && (
           <div className="cl-xmas-page">
             <div className="cl-xbg" aria-hidden="true"/>
@@ -4660,8 +4702,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 <div className="cl-script">Buon Natale</div>
                 <h2 className="cl-xtitle">Panettoni &amp; Dolci 2026</h2>
                 <div className="cl-gold-rule"><span className="cl-ico"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></span></div>
-                <p className="cl-xsub">Dove la festa inizia dal primo morso. Panettoni artigianali creati con le mani e pensati col cuore: <b>le ordinazioni sono aperte</b>: prenota il tuo direttamente dall'app.</p>
-                <div className="cl-xopen"><i/>Ordinazioni aperte · prenota dall'app</div>
+                <p className="cl-xsub">Dove la festa inizia dal primo morso. Panettoni artigianali creati con le mani e pensati col cuore: {xmasOpen ? <><b>le ordinazioni sono aperte</b>: prenota il tuo direttamente dall'app.</> : <>le ordinazioni di quest'anno sono <b>chiuse</b>. Grazie a tutti!</>}</p>
+                {xmasOpen ? <div className="cl-xopen"><i/>Ordinazioni aperte · prenota dall'app</div> : <div className="cl-xopen closed"><i/>Ordinazioni chiuse</div>}
               </div>
 
               {myX && !xEditing && (
@@ -4673,8 +4715,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
                       <div key={i.id} className="cl-xline"><span>{i.qty}× {i.n}{i.box?" (con scatola)":""}{i.w?` · ${i.w}`:""}</span><span>{i.price!=null?eur(i.price*i.qty):"su richiesta"}</span></div>
                     ))}
                     <div className="cl-xline tot"><span>Totale</span><span>{eur(myX.total||0)}{myX.items.some(i=>i.price==null)?" + su richiesta":""}</span></div>
-                    <p>Nessun acconto richiesto. Puoi modificarla finché non viene consegnata.</p>
-                    {myX.status!=="consegnata" && (
+                    <p>{xCanEdit ? "Nessun acconto richiesto. Puoi modificarla finché non viene confermata." : myX.status==="confermata" ? "Prenotazione confermata: per modifiche scrivi al forno." : myX.status==="consegnata" ? "Grazie e buone feste! 🎄" : "Le ordinazioni sono chiuse."}</p>
+                    {xCanEdit && (
                       <div className="cl-acts" style={{justifyContent:"center"}}>
                         <button className="cl-ghost light" onClick={editXmas}>✏️ Modifica</button>
                         <button className="cl-ghost light danger" onClick={cancelXmas}>🗑 Annulla</button>
@@ -4684,12 +4726,12 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 </section>
               )}
               {XMAS_CATALOG.map(sec=>(
-                <section key={sec.id} className="cl-xsec">
+                <section key={sec.id} className={`cl-xsec ${sec.id==="speciale"?"special":""}`}>
                   <div className="cl-xsec-head">
                     <h3 className="cl-xsec-title">{sec.title}</h3>
                     <div className="cl-xsec-sub">{sec.sub}</div>
                   </div>
-                  <div className={`cl-xgrid ${sec.id==="nativita"?"one":""}`}>
+                  <div className={`cl-xgrid ${(sec.id==="nativita"||sec.id==="speciale")?"one":""}`}>
                     {sec.items.map(it=>(
                       <article key={it.n} className={`cl-xcard ${it.mystery?"mystery":""} ${it.big?"big":""}`}>
                         {it.tag && <span className="cl-xtag">{it.tag}</span>}
@@ -4706,8 +4748,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
                             : <img src={XMAS_IMG(it.img)} alt={it.n} loading="lazy"/>}
                         </div>
                         <div className="cl-xname">{it.n}{it.w && <small> · {it.w}</small>}</div>
-                        {(()=>{ const base=`${sec.id}:${it.img||"mystery"}`; const canBook = !myX || xEditing;
-                          if(it.mystery) return <><div className="cl-xnote">{it.note}</div>{canBook && <div className="cl-xbtn"><span className="lab">Riservamelo</span>{xCtl(base)}</div>}</>;
+                        {(()=>{ const base=`${sec.id}:${it.img||"mystery"}`; const canBook = xmasOpen && (!myX || xEditing);
+                          if(it.mystery) return <div className="cl-xnote">{it.note}</div>;
                           if(it.onRequest) return <><div className="cl-xprice req">Prezzo su richiesta</div>{canBook && <div className="cl-xbtn"><span className="lab">Richiedi</span>{xCtl(base)}</div>}</>;
                           return <>
                             <div className="cl-xprices">
@@ -4952,7 +4994,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
           {/* Striscia Natale (discreta, porta alla sezione) */}
           <button className="cl-xmas-strip" onClick={()=>setTab("natale")}>
             <span className="cl-ico">{ICON.tree}</span>
-            <span className="tx"><b>Natale a Dolci Sapori</b><small>Panettoni, pandori, torroni: scopri il catalogo</small><span className="cd live"><i/>Ordinazioni aperte</span></span>
+            <span className="tx"><b>Natale a Dolci Sapori</b><small>Panettoni, pandori, torroni: scopri il catalogo</small>{xmasOpen ? <span className="cd live"><i/>Ordinazioni aperte</span> : <span className="cd off"><i/>Ordinazioni chiuse</span>}</span>
             <span className="cl-ico chev">{ICON.chev}</span>
           </button>
 
