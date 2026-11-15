@@ -710,7 +710,8 @@ const STYLE = `
   .cl .cl-modal-acts .cl-big{margin-top:0;height:48px}
 
   /* natale pagina intera */
-  .cl[data-screen=natale]{background:radial-gradient(120% 70% at 50% -10%,#a31818 0%,#8b1a1a 38%,#4a1611 70%,#2b1810 100%) fixed}
+  .cl[data-screen=natale]{background:#2b1810 radial-gradient(120% 60vh at 50% -10%,#a31818 0%,#8b1a1a 35%,#4a1611 70%,#2b1810 100%) no-repeat;background-size:100% 100%}
+  body:has(.cl[data-screen=natale]){background:#2b1810}
   .cl[data-screen=natale]::before,.cl[data-screen=natale]::after{display:none}
   .cl[data-screen=natale] .cl-head,.cl[data-screen=natale] .cl-hi,.cl[data-screen=natale] .cl-h1{color:#fff}
   .cl[data-screen=natale] .cl-hi{opacity:.75}
@@ -742,6 +743,48 @@ const STYLE = `
   .cl .cl-cdown div::before{content:"";position:absolute;top:-10px;width:12px;height:8px;border-radius:2px;background:#f4d35e}
   .cl .cl-cdown b{font-family:"Mountains of Christmas","Cormorant Garamond",serif;font-size:34px;line-height:1;color:#f4d35e;font-weight:700}.cl .cl-cdown small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;opacity:.9;margin-top:2px;color:#fff}
   .cl .cl-branches{margin:16px 0 0}.cl .cl-branches svg{width:100%;height:40px;display:block}
+  .cl .cl-xmas-strip .cd.live{display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;align-self:flex-start;animation:clPulse 2s ease-in-out infinite}
+  .cl .cl-xmas-strip .tx{display:flex;flex-direction:column;flex:1}
+  .cl .cl-xmas-strip{min-height:92px}
+  .cl .cl-xmas-strip .cd.live i{width:7px;height:7px;border-radius:50%;background:#1e6b3f;box-shadow:0 0 0 2px rgba(30,107,63,.3)}
+  @keyframes clPulse{50%{box-shadow:0 0 0 6px rgba(244,211,94,.25)}}
+  .cl .cl-xopen{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(244,211,94,.6);color:#f4d35e;font-weight:700;font-size:13px;letter-spacing:.04em}
+  .cl .cl-xopen i{width:8px;height:8px;border-radius:50%;background:#7CFC9A;box-shadow:0 0 0 3px rgba(124,252,154,.25)}
+  .cl .cl-xsec{margin-top:30px}
+  .cl .cl-xsec-head{text-align:center;margin-bottom:14px}
+  .cl .cl-xsec-title{font-family:"Mountains of Christmas","Cormorant Garamond",serif;font-size:30px;line-height:1.05;color:#f4d35e;font-weight:700;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+  .cl .cl-xsec-sub{font-size:13.5px;color:rgba(255,255,255,.8);margin-top:4px;font-style:italic}
+  .cl .cl-xgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cl .cl-xgrid.one{grid-template-columns:1fr;max-width:420px;margin:0 auto}
+  .cl .cl-xcard{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 30px -20px rgba(0,0,0,.8)}
+  .cl .cl-xcard.mystery{background:linear-gradient(180deg,#1a1a1a,#050505);border-color:#f4d35e;box-shadow:0 0 0 4px rgba(244,211,94,.15),0 18px 40px -20px rgba(0,0,0,.9)}
+  .cl .cl-xtag{position:absolute;top:10px;left:10px;z-index:2;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#f4d35e;color:#2b1810;padding:4px 8px;border-radius:999px}
+  .cl .cl-xph{width:100%;aspect-ratio:1/1;display:grid;place-items:center;padding:6px}
+  .cl .cl-xph img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));transition:transform .3s}
+  .cl .cl-xcard:hover .cl-xph img{transform:scale(1.05) rotate(-1deg)}
+  .cl .cl-xmystery{width:100%;height:100%;display:grid;place-items:center}
+  .cl .cl-xmystery svg{width:92%;height:92%;filter:drop-shadow(0 10px 18px rgba(0,0,0,.7))}
+  .cl .cl-xname{font-weight:700;font-size:14.5px;line-height:1.25;color:#fff;margin-top:4px;min-height:36px;display:flex;align-items:center}
+  .cl .cl-xname small{display:block;width:100%;font-weight:500;color:rgba(255,255,255,.7);font-size:12px}
+  .cl .cl-xname{flex-wrap:wrap;justify-content:center}
+  .cl .cl-xprices{margin-top:8px;display:flex;flex-direction:column;gap:3px;align-items:center}
+  .cl .cl-xprice{font-size:13px;color:rgba(255,255,255,.85);display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;justify-content:center}
+  .cl .cl-xprice b{font-size:20px;color:#f4d35e;font-weight:800;letter-spacing:-.01em}
+  .cl .cl-xprice.box b{font-size:16px}
+  .cl .cl-xprice small{font-size:11.5px;color:rgba(255,255,255,.7)}
+  .cl .cl-xprice.req{margin-top:8px;color:#f4d35e;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  .cl .cl-xincl{font-size:11px;font-weight:700;color:#2b1810;background:#f4d35e;border-radius:999px;padding:3px 9px;margin-top:4px}
+  .cl .cl-xnote{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:6px;font-style:italic}
+  .cl .cl-xcard.mystery .cl-xname{color:#f4d35e;font-size:16px}.cl .cl-xcard.mystery .cl-xnote{color:#fff;font-style:normal;font-weight:600}
+  .cl .cl-xcard.big .cl-xph{aspect-ratio:4/3}
+  .cl .cl-xbox{display:grid;grid-template-columns:90px 90px 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:14px}
+  .cl .cl-xbox img{width:100%;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
+  .cl .cl-xbox .cl-xsec-title{font-size:24px;text-align:left}.cl .cl-xbox p{font-size:13px;color:rgba(255,255,255,.85);margin-top:4px;line-height:1.45}
+  .cl .cl-xorder{text-align:center;background:linear-gradient(180deg,rgba(43,24,16,.6),rgba(43,24,16,.9));border:2px solid #f4d35e;border-radius:24px;padding:20px 16px}
+  .cl .cl-xorder p{color:#fff;font-size:15px;margin:4px 0 12px}
+  .cl .cl-xaddr{color:#fff;font-weight:600;font-size:14px;padding:4px 0}
+  .cl .cl-xdays{margin-top:12px;color:#f4d35e;font-size:14px}.cl .cl-xdays b{font-size:20px}
+  .cl .cl-xfoot{text-align:center;color:rgba(255,255,255,.75);font-style:italic;margin:16px 0 6px;font-size:13.5px}
   .cl .cl-xnote{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;height:50px;border-radius:999px;border:0;background:#f4d35e;color:#2b1810;font-weight:700;font-size:14.5px;box-shadow:0 12px 26px -12px rgba(0,0,0,.6);cursor:pointer}
   .cl .cl-xnote .cl-ico{font-size:19px}
   .cl .cl-chips{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
@@ -826,11 +869,13 @@ const STYLE = `
     .cl .cl-tabbar,.cl .cl-cartbar,.cl .cl-sheet,.cl .cl-scrim{display:none!important}
     .cl .toast{bottom:28px}
     .cl .cl-script{font-size:52px}.cl .cl-xtitle{font-size:50px}
-    .cl .cl-xwrap{display:grid;grid-template-columns:1.05fr 1fr;column-gap:40px;align-items:center;padding:10px 0 20px}
-    .cl .cl-xhead{text-align:left;grid-column:2;grid-row:1}.cl .cl-gold-rule{margin-left:0}.cl .cl-xsub{margin:0}
-    .cl .cl-xhero{grid-column:1;grid-row:1/4;margin:0}.cl .cl-xhero video{aspect-ratio:4/3}
-    .cl .cl-cdwrap{grid-column:2;text-align:left;margin-top:18px}.cl .cl-cdown{justify-content:flex-start}
-    .cl .cl-branches{grid-column:1/-1}.cl .cl-xnote{grid-column:2;width:auto;justify-self:start;padding:0 26px;margin-top:0}
+    .cl .cl-xwrap.catalog{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;align-items:center;padding:10px 0 20px}
+    .cl .cl-xwrap.catalog .cl-xhead{text-align:left;grid-column:2;grid-row:1}.cl .cl-xwrap.catalog .cl-gold-rule{margin-left:0}.cl .cl-xwrap.catalog .cl-xsub{margin:0}
+    .cl .cl-xwrap.catalog .cl-xhero{grid-column:1;grid-row:1;margin:0}.cl .cl-xwrap.catalog .cl-xhero video{aspect-ratio:4/3}
+    .cl .cl-xwrap.catalog .cl-xsec,.cl .cl-xwrap.catalog .cl-branches,.cl .cl-xwrap.catalog .cl-xfoot{grid-column:1/-1}
+    .cl .cl-xgrid{grid-template-columns:repeat(4,1fr);gap:16px}
+    .cl .cl-xsec-title{font-size:38px}
+    .cl .cl-xbox{grid-template-columns:130px 130px 1fr}
     .cl .cl-xmas-page{max-width:1100px}
   }
 `;
@@ -1638,6 +1683,50 @@ const NATALE_IMG_LOCAL   = "/natale.jpg";
 const NATALE_IMG_CDN     = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_230524_4b8b457f-88d2-4d75-848d-60ee318a6523.png";
 // Video: prova /natale.mp4 in public/, altrimenti il CDN; se nessuno dei due
 // è disponibile resta l'immagine (poster).
+// ─── Catalogo di Natale 2026 (dal PDF del forno) ──────────────────────────
+const XMAS_IMG = n => `/natale/${n}.webp`;
+const XMAS_CATALOG = [
+  { id:"panettoni", title:"I Panettoni", sub:"Artigianali, lievitazione naturale", items:[
+    { n:"Classico",                 img:"classico",        price:16.5, box:22 },
+    { n:"Cioccolato",               img:"cioccolato",      price:16.5, box:22 },
+    { n:"Pere e Cioccolato",        img:"pere-cioccolato", price:18,   box:23 },
+    { n:"Tre Cioccolati",           img:"tre-cioccolati",  price:22,   boxIncl:true },
+    { n:"Veneziana al Cioccolato",  img:"veneziana",       price:22,   boxIncl:true },
+    { n:"Rocher",                   img:"rocher",          price:24,   boxIncl:true },
+    { n:"Pistacchio",               img:"pistacchio",      price:25,   boxIncl:true },
+    { n:"Frutti di Bosco e Cioccolato Bianco", img:"frutti-di-bosco", price:25, boxIncl:true },
+    { n:"Vegano al Cioccolato",     img:"vegano",          price:16.5, tag:"🌱 100% vegetale" },
+    { n:"Panettone Speciale",       mystery:true,          tag:"Limited Edition", note:"In arrivo a metà novembre" },
+  ]},
+  { id:"pandoro", title:"Pandoro & formato mini", sub:"Anche in formato mini… ma mega buono!", items:[
+    { n:"Pandoro",                  img:"pandoro",       price:16.5 },
+    { n:"Stella al Cioccolato",     img:"stella",        price:20 },
+    { n:"Stellina al Cioccolato",   img:"stellina",      price:3.5,  w:"110 g" },
+    { n:"Pandorino",                img:"pandorino",     price:2.5,  w:"100 g" },
+    { n:"Panettoncino al Cioccolato", img:"panettoncino", price:2.5, w:"100 g" },
+  ]},
+  { id:"torroni", title:"I Torroni", sub:"Morbidi o al cioccolato", items:[
+    { n:"Torrone Morbido al Pistacchio", img:"torrone-pistacchio", price:11.9 },
+    { n:"Torrone Morbido alla Nocciola", img:"torrone-nocciola",   price:11.9 },
+    { n:"Torrone Cioccolato al Latte",   img:"torrone-latte",      price:11.9 },
+    { n:"Torrone Cioccolato Fondente",   img:"torrone-fondente",   price:11.9 },
+  ]},
+  { id:"tradizione", title:"Non possono mancare a tavola", sub:"I dolci della tradizione", items:[
+    { n:"Panpepato",            img:"panpepato",    price:8.5 },
+    { n:"Pangiallo",            img:"pangiallo",    price:8.5 },
+    { n:"Torta Cicerchiata",    img:"cicerchiata",  price:13 },
+    { n:"Mostaccioli",          img:"mostaccioli",  price:18,  unit:"al kg" },
+    { n:"Tozzetti al Miele",    img:"tozzetti",     price:5.9, w:"300 g" },
+    { n:"Brutti e Buoni",       img:"brutti-buoni", price:5.9, w:"230 g" },
+    { n:"Struffoli",            img:"struffoli",    price:2,   unit:"l'uno" },
+    { n:"Tronchetto al Cioccolato", img:"tronchetto", onRequest:true },
+  ]},
+  { id:"nativita", title:"Il nostro must-have di Natale", sub:"Pezzi limitati, magia garantita!", items:[
+    { n:"Natività", img:"nativita", onRequest:true, big:true, note:"Pane dolce decorato a mano" },
+  ]},
+];
+const XMAS_SEDI = ["Via della Lite, 93 — 00132 Roma", "Via di Fontana Candida, 14 — 00132 Roma"];
+
 const NATALE_VIDEO_LOCAL = "/natale.mp4";
 const NATALE_VIDEO_CDN   = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_231327_ebab638f-268f-4df3-b53b-522451303fe5.mp4";
 
@@ -4180,7 +4269,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
     storico: ["Ultimi 30 giorni", "I tuoi ordini"],
     top:     ["Chi ordina di più", "Top clienti"],
     notifs:  [unreadCount>0 ? `${unreadCount} da leggere` : "Tutte lette", "Notifiche"],
-    natale:  ["Dicembre si avvicina", "Natale"],
+    natale:  ["Ordinazioni aperte", "Natale"],
     account: ["Il tuo profilo", "Account"],
   };
   const [cartOpen, setCartOpen] = useState(false);
@@ -4407,12 +4496,13 @@ function ClientPanel({ user, appState, update, onLogout }) {
         {tab==="natale" && (
           <div className="cl-xmas-page">
             <div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div>
-            <div className="cl-xwrap">
+            <div className="cl-xwrap catalog">
               <div className="cl-xhead">
                 <div className="cl-script">Buon Natale</div>
-                <h2 className="cl-xtitle">Il Natale di Dolci Sapori</h2>
+                <h2 className="cl-xtitle">Panettoni &amp; Dolci 2026</h2>
                 <div className="cl-gold-rule"><span className="cl-ico"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></span></div>
-                <p className="cl-xsub">Panettoni, pandori, torroni e i piatti della tradizione. Il menù delle feste è <b>in lavorazione</b>: appena pronto lo troverai qui e potrai ordinare come sempre.</p>
+                <p className="cl-xsub">Dove la festa inizia dal primo morso. Panettoni artigianali creati con le mani e pensati col cuore: <b>le ordinazioni sono aperte</b>, prenota il tuo in forno.</p>
+                <div className="cl-xopen"><i/>Ordinazioni aperte · consegna in forno</div>
               </div>
               <div className="cl-xhero">
                 <svg className="cl-orn o1" viewBox="0 0 40 60" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="18" stroke="#f4d35e" strokeWidth="1.5"/><rect x="15" y="16" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="40" r="18" fill="#8b1a1a" stroke="#f4d35e" strokeWidth="2"/><path d="M6 36c6-4 22-4 28 0" stroke="#f4d35e" strokeWidth="1.5" fill="none"/><circle cx="14" cy="33" r="3" fill="#fff" opacity=".35"/></svg>
@@ -4421,16 +4511,68 @@ function ClientPanel({ user, appState, update, onLogout }) {
                   onError={()=>{ if(xVideo!==NATALE_VIDEO_CDN) setXVideo(NATALE_VIDEO_CDN); }}/>
                 <img alt="" src={xPoster} style={{display:"none"}} onError={()=>{ if(xPoster!==NATALE_IMG_CDN) setXPoster(NATALE_IMG_CDN); }}/>
               </div>
-              <div className="cl-cdwrap">
-                <div className="cl-cdlab">Mancano a Natale</div>
-                {(()=>{ const now=new Date(); const x=new Date(now.getFullYear(),11,25); if(x<now) x.setFullYear(x.getFullYear()+1);
-                  const ms=x-now, d=Math.floor(ms/864e5), hh=Math.floor(ms%864e5/36e5), mm=Math.floor(ms%36e5/6e4);
-                  return <div className="cl-cdown"><div><b>{d}</b><small>giorni</small></div><div><b>{hh}</b><small>ore</small></div><div><b>{mm}</b><small>minuti</small></div></div>; })()}
-              </div>
+
+              {XMAS_CATALOG.map(sec=>(
+                <section key={sec.id} className="cl-xsec">
+                  <div className="cl-xsec-head">
+                    <h3 className="cl-xsec-title">{sec.title}</h3>
+                    <div className="cl-xsec-sub">{sec.sub}</div>
+                  </div>
+                  <div className={`cl-xgrid ${sec.id==="nativita"?"one":""}`}>
+                    {sec.items.map(it=>(
+                      <article key={it.n} className={`cl-xcard ${it.mystery?"mystery":""} ${it.big?"big":""}`}>
+                        {it.tag && <span className="cl-xtag">{it.tag}</span>}
+                        <div className="cl-xph">
+                          {it.mystery
+                            ? <div className="cl-xmystery" aria-label="Panettone speciale in arrivo">
+                                <svg viewBox="0 0 200 180" aria-hidden="true">
+                                  <defs><radialGradient id="xmg" cx="40%" cy="30%" r="80%"><stop offset="0" stopColor="#3a3a3a"/><stop offset="1" stopColor="#050505"/></radialGradient></defs>
+                                  <path d="M38 92c-6-40 18-72 62-72s68 32 62 72c6 2 10 8 10 14v54c0 6-6 12-12 12H40c-6 0-12-6-12-12v-54c0-6 4-12 10-14z" fill="url(#xmg)" stroke="#f4d35e" strokeWidth="2"/>
+                                  <path d="M28 108h144M28 126h144M28 144h144" stroke="#f4d35e" strokeWidth="1" opacity=".35"/>
+                                  <text x="100" y="118" textAnchor="middle" fontSize="92" fontWeight="800" fill="#f4d35e" fontFamily="system-ui,sans-serif">?</text>
+                                </svg>
+                              </div>
+                            : <img src={XMAS_IMG(it.img)} alt={it.n} loading="lazy"/>}
+                        </div>
+                        <div className="cl-xname">{it.n}{it.w && <small> · {it.w}</small>}</div>
+                        {it.mystery
+                          ? <div className="cl-xnote">{it.note}</div>
+                          : it.onRequest
+                            ? <div className="cl-xprice req">Prezzo su richiesta</div>
+                            : <div className="cl-xprices">
+                                <div className="cl-xprice"><b>{eur(it.price)}</b>{it.unit && <small> {it.unit}</small>}{it.box && <small> senza scatola</small>}</div>
+                                {it.box && <div className="cl-xprice box"><b>{eur(it.box)}</b><small> con scatola regalo</small></div>}
+                                {it.boxIncl && <div className="cl-xincl">🎁 Scatola regalo inclusa</div>}
+                              </div>}
+                        {it.note && !it.mystery && <div className="cl-xnote">{it.note}</div>}
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              <section className="cl-xsec">
+                <div className="cl-xbox">
+                  <img src={XMAS_IMG("scatola-1")} alt="" className="b1"/>
+                  <img src={XMAS_IMG("scatola-2")} alt="" className="b2"/>
+                  <div><h3 className="cl-xsec-title">Scatola regalo</h3><p>Inclusa con Pistacchio, Rocher, Frutti di Bosco, Veneziana e Tre Cioccolati. Per Classico, Cioccolato e Pere e Cioccolato disponibile con il prezzo "con scatola".</p></div>
+                </div>
+              </section>
+
+              <section className="cl-xsec">
+                <div className="cl-xorder">
+                  <div className="cl-cdlab">Come ordinare</div>
+                  <p>Ti aspettiamo in forno per prenotare: pezzi limitati, magia garantita!</p>
+                  {XMAS_SEDI.map(a=><div key={a} className="cl-xaddr">📍 {a}</div>)}
+                  {(()=>{ const now=new Date(); const x=new Date(now.getFullYear(),11,25); if(x<now) x.setFullYear(x.getFullYear()+1);
+                    const dd=Math.floor((x-now)/864e5); return <div className="cl-xdays">🎄 Mancano <b>{dd}</b> giorni a Natale</div>; })()}
+                </div>
+              </section>
+
               <div className="cl-branches" aria-hidden="true">
                 <svg viewBox="0 0 400 40" preserveAspectRatio="xMidYMid meet"><defs><path id="clst" d="M0-6 1.8-1.8 6-1.3 2.9 1.6 3.7 6 0 3.8-3.7 6-2.9 1.6-6-1.3-1.8-1.8Z"/></defs><path d="M10 26 Q 100 6 200 26 T 390 26" stroke="#f4d35e" strokeWidth="1.2" fill="none" strokeDasharray="3 5"/><g fill="#f4d35e"><use href="#clst" transform="translate(40 20) scale(1.1)"/><use href="#clst" transform="translate(120 12)"/><use href="#clst" transform="translate(200 26) scale(1.4)"/><use href="#clst" transform="translate(280 12)"/><use href="#clst" transform="translate(360 20) scale(1.1)"/></g><g fill="#fff" opacity=".9"><circle cx="80" cy="15" r="1.8"/><circle cx="160" cy="18" r="1.8"/><circle cx="240" cy="18" r="1.8"/><circle cx="320" cy="15" r="1.8"/></g><g fill="#8b1a1a" stroke="#f4d35e" strokeWidth="1"><circle cx="100" cy="22" r="3.5"/><circle cx="300" cy="22" r="3.5"/></g></svg>
               </div>
-              <button className="cl-xnote" onClick={()=>{ setToast("🔔 Ti avviseremo quando il menù di Natale sarà pronto"); setTimeout(()=>setToast(""),2500); }}><span className="cl-ico">{ICON.bell}</span>Avvisami quando il menù di Natale è pronto</button>
+              <div className="cl-xfoot">Panettone artigianale — creato con le mani, pensato col cuore.</div>
             </div>
           </div>
         )}
@@ -4633,8 +4775,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
           {/* Striscia Natale (discreta, porta alla sezione) */}
           <button className="cl-xmas-strip" onClick={()=>setTab("natale")}>
             <span className="cl-ico">{ICON.tree}</span>
-            <span className="tx"><b>Natale a Dolci Sapori</b><small>Menù delle feste in lavorazione</small></span>
-            <span className="cd">{daysToChristmas()} giorni</span>
+            <span className="tx"><b>Natale a Dolci Sapori</b><small>Panettoni, pandori, torroni: scopri il catalogo</small><span className="cd live"><i/>Ordinazioni aperte</span></span>
             <span className="cl-ico chev">{ICON.chev}</span>
           </button>
 
