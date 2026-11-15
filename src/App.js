@@ -720,6 +720,13 @@ const STYLE = `
   .cl[data-screen=natale] .cl-tabbar .in{background:#fff}
   .cl .cl-xmas-page{max-width:900px;margin:0 auto}
   .cl .cl-xmas-page{position:relative;z-index:1;color:#fff;padding-top:4px}
+  .cl.cl-admin .ax-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .cl.cl-admin .ax-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .cl.cl-admin .ax-status{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+  .cl.cl-admin .ax-status .btn{padding:8px 4px;font-size:12.5px;white-space:nowrap;justify-content:center}
+  .cl .cl-xbg{position:fixed;inset:0;z-index:0;pointer-events:none;background:#1a0c08 url("/natale/bg-v.webp") center top/cover no-repeat}
+  .cl .cl-xbg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,12,8,.45) 0%,rgba(26,12,8,.62) 35%,rgba(26,12,8,.8) 100%)}
+  .cl[data-screen=natale] .cl-head{position:relative;z-index:1}
   .cl .cl-snow{position:fixed;inset:0;z-index:0;pointer-events:none}
   .cl .cl-snow i{position:absolute;top:-6%;font-style:normal;color:rgba(255,255,255,.9);animation:clFall linear infinite;text-shadow:0 0 8px rgba(255,255,255,.7)}
   .cl .cl-snow i:nth-child(1){left:3%;font-size:15px;animation-duration:12s}.cl .cl-snow i:nth-child(2){left:9%;font-size:10px;animation-duration:16s;animation-delay:-3s}.cl .cl-snow i:nth-child(3){left:15%;font-size:18px;animation-duration:13s;animation-delay:-6s}.cl .cl-snow i:nth-child(4){left:22%;font-size:9px;animation-duration:18s;animation-delay:-1s}.cl .cl-snow i:nth-child(5){left:28%;font-size:13px;animation-duration:14s;animation-delay:-8s}.cl .cl-snow i:nth-child(6){left:35%;font-size:11px;animation-duration:17s;animation-delay:-4s}.cl .cl-snow i:nth-child(7){left:41%;font-size:16px;animation-duration:12s;animation-delay:-9s}.cl .cl-snow i:nth-child(8){left:48%;font-size:10px;animation-duration:19s;animation-delay:-2s}.cl .cl-snow i:nth-child(9){left:54%;font-size:12px;animation-duration:14s;animation-delay:-7s}.cl .cl-snow i:nth-child(10){left:60%;font-size:17px;animation-duration:11s;animation-delay:-5s}.cl .cl-snow i:nth-child(11){left:66%;font-size:9px;animation-duration:16s;animation-delay:-10s}.cl .cl-snow i:nth-child(12){left:72%;font-size:13px;animation-duration:15s;animation-delay:-12s}.cl .cl-snow i:nth-child(13){left:78%;font-size:11px;animation-duration:13s;animation-delay:-2.5s}.cl .cl-snow i:nth-child(14){left:84%;font-size:15px;animation-duration:17s;animation-delay:-6.5s}.cl .cl-snow i:nth-child(15){left:90%;font-size:10px;animation-duration:12s;animation-delay:-9.5s}.cl .cl-snow i:nth-child(16){left:95%;font-size:14px;animation-duration:15s;animation-delay:-4.5s}
@@ -751,12 +758,13 @@ const STYLE = `
   .cl .cl-xopen{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(244,211,94,.6);color:#f4d35e;font-weight:700;font-size:13px;letter-spacing:.04em}
   .cl .cl-xopen i{width:8px;height:8px;border-radius:50%;background:#7CFC9A;box-shadow:0 0 0 3px rgba(124,252,154,.25)}
   .cl .cl-xsec{margin-top:30px}
-  .cl .cl-xsec-head{text-align:center;margin-bottom:14px}
+  .cl .cl-xsec-head{text-align:center;margin-bottom:14px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+  .cl .cl-xhead{text-shadow:0 2px 12px rgba(0,0,0,.7)}
   .cl .cl-xsec-title{font-family:"Mountains of Christmas","Cormorant Garamond",serif;font-size:30px;line-height:1.05;color:#f4d35e;font-weight:700;text-shadow:0 2px 14px rgba(0,0,0,.35)}
   .cl .cl-xsec-sub{font-size:13.5px;color:rgba(255,255,255,.8);margin-top:4px;font-style:italic}
   .cl .cl-xgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .cl .cl-xgrid.one{grid-template-columns:1fr;max-width:420px;margin:0 auto}
-  .cl .cl-xcard{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 30px -20px rgba(0,0,0,.8)}
+  .cl .cl-xcard{position:relative;background:linear-gradient(180deg,rgba(26,12,8,.62),rgba(26,12,8,.78));border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 30px -20px rgba(0,0,0,.8)}
   .cl .cl-xcard.mystery{background:linear-gradient(180deg,#1a1a1a,#050505);border-color:#f4d35e;box-shadow:0 0 0 4px rgba(244,211,94,.15),0 18px 40px -20px rgba(0,0,0,.9)}
   .cl .cl-xtag{position:absolute;top:10px;left:10px;z-index:2;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#f4d35e;color:#2b1810;padding:4px 8px;border-radius:999px}
   .cl .cl-xph{width:100%;aspect-ratio:1/1;display:grid;place-items:center;padding:6px}
@@ -777,7 +785,7 @@ const STYLE = `
   .cl .cl-xnote{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:6px;font-style:italic}
   .cl .cl-xcard.mystery .cl-xname{color:#f4d35e;font-size:16px}.cl .cl-xcard.mystery .cl-xnote{color:#fff;font-style:normal;font-weight:600}
   .cl .cl-xcard.big .cl-xph{aspect-ratio:4/3}
-  .cl .cl-xbox{display:grid;grid-template-columns:90px 90px 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:14px}
+  .cl .cl-xbox{display:grid;grid-template-columns:90px 90px 1fr;gap:12px;align-items:center;background:rgba(26,12,8,.7);border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:14px}
   .cl .cl-xbox img{width:100%;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
   .cl .cl-xbox .cl-xsec-title{font-size:24px;text-align:left}.cl .cl-xbox p{font-size:13px;color:rgba(255,255,255,.85);margin-top:4px;line-height:1.45}
   .cl .cl-xorder{text-align:center;background:linear-gradient(180deg,rgba(43,24,16,.6),rgba(43,24,16,.9));border:2px solid #f4d35e;border-radius:24px;padding:20px 16px}
@@ -785,6 +793,23 @@ const STYLE = `
   .cl .cl-xaddr{color:#fff;font-weight:600;font-size:14px;padding:4px 0}
   .cl .cl-xdays{margin-top:12px;color:#f4d35e;font-size:14px}.cl .cl-xdays b{font-size:20px}
   .cl .cl-xfoot{text-align:center;color:rgba(255,255,255,.75);font-style:italic;margin:16px 0 6px;font-size:13.5px}
+  .cl .cl-xrow{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:4px 0}
+  .cl .cl-xrow .cl-xprice{justify-content:flex-start;text-align:left}
+  .cl .cl-xprices{width:100%;align-items:stretch}
+  .cl .cl-xbtn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:8px}
+  .cl .cl-xbtn .lab{font-size:12.5px;font-weight:700;color:#f4d35e;text-transform:uppercase;letter-spacing:.06em}
+  .cl .cl-xcard .cl-add{background:#f4d35e;color:#2b1810;box-shadow:0 6px 14px -6px rgba(0,0,0,.7)}
+  .cl .cl-xcard .cl-step{background:#f4d35e;color:#2b1810}
+  .cl .cl-cartbar.xmas{background:#1a0c08;border:1px solid rgba(244,211,94,.5)}.cl .cl-cartbar.xmas .go{background:#f4d35e;color:#2b1810}
+  .cl .cl-xmine{margin-top:18px}
+  .cl .cl-xorder.mine{text-align:left}
+  .cl .cl-xorder.mine .cl-cdlab{text-align:center}
+  .cl .cl-xstatus{text-align:center;font-weight:700;font-size:13.5px;margin-bottom:10px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.1);color:#fff}
+  .cl .cl-xstatus.s-confermata{background:rgba(30,107,63,.35);color:#9ff0b8}.cl .cl-xstatus.s-consegnata{background:#f4d35e;color:#2b1810}
+  .cl .cl-xline{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px}
+  .cl .cl-xline.tot{border:0;font-weight:800;color:#f4d35e;font-size:16px;margin-top:4px}
+  .cl .cl-xorder.mine p{font-size:13px;color:rgba(255,255,255,.8);text-align:center;margin:10px 0}
+  .cl .cl-ghost.light{background:rgba(255,255,255,.14);color:#fff}.cl .cl-ghost.light.danger{color:#ffb3ad}
   .cl .cl-xnote{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;height:50px;border-radius:999px;border:0;background:#f4d35e;color:#2b1810;font-weight:700;font-size:14.5px;box-shadow:0 12px 26px -12px rgba(0,0,0,.6);cursor:pointer}
   .cl .cl-xnote .cl-ico{font-size:19px}
   .cl .cl-chips{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
@@ -869,10 +894,9 @@ const STYLE = `
     .cl .cl-tabbar,.cl .cl-cartbar,.cl .cl-sheet,.cl .cl-scrim{display:none!important}
     .cl .toast{bottom:28px}
     .cl .cl-script{font-size:52px}.cl .cl-xtitle{font-size:50px}
-    .cl .cl-xwrap.catalog{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;align-items:center;padding:10px 0 20px}
-    .cl .cl-xwrap.catalog .cl-xhead{text-align:left;grid-column:2;grid-row:1}.cl .cl-xwrap.catalog .cl-gold-rule{margin-left:0}.cl .cl-xwrap.catalog .cl-xsub{margin:0}
-    .cl .cl-xwrap.catalog .cl-xhero{grid-column:1;grid-row:1;margin:0}.cl .cl-xwrap.catalog .cl-xhero video{aspect-ratio:4/3}
-    .cl .cl-xwrap.catalog .cl-xsec,.cl .cl-xwrap.catalog .cl-branches,.cl .cl-xwrap.catalog .cl-xfoot{grid-column:1/-1}
+    .cl .cl-xbg{left:88px;background-image:url("/natale/bg-h.webp");background-position:center}
+    .cl .cl-xwrap.catalog{padding:10px 0 20px}
+    .cl .cl-xwrap.catalog .cl-xhead{padding:30px 0 10px}.cl .cl-xwrap.catalog .cl-xsub{font-size:17px}
     .cl .cl-xgrid{grid-template-columns:repeat(4,1fr);gap:16px}
     .cl .cl-xsec-title{font-size:38px}
     .cl .cl-xbox{grid-template-columns:130px 130px 1fr}
@@ -1725,7 +1749,6 @@ const XMAS_CATALOG = [
     { n:"Natività", img:"nativita", onRequest:true, big:true, note:"Pane dolce decorato a mano" },
   ]},
 ];
-const XMAS_SEDI = ["Via della Lite, 93 — 00132 Roma", "Via di Fontana Candida, 14 — 00132 Roma"];
 
 const NATALE_VIDEO_LOCAL = "/natale.mp4";
 const NATALE_VIDEO_CDN   = "https://d8j0ntlcm91z4.cloudfront.net/user_39IC2M2DEeFF8Cvnr18vurVNaKI/hf_20261007_231327_ebab638f-268f-4df3-b53b-522451303fe5.mp4";
@@ -3754,6 +3777,77 @@ const SPECIAL_TEMPLATE = () => {
   };
 };
 
+// ════════════════════════════════════════════════════════════════════════
+// ADMIN — Prenotazioni di Natale
+// ════════════════════════════════════════════════════════════════════════
+function AdminXmas({ appState, update, search }) {
+  const [toast,setToast]=useState("");
+  const showToast=t=>{setToast(t);setTimeout(()=>setToast(""),2200);};
+  const q=(search||"").trim().toLowerCase();
+  const all=Object.values(appState.xmasOrders||{}).filter(Boolean)
+    .filter(o=>!q||(o.userName||"").toLowerCase().includes(q)||(o.userId||"").toLowerCase().includes(q))
+    .sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const setOrder=(uid,patch)=>update(prev=>{const cur=(prev.xmasOrders||{})[uid]; if(!cur) return {}; return {xmasOrders:{...(prev.xmasOrders||{}),[uid]:{...cur,...patch}}};});
+  const removeOrder=uid=>{ if(!window.confirm("Eliminare questa prenotazione?")) return; update(prev=>{const o={...(prev.xmasOrders||{})}; delete o[uid]; return {xmasOrders:o};}); showToast("Prenotazione eliminata"); };
+  // Riepilogo pezzi (solo non consegnate)
+  const agg={};
+  all.filter(o=>o.status!=="consegnata").forEach(o=>o.items.forEach(i=>{const k=i.n+(i.box?" (con scatola)":""); agg[k]=(agg[k]||0)+i.qty;}));
+  const aggList=Object.entries(agg).sort((a,b)=>a[0].localeCompare(b[0]));
+  const tot=all.reduce((s,o)=>s+(o.total||0),0);
+  const nNew=all.filter(o=>o.status==="nuova"||!o.status).length;
+  const esporta=()=>{
+    const righe=[`PRENOTAZIONI DI NATALE — ${new Date().toLocaleDateString("it-IT")}`,``,`PEZZI DA PREPARARE (non consegnate):`,
+      ...aggList.map(([n,qn])=>`  ${qn}× ${n}`),``,`PRENOTAZIONI (${all.length}):`,
+      ...all.map(o=>[`  ${o.userName} — ${eur(o.total||0)} — ${o.status||"nuova"}${o.paid?" — pagata":""}`,...o.items.map(i=>`     ${i.qty}× ${i.n}${i.box?" (con scatola)":""}${i.price==null?" (su richiesta)":""}`)].join("\n")),
+      ``,`Totale prenotato: ${eur(tot)}`];
+    const blob=new Blob([righe.join("\n")],{type:"text/plain"}); const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download=`prenotazioni-natale.txt`; a.click(); URL.revokeObjectURL(url);
+  };
+  return(<>
+    <div className="grid3" style={{marginBottom:12}}>
+      <div className="stat-box"><div className="stat-num">{all.length}</div><div className="stat-label">Prenotazioni</div></div>
+      <div className="stat-box"><div className="stat-num" style={{color:"var(--accent)"}}>{nNew}</div><div className="stat-label">Nuove</div></div>
+      <div className="stat-box"><div className="stat-num" style={{color:"var(--green)"}}>{eur(tot)}</div><div className="stat-label">Totale prenotato</div></div>
+    </div>
+    <div className="card">
+      <div className="card-title" style={{justifyContent:"space-between"}}><span>🎁 Pezzi da preparare</span><button className="btn btn-gold btn-sm" onClick={esporta}>⬇ Esporta</button></div>
+      {aggList.length===0 ? <div className="empty">Nessuna prenotazione in corso.</div> : (
+        <div className="grid2">{aggList.map(([n,qn])=><div key={n} className="menu-item" style={{justifyContent:"space-between"}}><span>{n}</span><b style={{color:"var(--accent)"}}>{qn}×</b></div>)}</div>
+      )}
+    </div>
+    <div className="card">
+      <div className="card-title">🎄 Prenotazioni {q&&<span className="muted" style={{fontWeight:400,fontSize:".8rem"}}>· ricerca "{search.trim()}"</span>} <span className="badge" style={{background:"var(--accent)"}}>{all.length}</span></div>
+      {all.length===0&&<div className="empty">{q?"Nessuna prenotazione per questo cliente.":"Nessuna prenotazione ancora."}</div>}
+      {all.map(o=>(
+        <div key={o.userId} className="order-block">
+          <div className="ax-head">
+            <span style={{fontWeight:700,minWidth:0}}>👤 {o.userName} <span className="muted" style={{fontWeight:400,fontSize:".75rem",whiteSpace:"nowrap"}}>· {o.updatedAt?new Date(o.updatedAt).toLocaleDateString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""}</span></span>
+            <button className="btn btn-danger btn-sm" onClick={()=>removeOrder(o.userId)} aria-label="Elimina prenotazione">🗑</button>
+          </div>
+          <div className="ax-row">
+            <span style={{fontWeight:800,color:"var(--accent)"}}>{eur(o.total||0)}{o.items.some(i=>i.price==null)?<small style={{fontWeight:600}}> + su richiesta</small>:""}</span>
+            <span className={`paid-badge ${o.paid?"pagato":"non-pagato"}`} onClick={()=>{setOrder(o.userId,{paid:!o.paid});showToast(o.paid?"Segnata non pagata":"✓ Segnata pagata");}}>{o.paid?"✓ Pagata":"✗ Non pagata"}</span>
+          </div>
+          <div className="ax-status">
+            {["nuova","confermata","consegnata"].map(st=>(
+              <button key={st} className={`btn btn-sm ${(o.status||"nuova")===st?"btn-primary":"btn-ghost"}`} onClick={()=>{setOrder(o.userId,{status:st});showToast(`Stato: ${st}`);}}>
+                {st==="nuova"?"⏳ Nuova":st==="confermata"?"✓ Confermata":"📦 Consegnata"}
+              </button>
+            ))}
+          </div>
+          {o.items.map(i=>(
+            <div key={i.id} className="menu-order-item" style={{justifyContent:"space-between"}}>
+              <span style={{minWidth:0}}>{i.qty}× {i.n}{i.box?" 🎁 con scatola":""}{i.w?` · ${i.w}`:""}</span>
+              <span style={{fontWeight:700,whiteSpace:"nowrap",marginLeft:8}}>{i.price!=null?eur(i.price*i.qty):"su richiesta"}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+    {toast&&<div className="toast">{toast}</div>}
+  </>);
+}
+
 function AdminSpecials({ appState, update }) {
   const [editing, setEditing] = useState(null);   // oggetto novità in modifica (copia)
   const [toast, setToast]     = useState({text:"",err:false});
@@ -3920,6 +4014,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
   const [search,setSearch] = useState("");      // ricerca cliente (Ordini, Riepilogo, Clienti)
   const [moreOpen, setMoreOpen] = useState(false);
   const pendingCount = appState.users.filter(u=>u.role==="client"&&!u.approved).length;
+  const xmasNew = Object.values(appState.xmasOrders||{}).filter(o=>o&&(o.status==="nuova"||!o.status)).length;
 
   const TABS = [
     ["menu","Menù",      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>],
@@ -3936,20 +4031,21 @@ function AdminPanel({ user, appState, update, onLogout }) {
   const label = Object.fromEntries(TABS.map(([v,l])=>[v,l]));
   const withDate = !["summary","clients","notif","top","natale","novita"].includes(tab);
   const withRange = ["orders","riepilogo"].includes(tab);
-  const withSearch = ["orders","riepilogo","clients"].includes(tab);
+  const withSearch = ["orders","riepilogo","clients","natale"].includes(tab);
   const searchIcon = <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>;
   const go = v => { setTab(v); setMoreOpen(false); };
   const Btn = ({v,l,icon,onClick}) => (
     <button className={`cl-nav-btn ${tab===v?"on":""}`} onClick={onClick||(()=>go(v))} aria-label={l}>
       <span className="cl-ico" aria-hidden="true">{icon}</span>{l}
       {v==="clients"&&pendingCount>0&&<span className="cl-dot">{pendingCount}</span>}
+      {v==="natale"&&xmasNew>0&&<span className="cl-dot">{xmasNew}</span>}
     </button>
   );
   const outIcon = <svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>;
   const moreIcon = <svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>;
 
   return(
-    <div className="app cl cl-admin" data-screen={tab==="natale"?"natale":tab}>
+    <div className="app cl cl-admin" data-screen={tab==="natale"?"xmas-admin":tab}>
       <aside className="cl-side" aria-label="Navigazione">
         <div className="cl-logo"><img src="/logo192.png" alt="Dolci Sapori"/></div>
         {TABS.map(([v,l,icon])=><Btn key={v} v={v} l={l} icon={icon}/>)}
@@ -4004,7 +4100,7 @@ function AdminPanel({ user, appState, update, onLogout }) {
           {tab==="clients" &&<AdminClients             appState={appState} update={update} search={search}/>}
           {tab==="riepilogo"&&<AdminRiepilogo date={date} dateTo={dateTo} search={search} appState={appState}/>}
           {tab==="summary" &&<AdminSummary             appState={appState}/>}
-          {tab==="natale"  &&<div className="cl-xmas-page" style={{maxWidth:900}}><div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div><ChristmasSection isAdmin/></div>}
+          {tab==="natale"  &&<AdminXmas appState={appState} update={update} search={search}/>}
           {tab==="novita"  &&<AdminSpecials appState={appState} update={update}/>}
           {tab==="top"     &&<div className="cl-two">
             <Leaderboard appState={appState} period="month"/>
@@ -4263,7 +4359,47 @@ function ClientPanel({ user, appState, update, onLogout }) {
   // ─── Stato esclusivo del saldo: o da saldare, o credito, o in pari ─────
   const balanceKind = unpaid>0 ? "due" : (credit>0 ? "credit" : "ok");
   const screenName  = tab==="order" ? "ordina" : tab==="notifs" ? "notifiche" : tab;
-  const cartVisible = tab==="order" && ordersOpen && !myOrder && cartCount>0;
+  // ─── Prenotazioni di Natale (carrello separato, salvato in appState.xmasOrders[userId]) ───
+  const [xCart, setXCart] = useState({});          // id → qty
+  const [xEditing, setXEditing] = useState(false);
+  const [xSending, setXSending] = useState(false);
+  const xmasOrders = appState.xmasOrders || {};
+  const myX = xmasOrders[user.id] || null;
+  const XITEMS = useMemo(()=>{ const m={}; XMAS_CATALOG.forEach(sec=>sec.items.forEach(it=>{
+      const base=`${sec.id}:${it.img||"mystery"}`;
+      m[base]={id:base,n:it.n,price:(it.onRequest||it.mystery)?null:it.price,unit:it.unit||null,w:it.w||null,img:it.img||null,box:false};
+      if(it.box) m[base+":box"]={id:base+":box",n:it.n,price:it.box,unit:null,w:it.w||null,img:it.img||null,box:true};
+    })); return m; },[]);
+  const xQty = id => xCart[id]||0;
+  const setXQty = (id,d) => setXCart(p=>{ const q=Math.max(0,(p[id]||0)+d); const n={...p}; if(q) n[id]=q; else delete n[id]; return n; });
+  const xLines = Object.keys(xCart).filter(id=>XITEMS[id]).map(id=>({...XITEMS[id],qty:xCart[id]}));
+  const xCount = xLines.reduce((s,l)=>s+l.qty,0);
+  const xTotal = xLines.reduce((s,l)=>s+(l.price!=null?l.price*l.qty:0),0);
+  const xHasReq = xLines.some(l=>l.price==null);
+  const xShowCart = tab==="natale" && (!myX || xEditing);
+  const sendXmas = async () => {
+    if(!xCount || xSending) return;
+    setXSending(true);
+    const order={userId:user.id,userName:user.name,items:xLines.map(l=>({id:l.id,n:l.n,qty:l.qty,price:l.price,box:l.box,unit:l.unit,w:l.w,img:l.img})),
+      total:xTotal,status:myX?.status||"nuova",paid:myX?.paid||false,createdAt:myX?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+    try{
+      await update(prev=>({xmasOrders:{...(prev.xmasOrders||{}),[user.id]:order}}));
+      setXCart({}); setXEditing(false);
+      setToast("🎄 Prenotazione inviata!"); setTimeout(()=>setToast(""),3000);
+    }catch(e){ setToast("⚠️ Prenotazione NON inviata, riprova"); setTimeout(()=>setToast(""),3000); }
+    finally{ setXSending(false); }
+  };
+  const cancelXmas = async () => {
+    if(!window.confirm("Annullare la prenotazione di Natale?")) return;
+    try{
+      await update(prev=>{ const o={...(prev.xmasOrders||{})}; delete o[user.id]; return {xmasOrders:o}; });
+      setXCart({}); setXEditing(false);
+      setToast("Prenotazione annullata"); setTimeout(()=>setToast(""),2500);
+    }catch(e){ setToast("⚠️ Errore, riprova"); setTimeout(()=>setToast(""),2500); }
+  };
+  const editXmas = () => { const q={}; (myX?.items||[]).forEach(i=>{ if(XITEMS[i.id]) q[i.id]=i.qty; }); setXCart(q); setXEditing(true); };
+
+  const cartVisible = (tab==="order" && ordersOpen && !myOrder && cartCount>0) || (xShowCart && xCount>0);
   const titles = {
     order:   ["Buongiorno, "+user.name.split(" ")[0], "Cosa mangiamo oggi?"],
     storico: ["Ultimi 30 giorni", "I tuoi ordini"],
@@ -4274,8 +4410,6 @@ function ClientPanel({ user, appState, update, onLogout }) {
   };
   const [cartOpen, setCartOpen] = useState(false);
   const [topPeriod, setTopPeriod] = useState('month');
-  const [xVideo, setXVideo] = useState(NATALE_VIDEO_LOCAL);
-  const [xPoster, setXPoster] = useState(NATALE_IMG_LOCAL);
   useEffect(()=>{ if(!cartVisible) setCartOpen(false); },[cartVisible]);
 
   // Riga piatto (stesso setQty / itemNotes di sempre, solo markup nuovo)
@@ -4334,7 +4468,31 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   // Contenuto carrello (pannello desktop + foglio mobile): stessi totali di prima
   const cartItems = menu.filter(i=>(quantities[i.id]||0)>0);
-  const renderCartBody = () => (
+  const xCtl = id => xQty(id)>0
+    ? <span className="cl-step"><button onClick={()=>setXQty(id,-1)} aria-label="Togli">−</button><span>{xQty(id)}</span><button onClick={()=>setXQty(id,+1)} aria-label="Aggiungi">+</button></span>
+    : <button className="cl-add" onClick={()=>setXQty(id,+1)} aria-label="Prenota">+</button>;
+  const renderXmasCartBody = () => (
+    <>
+      <h3 className="cl-h3">🎄 La tua prenotazione</h3>
+      <div className="cl-sub" style={{textTransform:"none"}}>Nessun acconto</div>
+      <div className="cl-cart-list">
+        {xLines.map(l=>(
+          <div key={l.id} className="cl-crow">
+            {l.img && <div className="cl-th"><img src={XMAS_IMG(l.img)} alt="" style={{objectFit:"contain",background:"#2b1810"}}/></div>}
+            <div className="cl-crow-name">{l.n}<small>{l.box?"con scatola regalo":l.w?l.w:l.unit?l.unit:(l.price==null?"prezzo su richiesta":"")}</small></div>
+            <span className="cl-step sm"><button onClick={()=>setXQty(l.id,-1)} aria-label="Togli">−</button><span>{l.qty}</span><button onClick={()=>setXQty(l.id,+1)} aria-label="Aggiungi">+</button></span>
+            <span className="cl-price">{l.price!=null?eur(l.price*l.qty):<small>su richiesta</small>}</span>
+          </div>
+        ))}
+      </div>
+      <div className="cl-tot">
+        <div className="l big"><span>Totale</span><b>{eur(xTotal)}{xHasReq&&<small> + su richiesta</small>}</b></div>
+      </div>
+      <button className="cl-big" onClick={sendXmas} disabled={xSending||!xCount}>{xSending?"⏳ Invio in corso…":(xEditing?"💾 Salva prenotazione":"🎄 Invia prenotazione")}</button>
+      {xEditing && <button className="cl-ghost" style={{width:"100%",marginTop:8}} onClick={()=>{setXEditing(false);setXCart({});}}>Annulla modifiche</button>}
+    </>
+  );
+  const renderCartBody = () => tab==="natale" ? renderXmasCartBody() : (
     <>
       <h3 className="cl-h3">Il tuo ordine</h3>
       <div className="cl-sub">{fmt(date)}</div>
@@ -4495,23 +4653,36 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
         {tab==="natale" && (
           <div className="cl-xmas-page">
+            <div className="cl-xbg" aria-hidden="true"/>
             <div className="cl-snow" aria-hidden="true">{Array.from({length:16}).map((_,i)=><i key={i}>{["❄","❅","❆"][i%3]}</i>)}</div>
             <div className="cl-xwrap catalog">
               <div className="cl-xhead">
                 <div className="cl-script">Buon Natale</div>
                 <h2 className="cl-xtitle">Panettoni &amp; Dolci 2026</h2>
                 <div className="cl-gold-rule"><span className="cl-ico"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/></svg></span></div>
-                <p className="cl-xsub">Dove la festa inizia dal primo morso. Panettoni artigianali creati con le mani e pensati col cuore: <b>le ordinazioni sono aperte</b>, prenota il tuo in forno.</p>
-                <div className="cl-xopen"><i/>Ordinazioni aperte · consegna in forno</div>
-              </div>
-              <div className="cl-xhero">
-                <svg className="cl-orn o1" viewBox="0 0 40 60" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="18" stroke="#f4d35e" strokeWidth="1.5"/><rect x="15" y="16" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="40" r="18" fill="#8b1a1a" stroke="#f4d35e" strokeWidth="2"/><path d="M6 36c6-4 22-4 28 0" stroke="#f4d35e" strokeWidth="1.5" fill="none"/><circle cx="14" cy="33" r="3" fill="#fff" opacity=".35"/></svg>
-                <svg className="cl-orn o2" viewBox="0 0 40 80" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="38" stroke="#f4d35e" strokeWidth="1.5"/><rect x="15" y="36" width="10" height="6" rx="1.5" fill="#f4d35e"/><circle cx="20" cy="60" r="18" fill="#f4d35e" stroke="#fff" strokeWidth="1.5"/><path d="M8 54l24 12M8 66l24-12" stroke="#8b1a1a" strokeWidth="2"/><circle cx="14" cy="53" r="3" fill="#fff" opacity=".5"/></svg>
-                <video src={xVideo} poster={xPoster} autoPlay muted loop playsInline
-                  onError={()=>{ if(xVideo!==NATALE_VIDEO_CDN) setXVideo(NATALE_VIDEO_CDN); }}/>
-                <img alt="" src={xPoster} style={{display:"none"}} onError={()=>{ if(xPoster!==NATALE_IMG_CDN) setXPoster(NATALE_IMG_CDN); }}/>
+                <p className="cl-xsub">Dove la festa inizia dal primo morso. Panettoni artigianali creati con le mani e pensati col cuore: <b>le ordinazioni sono aperte</b>: prenota il tuo direttamente dall'app.</p>
+                <div className="cl-xopen"><i/>Ordinazioni aperte · prenota dall'app</div>
               </div>
 
+              {myX && !xEditing && (
+                <section className="cl-xsec cl-xmine">
+                  <div className="cl-xorder mine">
+                    <div className="cl-cdlab">La tua prenotazione</div>
+                    <div className={`cl-xstatus s-${myX.status||"nuova"}`}>{myX.status==="consegnata"?"✓ Consegnata":myX.status==="confermata"?"✓ Confermata dal forno":"⏳ Inviata, in attesa di conferma"}{myX.paid?" · pagata":""}</div>
+                    {myX.items.map(i=>(
+                      <div key={i.id} className="cl-xline"><span>{i.qty}× {i.n}{i.box?" (con scatola)":""}{i.w?` · ${i.w}`:""}</span><span>{i.price!=null?eur(i.price*i.qty):"su richiesta"}</span></div>
+                    ))}
+                    <div className="cl-xline tot"><span>Totale</span><span>{eur(myX.total||0)}{myX.items.some(i=>i.price==null)?" + su richiesta":""}</span></div>
+                    <p>Nessun acconto richiesto. Puoi modificarla finché non viene consegnata.</p>
+                    {myX.status!=="consegnata" && (
+                      <div className="cl-acts" style={{justifyContent:"center"}}>
+                        <button className="cl-ghost light" onClick={editXmas}>✏️ Modifica</button>
+                        <button className="cl-ghost light danger" onClick={cancelXmas}>🗑 Annulla</button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
               {XMAS_CATALOG.map(sec=>(
                 <section key={sec.id} className="cl-xsec">
                   <div className="cl-xsec-head">
@@ -4535,16 +4706,23 @@ function ClientPanel({ user, appState, update, onLogout }) {
                             : <img src={XMAS_IMG(it.img)} alt={it.n} loading="lazy"/>}
                         </div>
                         <div className="cl-xname">{it.n}{it.w && <small> · {it.w}</small>}</div>
-                        {it.mystery
-                          ? <div className="cl-xnote">{it.note}</div>
-                          : it.onRequest
-                            ? <div className="cl-xprice req">Prezzo su richiesta</div>
-                            : <div className="cl-xprices">
+                        {(()=>{ const base=`${sec.id}:${it.img||"mystery"}`; const canBook = !myX || xEditing;
+                          if(it.mystery) return <><div className="cl-xnote">{it.note}</div>{canBook && <div className="cl-xbtn"><span className="lab">Riservamelo</span>{xCtl(base)}</div>}</>;
+                          if(it.onRequest) return <><div className="cl-xprice req">Prezzo su richiesta</div>{canBook && <div className="cl-xbtn"><span className="lab">Richiedi</span>{xCtl(base)}</div>}</>;
+                          return <>
+                            <div className="cl-xprices">
+                              <div className="cl-xrow">
                                 <div className="cl-xprice"><b>{eur(it.price)}</b>{it.unit && <small> {it.unit}</small>}{it.box && <small> senza scatola</small>}</div>
-                                {it.box && <div className="cl-xprice box"><b>{eur(it.box)}</b><small> con scatola regalo</small></div>}
-                                {it.boxIncl && <div className="cl-xincl">🎁 Scatola regalo inclusa</div>}
+                                {canBook && xCtl(base)}
+                              </div>
+                              {it.box && <div className="cl-xrow">
+                                <div className="cl-xprice box"><b>{eur(it.box)}</b><small> con scatola regalo</small></div>
+                                {canBook && xCtl(base+":box")}
                               </div>}
-                        {it.note && !it.mystery && <div className="cl-xnote">{it.note}</div>}
+                              {it.boxIncl && <div className="cl-xincl">🎁 Scatola regalo inclusa</div>}
+                            </div>
+                            {it.note && <div className="cl-xnote">{it.note}</div>}
+                          </>; })()}
                       </article>
                     ))}
                   </div>
@@ -4561,9 +4739,8 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
               <section className="cl-xsec">
                 <div className="cl-xorder">
-                  <div className="cl-cdlab">Come ordinare</div>
-                  <p>Ti aspettiamo in forno per prenotare: pezzi limitati, magia garantita!</p>
-                  {XMAS_SEDI.map(a=><div key={a} className="cl-xaddr">📍 {a}</div>)}
+                  <div className="cl-cdlab">Come funziona</div>
+                  <p>Scegli i tuoi dolci con il tasto <b>+</b> e premi <b>Prenota</b>: nessun acconto. Pezzi limitati, magia garantita!</p>
                   {(()=>{ const now=new Date(); const x=new Date(now.getFullYear(),11,25); if(x<now) x.setFullYear(x.getFullYear()+1);
                     const dd=Math.floor((x-now)/864e5); return <div className="cl-xdays">🎄 Mancano <b>{dd}</b> giorni a Natale</div>; })()}
                 </div>
@@ -4906,7 +5083,16 @@ function ClientPanel({ user, appState, update, onLogout }) {
       </div></nav>
 
       {/* ─── Carrello: barra + foglio (mobile) ─────────────────────── */}
-      {cartVisible && (
+      {cartVisible && tab==="natale" && (
+        <div className="cl-cartbar xmas">
+          <button className="t" onClick={()=>setCartOpen(true)} aria-label="Apri la prenotazione">
+            <small>🎄 {xCount} {xCount===1?"articolo":"articoli"} · tocca per vedere</small>
+            <b>{eur(xTotal)}{xHasReq?" + su richiesta":""}</b>
+          </button>
+          <button className="go" onClick={sendXmas} disabled={xSending}>{xSending?"⏳ Invio…":(xEditing?"Salva 💾":"Prenota 🎄")}</button>
+        </div>
+      )}
+      {cartVisible && tab!=="natale" && (
         <div className="cl-cartbar">
           <button className="t" onClick={()=>setCartOpen(true)} aria-label="Apri il carrello">
             <small>{cartCount} {cartCount===1?"piatto":"piatti"}{crUsable>0?` · credito −${eur(crUsable)}`:""} · tocca per vedere</small>
