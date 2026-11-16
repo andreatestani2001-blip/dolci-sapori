@@ -809,6 +809,16 @@ const STYLE = `
   .cl .cl-xaddr{color:#fff;font-weight:600;font-size:14px;padding:4px 0}
   .cl .cl-xdays{margin-top:12px;color:#f4d35e;font-size:14px}.cl .cl-xdays b{font-size:20px}
   .cl .cl-xfoot{text-align:center;color:rgba(255,255,255,.75);font-style:italic;margin:16px 0 6px;font-size:13.5px}
+  .cl .cl-xkgsel{font-weight:800;color:#2b1810;background:#f4d35e;border-radius:999px;padding:7px 12px;font-size:14px;white-space:nowrap}
+  .cl .cl-xkg{width:100%;margin-top:8px;background:rgba(244,211,94,.12);border:1px solid rgba(244,211,94,.45);border-radius:14px;padding:10px}
+  .cl .cl-xkg-lab{font-size:12.5px;font-weight:700;color:#f4d35e;margin-bottom:7px;text-align:center}
+  .cl .cl-xkg-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .cl .cl-xkg-chips button{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:10px;padding:8px 2px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .cl .cl-xkg-chips button.on{background:#f4d35e;color:#2b1810;border-color:#f4d35e}
+  .cl .cl-xkg-row{display:flex;align-items:center;gap:6px;margin-top:8px}
+  .cl .cl-xkg-row label{flex:1;display:flex;align-items:center;gap:6px;font-size:12.5px;color:rgba(255,255,255,.85);white-space:nowrap}
+  .cl .cl-xkg-row input{flex:1;min-width:0;width:70px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font-weight:700;padding:0 8px;text-align:center}
+  .cl .cl-xkg-row .rm{width:36px;height:36px;border-radius:9px;border:0;background:rgba(139,26,26,.8);cursor:pointer;font-size:15px}
   .cl .cl-xrow{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:4px 0}
   .cl .cl-xrow .cl-xprice{justify-content:flex-start;text-align:left}
   .cl .cl-xprices{width:100%;align-items:stretch}
@@ -1757,7 +1767,7 @@ const XMAS_CATALOG = [
     { n:"Panpepato",            img:"panpepato",    price:8.5 },
     { n:"Pangiallo",            img:"pangiallo",    price:8.5 },
     { n:"Torta Cicerchiata",    img:"cicerchiata",  price:13 },
-    { n:"Mostaccioli",          img:"mostaccioli",  price:18,  unit:"al kg" },
+    { n:"Mostaccioli",          img:"mostaccioli",  price:18,  unit:"al kg", perKg:true },
     { n:"Tozzetti al Miele",    img:"tozzetti",     price:5.9, w:"300 g" },
     { n:"Brutti e Buoni",       img:"brutti-buoni", price:5.9, w:"230 g" },
     { n:"Struffoli",            img:"struffoli",    price:2,   unit:"l'uno" },
@@ -1778,6 +1788,11 @@ function daysToChristmas() {
   return Math.ceil((xmas - now) / 86400000);
 }
 
+// Articoli venduti a peso: qty = grammi
+const XMAS_KG_OPTS=[200,500,1000,2000];
+const fmtG = g => g>=1000 ? `${(g/1000).toLocaleString("it-IT",{maximumFractionDigits:2})} kg` : `${g} g`;
+const xItemQty = i => i.perKg ? fmtG(i.qty) : `${i.qty}×`;
+const xItemAmt = i => i.price==null ? null : i.perKg ? i.price*i.qty/1000 : i.price*i.qty;
 function ChristmasSection({ isAdmin=false }) {
   const [imgSrc, setImgSrc] = useState(NATALE_IMG_LOCAL);
   const [videoSrc, setVideoSrc] = useState(NATALE_VIDEO_LOCAL);
@@ -3809,15 +3824,15 @@ function AdminXmas({ appState, update, search }) {
   const removeOrder=uid=>{ if(!window.confirm("Eliminare questa prenotazione?")) return; update(prev=>{const o={...(prev.xmasOrders||{})}; delete o[uid]; return {xmasOrders:o};}); showToast("Prenotazione eliminata"); };
   // Riepilogo pezzi (solo non consegnate)
   const agg={};
-  all.filter(o=>o.status!=="consegnata").forEach(o=>o.items.forEach(i=>{const k=i.n+(i.box?" (con scatola)":""); agg[k]=(agg[k]||0)+i.qty;}));
-  const aggList=Object.entries(agg).sort((a,b)=>a[0].localeCompare(b[0]));
+  all.filter(o=>o.status!=="consegnata").forEach(o=>o.items.forEach(i=>{const k=i.n+(i.box?" (con scatola)":""); agg[k]=agg[k]||{q:0,perKg:!!i.perKg}; agg[k].q+=i.qty;}));
+  const aggList=Object.entries(agg).map(([n,v])=>[n,v.perKg?fmtG(v.q):`${v.q}×`]).sort((a,b)=>a[0].localeCompare(b[0]));
   const tot=all.reduce((s,o)=>s+(o.total||0),0);
   const nNew=all.filter(o=>o.status==="nuova"||!o.status).length;
   const xmasOpen=appState.xmasOpen!==false;
   const esporta=()=>{
     const righe=[`PRENOTAZIONI DI NATALE — ${new Date().toLocaleDateString("it-IT")}`,``,`PEZZI DA PREPARARE (non consegnate):`,
-      ...aggList.map(([n,qn])=>`  ${qn}× ${n}`),``,`PRENOTAZIONI (${all.length}):`,
-      ...all.map(o=>[`  ${o.userName} — ${eur(o.total||0)} — ${o.status||"nuova"}${o.paid?" — pagata":""}`,...o.items.map(i=>`     ${i.qty}× ${i.n}${i.box?" (con scatola)":""}${i.price==null?" (su richiesta)":""}`)].join("\n")),
+      ...aggList.map(([n,qn])=>`  ${qn} ${n}`),``,`PRENOTAZIONI (${all.length}):`,
+      ...all.map(o=>[`  ${o.userName} — ${eur(o.total||0)} — ${o.status||"nuova"}${o.paid?" — pagata":""}`,...o.items.map(i=>`     ${xItemQty(i)} ${i.n}${i.box?" (con scatola)":""}${i.price==null?" (su richiesta)":""}`)].join("\n")),
       ``,`Totale prenotato: ${eur(tot)}`];
     const blob=new Blob([righe.join("\n")],{type:"text/plain"}); const url=URL.createObjectURL(blob);
     const a=document.createElement("a"); a.href=url; a.download=`prenotazioni-natale.txt`; a.click(); URL.revokeObjectURL(url);
@@ -3837,7 +3852,7 @@ function AdminXmas({ appState, update, search }) {
     <div className="card">
       <div className="card-title" style={{justifyContent:"space-between"}}><span>🎁 Pezzi da preparare</span><button className="btn btn-gold btn-sm" onClick={esporta}>⬇ Esporta</button></div>
       {aggList.length===0 ? <div className="empty">Nessuna prenotazione in corso.</div> : (
-        <div className="grid2">{aggList.map(([n,qn])=><div key={n} className="menu-item" style={{justifyContent:"space-between"}}><span>{n}</span><b style={{color:"var(--accent)"}}>{qn}×</b></div>)}</div>
+        <div className="grid2">{aggList.map(([n,qn])=><div key={n} className="menu-item" style={{justifyContent:"space-between"}}><span>{n}</span><b style={{color:"var(--accent)"}}>{qn}</b></div>)}</div>
       )}
     </div>
     <div className="card">
@@ -3862,8 +3877,8 @@ function AdminXmas({ appState, update, search }) {
           </div>
           {o.items.map(i=>(
             <div key={i.id} className="menu-order-item" style={{justifyContent:"space-between"}}>
-              <span style={{minWidth:0}}>{i.qty}× {i.n}{i.box?" 🎁 con scatola":""}{i.w?` · ${i.w}`:""}</span>
-              <span style={{fontWeight:700,whiteSpace:"nowrap",marginLeft:8}}>{i.price!=null?eur(i.price*i.qty):"su richiesta"}</span>
+              <span style={{minWidth:0}}>{xItemQty(i)} {i.n}{i.box?" 🎁 con scatola":""}{i.w?` · ${i.w}`:""}</span>
+              <span style={{fontWeight:700,whiteSpace:"nowrap",marginLeft:8}}>{i.price!=null?eur(xItemAmt(i)):"su richiesta"}</span>
             </div>
           ))}
         </div>
@@ -4392,14 +4407,15 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const myX = xmasOrders[user.id] || null;
   const XITEMS = useMemo(()=>{ const m={}; XMAS_CATALOG.forEach(sec=>sec.items.forEach(it=>{
       const base=`${sec.id}:${it.img||"mystery"}`;
-      m[base]={id:base,n:it.n,price:(it.onRequest||it.mystery)?null:it.price,unit:it.unit||null,w:it.w||null,img:it.img||null,box:false};
+      m[base]={id:base,n:it.n,price:(it.onRequest||it.mystery)?null:it.price,unit:it.unit||null,w:it.w||null,img:it.img||null,box:false,perKg:!!it.perKg};
       if(it.box) m[base+":box"]={id:base+":box",n:it.n,price:it.box,unit:null,w:it.w||null,img:it.img||null,box:true};
     })); return m; },[]);
   const xQty = id => xCart[id]||0;
   const setXQty = (id,d) => setXCart(p=>{ const q=Math.max(0,(p[id]||0)+d); const n={...p}; if(q) n[id]=q; else delete n[id]; return n; });
   const xLines = Object.keys(xCart).filter(id=>XITEMS[id]).map(id=>({...XITEMS[id],qty:xCart[id]}));
-  const xCount = xLines.reduce((s,l)=>s+l.qty,0);
-  const xTotal = xLines.reduce((s,l)=>s+(l.price!=null?l.price*l.qty:0),0);
+  const xCount = xLines.reduce((s,l)=>s+(l.perKg?1:l.qty),0);
+  const xTotal = xLines.reduce((s,l)=>s+(xItemAmt(l)||0),0);
+  const setXGrams = (id,g) => setXCart(p=>{ const n={...p}; const v=Math.max(0,Math.round(Number(g)||0)); if(v) n[id]=v; else delete n[id]; return n; });
   const xHasReq = xLines.some(l=>l.price==null);
   const xmasOpen = appState.xmasOpen!==false;
   const xCanEdit = xmasOpen && (!myX || myX.status==="nuova" || !myX.status);
@@ -4407,7 +4423,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const sendXmas = async () => {
     if(!xCount || xSending) return;
     setXSending(true);
-    const order={userId:user.id,userName:user.name,items:xLines.map(l=>({id:l.id,n:l.n,qty:l.qty,price:l.price,box:l.box,unit:l.unit,w:l.w,img:l.img})),
+    const order={userId:user.id,userName:user.name,items:xLines.map(l=>({id:l.id,n:l.n,qty:l.qty,price:l.price,box:l.box,unit:l.unit,w:l.w,img:l.img,perKg:l.perKg||false})),
       total:xTotal,status:myX?.status||"nuova",paid:myX?.paid||false,createdAt:myX?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
     try{
       await update(prev=>({xmasOrders:{...(prev.xmasOrders||{}),[user.id]:order}}));
@@ -4498,6 +4514,18 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   // Contenuto carrello (pannello desktop + foglio mobile): stessi totali di prima
   const cartItems = menu.filter(i=>(quantities[i.id]||0)>0);
+  const xKgCtl = id => xQty(id)>0
+    ? <span className="cl-xkgsel">{fmtG(xQty(id))}</span>
+    : <button className="cl-add" onClick={()=>setXGrams(id,500)} aria-label="Prenota">+</button>;
+  const xKgBar = id => xQty(id)>0 && (
+    <div className="cl-xkg">
+      <div className="cl-xkg-lab">Quanti ne vuoi?</div>
+      <div className="cl-xkg-chips">{XMAS_KG_OPTS.map(g=><button key={g} className={xQty(id)===g?"on":""} onClick={()=>setXGrams(id,g)}>{fmtG(g)}</button>)}</div>
+      <div className="cl-xkg-row">
+        <label>Oppure grammi:<input type="number" inputMode="numeric" min="100" step="50" value={xQty(id)} onChange={e=>setXGrams(id,e.target.value)}/></label>
+        <button className="rm" onClick={()=>setXGrams(id,0)} aria-label="Togli">🗑</button>
+      </div>
+    </div>);
   const xCtl = id => xQty(id)>0
     ? <span className="cl-step"><button onClick={()=>setXQty(id,-1)} aria-label="Togli">−</button><span>{xQty(id)}</span><button onClick={()=>setXQty(id,+1)} aria-label="Aggiungi">+</button></span>
     : <button className="cl-add" onClick={()=>setXQty(id,+1)} aria-label="Prenota">+</button>;
@@ -4509,9 +4537,11 @@ function ClientPanel({ user, appState, update, onLogout }) {
         {xLines.map(l=>(
           <div key={l.id} className="cl-crow">
             {l.img && <div className="cl-th"><img src={XMAS_IMG(l.img)} alt="" style={{objectFit:"contain",background:"#2b1810"}}/></div>}
-            <div className="cl-crow-name">{l.n}<small>{l.box?"con scatola regalo":l.w?l.w:l.unit?l.unit:(l.price==null?"prezzo su richiesta":"")}</small></div>
-            <span className="cl-step sm"><button onClick={()=>setXQty(l.id,-1)} aria-label="Togli">−</button><span>{l.qty}</span><button onClick={()=>setXQty(l.id,+1)} aria-label="Aggiungi">+</button></span>
-            <span className="cl-price">{l.price!=null?eur(l.price*l.qty):<small>su richiesta</small>}</span>
+            <div className="cl-crow-name">{l.n}<small>{l.box?"con scatola regalo":l.w?l.w:l.perKg?`${eur(l.price)} al kg`:l.unit?l.unit:(l.price==null?"prezzo su richiesta":"")}</small></div>
+            {l.perKg
+              ? <span className="cl-step sm"><button onClick={()=>setXGrams(l.id,l.qty-100)} aria-label="Meno">−</button><span style={{minWidth:44}}>{fmtG(l.qty)}</span><button onClick={()=>setXGrams(l.id,l.qty+100)} aria-label="Più">+</button></span>
+              : <span className="cl-step sm"><button onClick={()=>setXQty(l.id,-1)} aria-label="Togli">−</button><span>{l.qty}</span><button onClick={()=>setXQty(l.id,+1)} aria-label="Aggiungi">+</button></span>}
+            <span className="cl-price">{l.price!=null?eur(xItemAmt(l)):<small>su richiesta</small>}</span>
           </div>
         ))}
       </div>
@@ -4712,7 +4742,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                     <div className="cl-cdlab">La tua prenotazione</div>
                     <div className={`cl-xstatus s-${myX.status||"nuova"}`}>{myX.status==="consegnata"?"✓ Consegnata":myX.status==="confermata"?"✓ Confermata dal forno":"⏳ Inviata, in attesa di conferma"}{myX.paid?" · pagata":""}</div>
                     {myX.items.map(i=>(
-                      <div key={i.id} className="cl-xline"><span>{i.qty}× {i.n}{i.box?" (con scatola)":""}{i.w?` · ${i.w}`:""}</span><span>{i.price!=null?eur(i.price*i.qty):"su richiesta"}</span></div>
+                      <div key={i.id} className="cl-xline"><span>{xItemQty(i)} {i.n}{i.box?" (con scatola)":""}{i.w?` · ${i.w}`:""}</span><span>{i.price!=null?eur(xItemAmt(i)):"su richiesta"}</span></div>
                     ))}
                     <div className="cl-xline tot"><span>Totale</span><span>{eur(myX.total||0)}{myX.items.some(i=>i.price==null)?" + su richiesta":""}</span></div>
                     <p>{xCanEdit ? "Nessun acconto richiesto. Puoi modificarla finché non viene confermata." : myX.status==="confermata" ? "Prenotazione confermata: per modifiche scrivi al forno." : myX.status==="consegnata" ? "Grazie e buone feste! 🎄" : "Le ordinazioni sono chiuse."}</p>
@@ -4755,8 +4785,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
                             <div className="cl-xprices">
                               <div className="cl-xrow">
                                 <div className="cl-xprice"><b>{eur(it.price)}</b>{it.unit && <small> {it.unit}</small>}{it.box && <small> senza scatola</small>}</div>
-                                {canBook && xCtl(base)}
+                                {canBook && (it.perKg ? xKgCtl(base) : xCtl(base))}
                               </div>
+                              {it.perKg && canBook && xKgBar(base)}
                               {it.box && <div className="cl-xrow">
                                 <div className="cl-xprice box"><b>{eur(it.box)}</b><small> con scatola regalo</small></div>
                                 {canBook && xCtl(base+":box")}
