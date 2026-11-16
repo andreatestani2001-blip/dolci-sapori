@@ -778,9 +778,9 @@ const STYLE = `
   .cl .cl-xhead{text-shadow:0 2px 12px rgba(0,0,0,.7)}
   .cl .cl-xsec-title{font-family:"Mountains of Christmas","Cormorant Garamond",serif;font-size:30px;line-height:1.05;color:#f4d35e;font-weight:700;text-shadow:0 2px 14px rgba(0,0,0,.35)}
   .cl .cl-xsec-sub{font-size:13.5px;color:rgba(255,255,255,.8);margin-top:4px;font-style:italic}
-  .cl .cl-xgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cl .cl-xgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
   .cl .cl-xgrid.one{grid-template-columns:1fr;max-width:420px;margin:0 auto}
-  .cl .cl-xcard{position:relative;background:linear-gradient(180deg,rgba(26,12,8,.62),rgba(26,12,8,.78));border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 30px -20px rgba(0,0,0,.8)}
+  .cl .cl-xcard{position:relative;background:linear-gradient(180deg,rgba(26,12,8,.62),rgba(26,12,8,.78));border:1px solid rgba(244,211,94,.35);border-radius:20px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;max-width:100%;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 30px -20px rgba(0,0,0,.8)}
   .cl .cl-xcard.mystery{background:linear-gradient(180deg,#1a1a1a,#050505);border-color:#f4d35e;box-shadow:0 0 0 4px rgba(244,211,94,.15),0 18px 40px -20px rgba(0,0,0,.9)}
   .cl .cl-xtag{position:absolute;top:10px;left:10px;z-index:2;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:#f4d35e;color:#2b1810;padding:4px 8px;border-radius:999px}
   .cl .cl-xph{width:100%;aspect-ratio:1/1;display:grid;place-items:center;padding:6px}
@@ -810,14 +810,16 @@ const STYLE = `
   .cl .cl-xdays{margin-top:12px;color:#f4d35e;font-size:14px}.cl .cl-xdays b{font-size:20px}
   .cl .cl-xfoot{text-align:center;color:rgba(255,255,255,.75);font-style:italic;margin:16px 0 6px;font-size:13.5px}
   .cl .cl-xkgsel{font-weight:800;color:#2b1810;background:#f4d35e;border-radius:999px;padding:7px 12px;font-size:14px;white-space:nowrap}
-  .cl .cl-xkg{width:100%;margin-top:8px;background:rgba(244,211,94,.12);border:1px solid rgba(244,211,94,.45);border-radius:14px;padding:10px}
+  .cl .cl-xkg{width:100%;min-width:0;margin-top:8px;background:rgba(244,211,94,.12);border:1px solid rgba(244,211,94,.45);border-radius:14px;padding:10px}
   .cl .cl-xkg-lab{font-size:12.5px;font-weight:700;color:#f4d35e;margin-bottom:7px;text-align:center}
-  .cl .cl-xkg-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .cl .cl-xkg-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
   .cl .cl-xkg-chips button{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:10px;padding:8px 2px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
   .cl .cl-xkg-chips button.on{background:#f4d35e;color:#2b1810;border-color:#f4d35e}
-  .cl .cl-xkg-row{display:flex;align-items:center;gap:6px;margin-top:8px}
-  .cl .cl-xkg-row label{flex:1;display:flex;align-items:center;gap:6px;font-size:12.5px;color:rgba(255,255,255,.85);white-space:nowrap}
-  .cl .cl-xkg-row input{flex:1;min-width:0;width:70px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font-weight:700;padding:0 8px;text-align:center}
+  .cl .cl-xkg-row{display:flex;align-items:center;gap:6px;margin-top:8px;min-width:0}
+  .cl .cl-xkg-row label{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:rgba(255,255,255,.85)}
+  .cl .cl-xkg-row label span{flex:none;text-transform:none;letter-spacing:0}
+  .cl .cl-xkg-row input::placeholder{color:rgba(255,255,255,.5);font-weight:500}
+  .cl .cl-xkg-row input{flex:1;min-width:56px;width:0;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font-weight:700;padding:0 8px;text-align:center}
   .cl .cl-xkg-row .rm{width:36px;height:36px;border-radius:9px;border:0;background:rgba(139,26,26,.8);cursor:pointer;font-size:15px}
   .cl .cl-xrow{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:4px 0}
   .cl .cl-xrow .cl-xprice{justify-content:flex-start;text-align:left}
@@ -923,7 +925,7 @@ const STYLE = `
     .cl .cl-xbg{left:88px;background-image:url("/natale/bg-h.webp");background-position:center}
     .cl .cl-xwrap.catalog{padding:10px 0 20px}
     .cl .cl-xwrap.catalog .cl-xhead{padding:30px 0 10px}.cl .cl-xwrap.catalog .cl-xsub{font-size:17px}
-    .cl .cl-xgrid{grid-template-columns:repeat(4,1fr);gap:16px}
+    .cl .cl-xgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
     .cl .cl-xsec-title{font-size:38px}
     .cl .cl-xbox{grid-template-columns:130px 130px 1fr}
     .cl .cl-xmas-page{max-width:1100px}
@@ -4522,7 +4524,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
       <div className="cl-xkg-lab">Quanti ne vuoi?</div>
       <div className="cl-xkg-chips">{XMAS_KG_OPTS.map(g=><button key={g} className={xQty(id)===g?"on":""} onClick={()=>setXGrams(id,g)}>{fmtG(g)}</button>)}</div>
       <div className="cl-xkg-row">
-        <label>Oppure grammi:<input type="number" inputMode="numeric" min="100" step="50" value={xQty(id)} onChange={e=>setXGrams(id,e.target.value)}/></label>
+        <label><input type="number" inputMode="numeric" min="100" step="50" placeholder="grammi" aria-label="Grammi" value={xQty(id)} onChange={e=>setXGrams(id,e.target.value)} onBlur={e=>{ const v=Math.round((Number(e.target.value)||0)/50)*50; setXGrams(id,Math.max(100,v)); }}/><span>g</span></label>
         <button className="rm" onClick={()=>setXGrams(id,0)} aria-label="Togli">🗑</button>
       </div>
     </div>);
