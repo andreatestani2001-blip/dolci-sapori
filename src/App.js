@@ -767,6 +767,10 @@ const STYLE = `
   .cl .cl-xmas-strip .cd.off{display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;align-self:flex-start;background:rgba(255,255,255,.18);color:#fff}
   .cl .cl-xmas-strip .cd.off i{width:7px;height:7px;border-radius:50%;background:#c33}
   .cl .cl-xopen.closed{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}.cl .cl-xopen.closed i{background:#c33;box-shadow:none}
+  .cl .cl-xsec.gf .cl-xsec-title{color:#fff}
+  .cl .cl-xsec.gf .cl-xsec-head::after{content:"LINEA SENZA GLUTINE";display:inline-block;margin-top:8px;font-size:11px;font-weight:800;letter-spacing:.14em;background:#8b1a1a;color:#fff;border:1px solid #f4d35e;padding:5px 12px;border-radius:999px}
+  .cl .cl-xsec.gf .cl-xcard{border-color:rgba(244,211,94,.6)}
+  .cl .cl-xsec.gf .cl-xtag{background:#2e7d32;color:#fff}
   .cl .cl-xsec.special .cl-xgrid.one{max-width:460px}
   .cl .cl-xsec.special .cl-xsec-title{color:#f4d35e}
   .cl .cl-xmas-strip .cd.live i{width:7px;height:7px;border-radius:50%;background:#1e6b3f;box-shadow:0 0 0 2px rgba(30,107,63,.3)}
@@ -1758,6 +1762,14 @@ const XMAS_CATALOG = [
     { n:"Stellina al Cioccolato",   img:"stellina",      price:3.5,  w:"110 g" },
     { n:"Pandorino",                img:"pandorino",     price:2.5,  w:"100 g" },
     { n:"Panettoncino al Cioccolato", img:"panettoncino", price:2.5, w:"100 g" },
+  ]},
+  { id:"glutenfree", title:"Zero Glutine, Zero Rinunce", sub:"Linea senza glutine · Natale 2026", gf:true, items:[
+    { n:"Panettone Classico senza glutine",      short:"Classico",     img:"gf-classico",     price:20,  w:"circa 750 g", tag:"🌾 senza glutine" },
+    { n:"Panettone al Cioccolato senza glutine", short:"Cioccolato",   img:"gf-cioccolato",   price:20,  w:"circa 750 g", tag:"🌾 senza glutine" },
+    { n:"Panettone al Pistacchio senza glutine", short:"Pistacchio",   img:"gf-pistacchio",   price:25,  w:"circa 750 g", tag:"🌾 senza glutine" },
+    { n:"Pandoro senza glutine",                 short:"Pandoro",      img:"gf-pandoro",      price:20,  w:"circa 750 g", tag:"🌾 senza glutine" },
+    { n:"Panettoncino al Cioccolato senza glutine", short:"Panettoncino", img:"gf-panettoncino", price:3.5, w:"circa 100 g", tag:"🌾 senza glutine" },
+    { n:"Stelline al Cioccolato senza glutine",  short:"Stelline",     img:"gf-stelline",     price:4,   w:"circa 100 g", tag:"🌾 senza glutine" },
   ]},
   { id:"torroni", title:"I Torroni", sub:"Morbidi o al cioccolato", items:[
     { n:"Torrone Morbido al Pistacchio", img:"torrone-pistacchio", price:11.9 },
@@ -4761,7 +4773,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                 </section>
               )}
               {XMAS_CATALOG.map(sec=>(
-                <section key={sec.id} className={`cl-xsec ${sec.id==="speciale"?"special":""}`}>
+                <section key={sec.id} className={`cl-xsec ${sec.id==="speciale"?"special":""} ${sec.gf?"gf":""}`}>
                   <div className="cl-xsec-head">
                     <h3 className="cl-xsec-title">{sec.title}</h3>
                     <div className="cl-xsec-sub">{sec.sub}</div>
@@ -4782,7 +4794,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
                               </div>
                             : <img src={XMAS_IMG(it.img)} alt={it.n} loading="lazy"/>}
                         </div>
-                        <div className="cl-xname">{it.n}{it.w && <small> · {it.w}</small>}</div>
+                        <div className="cl-xname">{it.short||it.n}{it.w && <small> · {it.w}</small>}</div>
                         {(()=>{ const base=`${sec.id}:${it.img||"mystery"}`; const canBook = xmasOpen && (!myX || xEditing);
                           if(it.mystery) return <div className="cl-xnote">{it.note}</div>;
                           if(it.onRequest) return <><div className="cl-xprice req">Prezzo su richiesta</div>{canBook && <div className="cl-xbtn"><span className="lab">Richiedi</span>{xCtl(base)}</div>}</>;
