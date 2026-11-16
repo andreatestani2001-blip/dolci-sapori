@@ -4516,6 +4516,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
 
   // Contenuto carrello (pannello desktop + foglio mobile): stessi totali di prima
   const cartItems = menu.filter(i=>(quantities[i.id]||0)>0);
+  const [xGText, setXGText] = useState({});
   const xKgCtl = id => xQty(id)>0
     ? <span className="cl-xkgsel">{fmtG(xQty(id))}</span>
     : <button className="cl-add" onClick={()=>setXGrams(id,500)} aria-label="Prenota">+</button>;
@@ -4524,7 +4525,9 @@ function ClientPanel({ user, appState, update, onLogout }) {
       <div className="cl-xkg-lab">Quanti ne vuoi?</div>
       <div className="cl-xkg-chips">{XMAS_KG_OPTS.map(g=><button key={g} className={xQty(id)===g?"on":""} onClick={()=>setXGrams(id,g)}>{fmtG(g)}</button>)}</div>
       <div className="cl-xkg-row">
-        <label><input type="number" inputMode="numeric" min="100" step="50" placeholder="grammi" aria-label="Grammi" value={xQty(id)} onChange={e=>setXGrams(id,e.target.value)} onBlur={e=>{ const v=Math.round((Number(e.target.value)||0)/50)*50; setXGrams(id,Math.max(100,v)); }}/><span>g</span></label>
+        <label><input type="number" inputMode="numeric" min="100" step="50" placeholder="grammi" aria-label="Grammi" value={xGText[id]!==undefined?xGText[id]:xQty(id)}
+            onChange={e=>{ const t=e.target.value; setXGText(p=>({...p,[id]:t})); const v=Math.round(Number(t)||0); if(v>0) setXGrams(id,v); }}
+            onBlur={e=>{ const v=Math.max(100,Math.round((Number(e.target.value)||0)/50)*50); setXGrams(id,v); setXGText(p=>{const n={...p}; delete n[id]; return n;}); }}/><span>g</span></label>
         <button className="rm" onClick={()=>setXGrams(id,0)} aria-label="Togli">🗑</button>
       </div>
     </div>);
