@@ -720,6 +720,17 @@ const STYLE = `
   .cl[data-screen=natale] .cl-tabbar .in{background:#fff}
   .cl .cl-xmas-page{max-width:900px;margin:0 auto}
   .cl .cl-xmas-page{position:relative;z-index:1;color:#fff;padding-top:4px}
+  .cl.cl-admin .cl-modal:has(.ax-editor){z-index:100000;align-items:center!important}
+  .cl.cl-admin .ax-editor{max-width:560px;text-align:left;padding:16px 16px 14px;max-height:84vh;display:flex;flex-direction:column;border-radius:22px}
+  .cl.cl-admin .ax-editor .card-title{margin-bottom:8px}
+  .cl.cl-admin .ax-editor .form-group{margin-bottom:8px}
+  .cl.cl-admin .ax-editor select,.cl.cl-admin .ax-editor input{width:100%;font-size:16px}
+  @media (min-width:900px){.cl.cl-admin .cl-modal{align-items:center!important}}
+  .cl.cl-admin .ax-edit-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border,#eee);font-size:.9rem;line-height:1.25}
+  .cl.cl-admin .ax-step{display:inline-flex;align-items:center;gap:4px;flex:none}
+  .cl.cl-admin .ax-step button{width:32px;height:32px;border-radius:9px;border:1px solid var(--border,#ddd);background:#fff;font-size:17px;font-weight:700;cursor:pointer;color:#2b1810}
+  .cl.cl-admin .ax-step b{min-width:26px;text-align:center;color:#999}.cl.cl-admin .ax-step b.on{color:var(--accent)}
+  .cl.cl-admin .ax-step input{width:64px;height:32px;text-align:center;font-weight:700;padding:0 4px;font-size:16px}
   .cl.cl-admin .ax-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
   .cl.cl-admin .ax-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
   .cl.cl-admin .ax-status{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
@@ -1807,6 +1818,12 @@ const XMAS_KG_OPTS=[200,500,1000,2000];
 const fmtG = g => g>=1000 ? `${(g/1000).toLocaleString("it-IT",{maximumFractionDigits:2})} kg` : `${g} g`;
 const xItemQty = i => i.perKg ? fmtG(i.qty) : `${i.qty}×`;
 const xItemAmt = i => i.price==null ? null : i.perKg ? i.price*i.qty/1000 : i.price*i.qty;
+const buildXmasItems = () => { const m={}; XMAS_CATALOG.forEach(sec=>sec.items.forEach(it=>{
+    const base=`${sec.id}:${it.img||"mystery"}`;
+    m[base]={id:base,sec:sec.id,n:it.n,price:(it.onRequest||it.mystery)?null:it.price,unit:it.unit||null,w:it.w||null,img:it.img||null,box:false,perKg:!!it.perKg,mystery:!!it.mystery};
+    if(it.box) m[base+":box"]={id:base+":box",sec:sec.id,n:it.n,price:it.box,unit:null,w:it.w||null,img:it.img||null,box:true};
+  })); return m; };
+const XMAS_ITEMS = buildXmasItems();
 function ChristmasSection({ isAdmin=false }) {
   const [imgSrc, setImgSrc] = useState(NATALE_IMG_LOCAL);
   const [videoSrc, setVideoSrc] = useState(NATALE_VIDEO_LOCAL);
@@ -3827,7 +3844,77 @@ const SPECIAL_TEMPLATE = () => {
 // ════════════════════════════════════════════════════════════════════════
 // ADMIN — Prenotazioni di Natale
 // ════════════════════════════════════════════════════════════════════════
+function XmasEditor({ appState, order, onSave, onClose }) {
+  const clients=(appState.users||[]).filter(u=>u.role==="client").slice().sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  const isNew=!order;
+  const [who,setWho]=useState(order?order.userId:"");
+  const [manualName,setManualName]=useState(order&&String(order.userId).startsWith("m:")?order.userName:"");
+  const [q,setQ]=useState(()=>{ const m={}; (order?.items||[]).forEach(i=>{ if(XMAS_ITEMS[i.id]) m[i.id]=i.qty; }); return m; });
+  const [filter,setFilter]=useState("");
+  const [saving,setSaving]=useState(false);
+  const qty=id=>q[id]||0;
+  const setQty=(id,v)=>setQ(p=>{const n={...p}; const x=Math.max(0,Math.round(Number(v)||0)); if(x) n[id]=x; else delete n[id]; return n;});
+  const lines=Object.keys(q).filter(id=>XMAS_ITEMS[id]).map(id=>({...XMAS_ITEMS[id],qty:q[id]}));
+  const total=lines.reduce((s,l)=>s+(xItemAmt(l)||0),0);
+  const manual=who==="__manual__"||(order&&String(order.userId).startsWith("m:"));
+  const f=filter.trim().toLowerCase();
+  const save=async()=>{
+    let userId, userName;
+    if(manual){ userName=manualName.trim(); if(!userName){ alert("Scrivi il nome del cliente."); return; } userId=order?order.userId:`m:${Date.now()}`; }
+    else { const u=clients.find(c=>c.id===who); if(!u){ alert("Scegli un cliente."); return; } userId=u.id; userName=u.name; }
+    if(!lines.length){ alert("Aggiungi almeno un prodotto."); return; }
+    const now=new Date().toISOString();
+    const o={userId,userName,items:lines.map(l=>({id:l.id,n:l.n,qty:l.qty,price:l.price,box:l.box,unit:l.unit,w:l.w,img:l.img,perKg:l.perKg||false})),
+      total,status:order?.status||"confermata",paid:order?.paid||false,createdAt:order?.createdAt||now,updatedAt:now,byAdmin:true};
+    setSaving(true); try{ await onSave(o, order&&order.userId!==userId?order.userId:null); }finally{ setSaving(false); }
+  };
+  return(
+    <div className="cl-modal" onClick={onClose}>
+      <div className="cl-modal-box ax-editor" onClick={e=>e.stopPropagation()}>
+        <div className="card-title" style={{justifyContent:"space-between"}}><span>{isNew?"➕ Nuova prenotazione di Natale":`✏️ Modifica — ${order.userName}`}</span><button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button></div>
+        {isNew && (
+          <div className="form-group" style={{marginBottom:8}}>
+            <label>Cliente</label>
+            <select value={who} onChange={e=>setWho(e.target.value)}>
+              <option value="">— scegli un cliente —</option>
+              {clients.map(c=><option key={c.id} value={c.id}>{c.name} ({c.id})</option>)}
+              <option value="__manual__">Altro (nome a mano)…</option>
+            </select>
+          </div>
+        )}
+        {manual && <div className="form-group" style={{marginBottom:8}}><label>Nome cliente</label><input value={manualName} onChange={e=>setManualName(e.target.value)} placeholder="Es. Sig.ra Rossi"/></div>}
+        <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="🔍 Cerca prodotto…" style={{marginBottom:8}}/>
+        <div style={{overflow:"auto",flex:1,minHeight:0,border:"1px solid var(--border)",borderRadius:12,padding:"4px 8px"}}>
+          {XMAS_CATALOG.map(sec=>{
+            const its=Object.values(XMAS_ITEMS).filter(i=>i.sec===sec.id&&!i.mystery&&(!f||i.n.toLowerCase().includes(f)));
+            if(!its.length) return null;
+            return(<div key={sec.id}>
+              <div className="muted" style={{fontSize:".72rem",fontWeight:800,textTransform:"uppercase",letterSpacing:".06em",margin:"8px 0 2px"}}>{sec.title}</div>
+              {its.map(i=>(
+                <div key={i.id} className="ax-edit-row">
+                  <span style={{minWidth:0}}>{i.n}{i.box?" 🎁 con scatola":""}{i.w?<small className="muted"> · {i.w}</small>:""}<br/><small style={{color:"var(--accent)",fontWeight:700}}>{i.price!=null?eur(i.price)+(i.perKg?" al kg":""):"su richiesta"}</small></span>
+                  {i.perKg
+                    ? <span className="ax-step"><button onClick={()=>setQty(i.id,qty(i.id)-100)}>−</button><input type="number" inputMode="numeric" value={qty(i.id)||""} placeholder="g" onChange={e=>setQty(i.id,e.target.value)}/><button onClick={()=>setQty(i.id,qty(i.id)+100)}>+</button></span>
+                    : <span className="ax-step"><button onClick={()=>setQty(i.id,qty(i.id)-1)}>−</button><b className={qty(i.id)?"on":""}>{qty(i.id)}</b><button onClick={()=>setQty(i.id,qty(i.id)+1)}>+</button></span>}
+                </div>))}
+            </div>);
+          })}
+        </div>
+        <div className="flex" style={{justifyContent:"space-between",alignItems:"center",marginTop:10,gap:8,flexWrap:"wrap"}}>
+          <span><b style={{color:"var(--accent)",fontSize:"1.05rem"}}>{eur(total)}</b> <small className="muted">· {lines.length} {lines.length===1?"prodotto":"prodotti"}{lines.some(l=>l.price==null)?" · + su richiesta":""}</small></span>
+          <button className="btn btn-primary" disabled={saving} onClick={save}>{saving?"Salvo…":"💾 Salva prenotazione"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminXmas({ appState, update, search }) {
+  const [editing,setEditing]=useState(null); // null | "new" | order
+  const saveOrder=async(o,oldKey)=>{
+    await update(prev=>{ const m={...(prev.xmasOrders||{})}; if(oldKey) delete m[oldKey]; m[o.userId]=o; return {xmasOrders:m}; });
+    setEditing(null); showToast("💾 Prenotazione salvata");
+  };
   const [toast,setToast]=useState("");
   const showToast=t=>{setToast(t);setTimeout(()=>setToast(""),2200);};
   const q=(search||"").trim().toLowerCase();
@@ -3870,13 +3957,16 @@ function AdminXmas({ appState, update, search }) {
       )}
     </div>
     <div className="card">
-      <div className="card-title">🎄 Prenotazioni {q&&<span className="muted" style={{fontWeight:400,fontSize:".8rem"}}>· ricerca "{search.trim()}"</span>} <span className="badge" style={{background:"var(--accent)"}}>{all.length}</span></div>
+      <div className="card-title" style={{justifyContent:"space-between"}}><span>🎄 Prenotazioni {q&&<span className="muted" style={{fontWeight:400,fontSize:".8rem"}}>· ricerca "{search.trim()}"</span>} <span className="badge" style={{background:"var(--accent)"}}>{all.length}</span></span><button className="btn btn-success btn-sm" onClick={()=>setEditing("new")}>➕ Aggiungi</button></div>
       {all.length===0&&<div className="empty">{q?"Nessuna prenotazione per questo cliente.":"Nessuna prenotazione ancora."}</div>}
       {all.map(o=>(
         <div key={o.userId} className="order-block">
           <div className="ax-head">
-            <span style={{fontWeight:700,minWidth:0}}>👤 {o.userName} <span className="muted" style={{fontWeight:400,fontSize:".75rem",whiteSpace:"nowrap"}}>· {o.updatedAt?new Date(o.updatedAt).toLocaleDateString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""}</span></span>
-            <button className="btn btn-danger btn-sm" onClick={()=>removeOrder(o.userId)} aria-label="Elimina prenotazione">🗑</button>
+            <span style={{fontWeight:700,minWidth:0}}>👤 {o.userName}{String(o.userId).startsWith("m:")&&<span className="badge" style={{background:"var(--muted,#999)",marginLeft:6,fontSize:".65rem"}}>manuale</span>} <span className="muted" style={{fontWeight:400,fontSize:".75rem",whiteSpace:"nowrap"}}>· {o.updatedAt?new Date(o.updatedAt).toLocaleDateString("it-IT",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""}</span></span>
+            <span className="flex" style={{gap:5,flex:"none"}}>
+              <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(o)} aria-label="Modifica prenotazione">✏️</button>
+              <button className="btn btn-danger btn-sm" onClick={()=>removeOrder(o.userId)} aria-label="Elimina prenotazione">🗑</button>
+            </span>
           </div>
           <div className="ax-row">
             <span style={{fontWeight:800,color:"var(--accent)"}}>{eur(o.total||0)}{o.items.some(i=>i.price==null)?<small style={{fontWeight:600}}> + su richiesta</small>:""}</span>
@@ -3898,6 +3988,7 @@ function AdminXmas({ appState, update, search }) {
         </div>
       ))}
     </div>
+    {editing && <XmasEditor appState={appState} order={editing==="new"?null:editing} onSave={saveOrder} onClose={()=>setEditing(null)}/>}
     {toast&&<div className="toast">{toast}</div>}
   </>);
 }
@@ -4419,11 +4510,7 @@ function ClientPanel({ user, appState, update, onLogout }) {
   const [xSending, setXSending] = useState(false);
   const xmasOrders = appState.xmasOrders || {};
   const myX = xmasOrders[user.id] || null;
-  const XITEMS = useMemo(()=>{ const m={}; XMAS_CATALOG.forEach(sec=>sec.items.forEach(it=>{
-      const base=`${sec.id}:${it.img||"mystery"}`;
-      m[base]={id:base,n:it.n,price:(it.onRequest||it.mystery)?null:it.price,unit:it.unit||null,w:it.w||null,img:it.img||null,box:false,perKg:!!it.perKg};
-      if(it.box) m[base+":box"]={id:base+":box",n:it.n,price:it.box,unit:null,w:it.w||null,img:it.img||null,box:true};
-    })); return m; },[]);
+  const XITEMS = XMAS_ITEMS;
   const xQty = id => xCart[id]||0;
   const setXQty = (id,d) => setXCart(p=>{ const q=Math.max(0,(p[id]||0)+d); const n={...p}; if(q) n[id]=q; else delete n[id]; return n; });
   const xLines = Object.keys(xCart).filter(id=>XITEMS[id]).map(id=>({...XITEMS[id],qty:xCart[id]}));
